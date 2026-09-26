@@ -4,6 +4,7 @@ import { useStore } from '../store/useStore.js'
 import { t, dateLocale } from '../lib/i18n.js'
 import { todayISO, isoOf, fmtNum } from '../lib/format.js'
 import { DEFAULT_TARGETS, NUTRIENTS, caloriesFromMacros, foodFromProduct, totalsFor } from '../lib/nutrition.js'
+import { groupFoodResults, rankFoodResults } from '../lib/foodSearch.js'
 import { Button, NumberField, TextField } from '../components/ui.jsx'
 import Icon from '../components/Icon.jsx'
 import NutritionSummary from '../components/NutritionSummary.jsx'
@@ -14,7 +15,8 @@ const LABELS = { kcal: 'Calories', protein: 'Protein', carbs: 'Carbs', fat: 'Fat
 async function lookup(params) {
   const response = await fetch('/api/food?' + new URLSearchParams(params))
   if (!response.ok) throw new Error(t('Food search is temporarily unavailable. You can add the food manually.'))
-  return ((await response.json()).products || []).map(foodFromProduct).filter(Boolean)
+  const data = await response.json()
+  return { products: (data.products || []).map(foodFromProduct).filter(Boolean), market: data.market }
 }
 
 function Scanner({ onCode, onClose }) {
@@ -82,10 +84,15 @@ export default function Nutrition() {
   const search = async params => {
     setMessage(''); setBusy(true); setResults([])
     try {
-      const products = await lookup(params)
-      setResults(products)
+      const { products, market } = await lookup(params)
+      if (params.code && products.length === 1) {
+        select(products[0])
+        return
+      }
+      const ranked = params.code ? products : rankFoodResults(products, params.q)
+      setResults(groupFoodResults(ranked))
       if (!products.length) setMessage(t('No product found. Add it manually and check the label.'))
-      if (params.code && products.length === 1) select(products[0])
+      else if (market === 'global') setMessage(t('No Romanian matches. Showing international products.'))
     } catch (e) { setMessage(e.message) }
     finally { setBusy(false) }
   }
@@ -146,7 +153,12 @@ export default function Nutrition() {
       {busy && <p className="small muted">{t('Searching…')}</p>}
       {message && <p className="small muted" role="status">{message}</p>}
       {!food && !results.length && !busy && recent.length > 0 && <div className="nutrition-recent"><h3>{t('Recently logged')}</h3>{recent.map((entry, i) => <button key={entry.id || i} className="nutrition-result" onClick={() => select(entry)}><span><strong>{entry.name}</strong><small>{entry.brand}</small></span><span>{fmtNum(entry.per100.kcal)} kcal / 100 g</span></button>)}</div>}
-      {results.map((item, i) => <button key={item.code || i} className="nutrition-result" onClick={() => select(item)}><span><strong>{item.name}</strong><small>{item.brand}</small></span><span>{fmtNum(item.per100.kcal)} kcal / 100 g</span></button>)}
+      {results.map((group, i) => group.variants.length === 1
+        ? <button key={`${group.name}-${group.brand}-${i}`} className="nutrition-result" onClick={() => select(group.variants[0])}><span><strong>{group.name}</strong><small>{group.brand}</small></span><span>{fmtNum(group.variants[0].per100.kcal)} kcal / 100 g</span></button>
+        : <details key={`${group.name}-${group.brand}-${i}`} className="nutrition-result-group">
+          <summary className="nutrition-result"><span><strong>{group.name}</strong><small>{group.brand || t('Unbranded entry')} · {group.variants.length} {t('options')}</small></span><span>{t('Choose')}</span></summary>
+          <div className="nutrition-result-variants">{group.variants.map((item, variantIndex) => <button key={item.code || `${item.per100.kcal}-${item.per100.protein}-${item.per100.carbs}-${item.per100.fat}-${variantIndex}`} className="nutrition-result-variant" onClick={() => select(item)}><span>{t('Option')} {variantIndex + 1}</span><span>{fmtNum(item.per100.kcal)} kcal / 100 g<small>P {fmtNum(item.per100.protein)} g · C {fmtNum(item.per100.carbs)} g · F {fmtNum(item.per100.fat)} g</small></span></button>)}</div>
+        </details>)}
       {manual && <div className="nutrition-form"><TextField value={custom.name} onChange={e => setCustom({ ...custom, name: e.target.value })} placeholder={t('Food name')} /><p className="small muted">{t('Nutrition values per 100 g, from the product label.')}</p><div className="nutrition-grid">{NUTRIENTS.map(k => <label key={k} className="nutrition-input">{t(LABELS[k])}<NumberField value={custom[k]} onChange={v => setCustom(c => ({ ...c, [k]: v }))} /></label>)}</div><Button onClick={saveCustom}>{t('Continue')}</Button></div>}
       {food && <div className="nutrition-form"><strong>{food.name}</strong>{food.brand && <span className="small muted">{food.brand}</span>}<p className="small muted">{t('Check the product label. Values are per 100 g.')}: {NUTRIENTS.map(k => `${t(LABELS[k])}: ${fmtNum(food.per100[k])}`).join(' · ')}</p><label className="nutrition-input">{t('Amount eaten (g)')}<NumberField value={grams} onChange={setGrams} /></label><Button variant="primary" onClick={add} disabled={!grams || grams > 10000}>{t('Add to diary')}</Button></div>}
       <p className="nutrition-source-note">{t('Product data: Open Food Facts. Check the label before logging.')}</p>
