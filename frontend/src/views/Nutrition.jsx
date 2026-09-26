@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import { t, dateLocale } from '../lib/i18n.js'
 import { todayISO, isoOf, fmtNum } from '../lib/format.js'
-import { DEFAULT_TARGETS, NUTRIENTS, foodFromProduct, totalsFor } from '../lib/nutrition.js'
+import { DEFAULT_TARGETS, NUTRIENTS, caloriesFromMacros, foodFromProduct, totalsFor } from '../lib/nutrition.js'
 import { Button, NumberField, TextField } from '../components/ui.jsx'
 import Icon from '../components/Icon.jsx'
 import NutritionSummary from '../components/NutritionSummary.jsx'
@@ -53,6 +53,8 @@ export default function Nutrition() {
   const nutrition = S.nutrition || { targets: DEFAULT_TARGETS, entries: [] }
   const entries = nutrition.entries || []
   const targets = { ...DEFAULT_TARGETS, ...nutrition.targets }
+  const macroCalories = caloriesFromMacros(targets)
+  const targetDifference = Math.round((Number(targets.kcal) - macroCalories) * 10) / 10
   const [date, setDate] = useState(todayISO())
   const [meal, setMeal] = useState('Breakfast')
   const [food, setFood] = useState(null)
@@ -101,19 +103,33 @@ export default function Nutrition() {
     select({ name: custom.name.trim(), per100: Object.fromEntries(NUTRIENTS.map(k => [k, Number(custom[k]) || 0])) })
   }
   const openAdd = m => { setMeal(m); setShowAdd(true); setResults([]); setMessage('') }
+  const setTarget = (key, value) => update(s => {
+    s.nutrition ||= { targets: {}, entries: [] }
+    s.nutrition.targets ||= {}
+    const previous = { ...DEFAULT_TARGETS, ...s.nutrition.targets }
+    s.nutrition.targets[key] = value
+    if (key !== 'kcal' && (!previous.kcal || previous.kcal === caloriesFromMacros(previous))) {
+      s.nutrition.targets.kcal = caloriesFromMacros(s.nutrition.targets)
+    }
+  })
 
   return <div className="narrow nutrition">
     <div className="hdr"><button className="iconbtn" onClick={() => nav('/home')} aria-label={t('Home')}><Icon name="chevronLeft" /></button><h1 style={{ marginLeft: 10 }}>{t('Nutrition')}</h1></div>
     <div className="card nutrition-day-card">
       <div className="row between"><button className="iconbtn" onClick={() => moveDay(-1)} aria-label={t('Previous day')}><Icon name="chevronLeft" /></button><strong>{new Date(date + 'T12:00:00').toLocaleDateString(dateLocale(), { weekday: 'long', day: 'numeric', month: 'long' })}</strong><button className="iconbtn" onClick={() => moveDay(1)} aria-label={t('Next day')}><Icon name="chevronRight" /></button></div>
       <NutritionSummary nutrition={nutrition} date={date} />
-      <button className="nutrition-link" onClick={() => setEditTargets(v => !v)}>{t('Daily targets')}</button>
-      {editTargets && <div className="nutrition-grid">{NUTRIENTS.map(k => <label key={k} className="nutrition-input">{t(LABELS[k])} ({k === 'kcal' ? 'kcal' : 'g'})<NumberField value={targets[k]} onChange={v => update(s => { s.nutrition ||= { targets: {}, entries: [] }; s.nutrition.targets ||= {}; s.nutrition.targets[k] = v })} /></label>)}</div>}
+      <button className="nutrition-target-toggle" onClick={() => setEditTargets(v => !v)} aria-expanded={editTargets}><Icon name="target" /><span>{editTargets ? t('Hide daily targets') : t('Set daily targets')}</span><Icon name="chevronRight" className={editTargets ? 'nutrition-chevron open' : 'nutrition-chevron'} /></button>
+      {editTargets && <div className="nutrition-target-panel">
+        <label className="nutrition-input nutrition-kcal-input">{t('Calorie goal')} (kcal)<NumberField value={targets.kcal} onChange={v => setTarget('kcal', v)} decimal={false} /></label>
+        <div className="nutrition-target-macros">{['protein', 'carbs', 'fat'].map(k => <label key={k} className="nutrition-input">{t(LABELS[k])} (g)<NumberField value={targets[k]} onChange={v => setTarget(k, v)} /></label>)}</div>
+        <div className="nutrition-calculated"><div><span>{t('Calculated from macros')}</span><strong>{fmtNum(macroCalories)} kcal</strong></div><small>{t('Protein and carbs: 4 kcal/g · fat: 9 kcal/g')}</small></div>
+        {Math.abs(targetDifference) >= 1 && <div className="nutrition-target-difference"><span>{t('Difference from calorie goal')}: {fmtNum(Math.abs(targetDifference))} kcal</span><button onClick={() => setTarget('kcal', macroCalories)}>{t('Use macro total')}</button></div>}
+      </div>}
     </div>
 
     <div className="nutrition-section-head"><h2>{t('Food diary')}</h2><span className="small muted">{fmtNum(totals.kcal)} kcal</span></div>
     {MEALS.map(m => { const items = selected.filter(e => e.meal === m); const mealCalories = items.reduce((sum, e) => sum + (e.per100?.kcal || 0) * e.grams / 100, 0); return <div className="card nutrition-meal-card" key={m}>
-      <div className="nutrition-meal-head"><div><h3>{t(m)}</h3><span className="small muted">{items.length ? `${fmtNum(mealCalories)} kcal · ${items.length} ${t('foods')}` : t('Nothing logged yet')}</span></div><button className="nutrition-add" onClick={() => openAdd(m)} aria-label={`${t('Add food')} · ${t(m)}`}><Icon name="plus" /></button></div>
+      <div className="nutrition-meal-head"><div><h3>{t(m)}</h3><span className="small muted">{items.length ? `${fmtNum(mealCalories)} kcal · ${items.length} ${t('foods')}` : t('Nothing logged yet')}</span></div><button className="nutrition-add" onClick={() => openAdd(m)} aria-label={`${t('Add food')} · ${t(m)}`}><Icon name="plus" /> {t('Add food')}</button></div>
       {items.map(entry => <div key={entry.id} className="nutrition-entry"><div><strong>{entry.name}</strong><div className="small muted">{fmtNum(entry.grams)} g · P {fmtNum(entry.per100.protein * entry.grams / 100)} g · C {fmtNum(entry.per100.carbs * entry.grams / 100)} g · F {fmtNum(entry.per100.fat * entry.grams / 100)} g</div></div><div className="nutrition-entry-side"><strong>{fmtNum(entry.per100.kcal * entry.grams / 100)}</strong><button className="iconbtn" aria-label={t('Delete')} onClick={() => update(s => { s.nutrition.entries = s.nutrition.entries.filter(e => e.id !== entry.id) })}><Icon name="trash" /></button></div></div>)}
     </div> })}
 

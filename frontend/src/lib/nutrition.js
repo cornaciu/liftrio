@@ -1,6 +1,10 @@
 export const DEFAULT_TARGETS = { kcal: 0, protein: 0, carbs: 0, fat: 0 };
 export const NUTRIENTS = ['kcal', 'protein', 'carbs', 'fat'];
 
+export function caloriesFromMacros({ protein = 0, carbs = 0, fat = 0 } = {}) {
+  return Math.round((Math.max(0, Number(protein) || 0) * 4 + Math.max(0, Number(carbs) || 0) * 4 + Math.max(0, Number(fat) || 0) * 9) * 10) / 10;
+}
+
 const clean = value => {
   const n = Number(value);
   return Number.isFinite(n) && n >= 0 ? Math.round(n * 10) / 10 : 0;
