@@ -8,7 +8,17 @@ import {
   generateAuthenticationOptions, verifyAuthenticationResponse
 } from '@simplewebauthn/server';
 
-const pool = new pg.Pool({ connectionString: process.env.POSTGRES_URL, max: 2, idleTimeoutMillis: 10000 });
+const databaseUrl = process.env.POSTGRES_URL && new URL(process.env.POSTGRES_URL);
+// node-postgres treats sslmode in a URL as an override for the ssl object.
+// Remove it so the supplied CA is actually used to verify the connection.
+databaseUrl?.searchParams.delete('sslmode');
+const ca = process.env.POSTGRES_CA_CERT_BASE64 && Buffer.from(process.env.POSTGRES_CA_CERT_BASE64, 'base64').toString('utf8');
+const pool = new pg.Pool({
+  connectionString: databaseUrl?.toString(),
+  ssl: ca ? { ca, rejectUnauthorized: true } : undefined,
+  max: 2,
+  idleTimeoutMillis: 10000
+});
 const RP_ID = process.env.RP_ID || 'open-gym-bay.vercel.app';
 const ORIGIN = process.env.ORIGIN || `https://${RP_ID}`;
 const RP_NAME = process.env.RP_NAME || 'openGym';
@@ -29,6 +39,7 @@ const send = (res, code, object, headers = {}) => {
 
 export default async function handler(req, res) {
   if (!process.env.POSTGRES_URL) return send(res, 503, { error: 'database not configured' });
+  if (!ca?.includes('-----BEGIN CERTIFICATE-----')) return send(res, 503, { error: 'database CA certificate not configured' });
   const client = await pool.connect();
   try {
     await client.query('begin');

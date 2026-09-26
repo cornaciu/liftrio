@@ -4,6 +4,18 @@ The Vercel project uses this repository root, `npm run build`, and `frontend/dis
 Supabase's Vercel integration supplies `POSTGRES_URL` to the server function.
 Do not expose this URL or a Supabase secret in Vite's `VITE_` variables.
 
+Download the certificate from Supabase Dashboard → Database → Settings →
+SSL configuration. Base64-encode the complete PEM file, then add it to Vercel
+as `POSTGRES_CA_CERT_BASE64` for Production and Preview. This lets the server
+verify the Supabase TLS certificate. For example, on macOS or Linux:
+
+```sh
+base64 < prod-ca-2021.crt | tr -d '\n'
+```
+
+Paste the output as the environment variable value, then redeploy. Keep TLS
+verification enabled; the API returns 503 if this certificate is missing.
+
 Run `supabase/opengym.sql` once in the database SQL editor. Set these Vercel
 environment variables for Production (and Preview if using preview deployments):
 
