@@ -7,6 +7,7 @@ import { t, dateLocale } from '../lib/i18n.js'
 import { bwSheet, goalSheet, dayOverrideSheet, calendarSheet, startFlow, loadStarterPlan, bwDeltaColor } from '../sheets.jsx'
 import LineChart from '../components/LineChart.jsx'
 import Icon from '../components/Icon.jsx'
+import NutritionSummary from '../components/NutritionSummary.jsx'
 import { Button } from '../components/ui.jsx'
 import { glyphOf } from '../lib/glyphs.js'
 
@@ -75,8 +76,8 @@ export default function Home() {
     </div>
 
     <div className="card tappable" role="button" tabIndex={0} onClick={() => nav('/nutrition')} onKeyDown={e => { if (e.key === 'Enter') nav('/nutrition') }}>
-      <div className="row between"><h2 style={{ margin: 0 }}>{t('Nutrition')}</h2><Icon name="chevronRight" /></div>
-      <div className="muted small" style={{ marginTop: 6 }}>{t('Track calories and macros, scan a barcode or add a meal.')}</div>
+      <div className="row between"><h2 style={{ margin: 0 }}>{t('Nutrition today')}</h2><span className="small" style={{ color: 'var(--acc)' }}>{t('Open diary')} <Icon name="chevronRight" /></span></div>
+      <NutritionSummary nutrition={S.nutrition} date={todayISO()} compact />
     </div>
 
     {!S.routines.length && !S.active && (

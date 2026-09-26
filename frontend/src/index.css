@@ -832,6 +832,41 @@ h4.sec{
 .nutrition{padding-bottom:20px}
 .nutrition .card{margin-bottom:14px}
 .nutrition .card h2{margin:0 0 12px}
+.nutrition-summary{padding:14px 2px 2px}
+.nutrition-energy{display:flex;align-items:center;gap:22px;padding:4px 0 18px}
+.nutrition-ring{width:114px;height:114px;flex:none;border-radius:50%;padding:8px;background:conic-gradient(var(--acc) var(--progress),var(--surface-3) 0)}
+.nutrition-ring>div{width:100%;height:100%;background:var(--surface);border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.nutrition-ring strong{font-size:25px;line-height:1.1;letter-spacing:-.04em}
+.nutrition-ring span{font-size:11px;color:var(--label-2)}
+.nutrition-energy-text{display:flex;flex-direction:column;gap:5px;min-width:0}
+.nutrition-energy-text>strong{font-size:30px;line-height:1;letter-spacing:-.04em}
+.nutrition-energy-text small{font-size:14px;font-weight:400;color:var(--label-2);letter-spacing:0}
+.nutrition-macro-list{display:grid;gap:14px}
+.nutrition-macro{font-size:13px}
+.nutrition-macro .row{margin-bottom:5px}
+.nutrition-macro .row span:last-child{font-variant-numeric:tabular-nums}
+.nutrition-macro .nutrition-track i{background:var(--macro-color)}
+.nutrition-summary.compact{padding:14px 0 0}
+.nutrition-summary.compact .nutrition-ring{width:82px;height:82px;padding:6px}
+.nutrition-summary.compact .nutrition-ring strong{font-size:20px}
+.nutrition-summary.compact .nutrition-energy{gap:16px;padding-bottom:13px}
+.nutrition-summary.compact .nutrition-energy-text>strong{font-size:26px}
+.nutrition-summary.compact .nutrition-macro-list{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.nutrition-summary.compact .nutrition-macro{font-size:11px}
+.nutrition-summary.compact .nutrition-macro .row{align-items:flex-start;flex-direction:column;gap:2px}
+.nutrition-day-card{padding-bottom:16px}
+.nutrition-day-card>.row strong{text-align:center;font-size:15px}
+.nutrition-section-head{display:flex;align-items:baseline;justify-content:space-between;margin:22px 3px 10px}
+.nutrition-section-head h2{font-size:21px;margin:0}
+.nutrition-meal-card{padding:0 16px!important}
+.nutrition-meal-head{display:flex;align-items:center;justify-content:space-between;min-height:77px}
+.nutrition-meal-head h3{font-size:17px;margin:0 0 4px}
+.nutrition-add{display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;background:var(--acc-soft);color:var(--acc);font-size:20px}
+.nutrition-add-panel{scroll-margin-top:14px}
+.nutrition-add-panel>.row h2{margin:0}
+.nutrition-entry-side{display:flex;align-items:center;gap:6px;white-space:nowrap}
+.nutrition-entry-side strong{font-size:15px}
+.nutrition-recent h3{font-size:14px;color:var(--label-2);margin:18px 0 2px}
 .nutrition-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:16px}
 .nutrition-metric{display:flex;flex-direction:column;gap:4px;min-width:0}
 .nutrition-metric strong{font-size:17px;white-space:nowrap}
@@ -845,7 +880,8 @@ h4.sec{
 .nutrition-meals button{padding:8px 10px;border-radius:9px;background:var(--surface-2);font-size:13px}
 .nutrition-meals button.on{background:var(--acc-soft);color:var(--acc)}
 .nutrition-search{display:flex;gap:8px;margin:10px 0}
-.nutrition-search .field{min-width:0;flex:1}
+.nutrition-search .field{min-width:0;flex:1;background:var(--surface-2);border-radius:10px;padding:10px 12px;min-height:44px}
+.nutrition-search .btn{flex:none}
 .nutrition-result{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--sep);text-align:left}
 .nutrition-result span:first-child{min-width:0;display:flex;flex-direction:column;gap:2px}
 .nutrition-result span:last-child,.nutrition-result small{color:var(--label-2);font-size:12px}
@@ -854,6 +890,8 @@ h4.sec{
 .nutrition-form .nutrition-grid{margin:0}
 .nutrition-entry{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 0;border-bottom:1px solid var(--sep)}
 .nutrition-entry strong{font-size:15px}
+.nutrition-entry>div:first-child{min-width:0}
+.nutrition-entry .small{line-height:1.4}
 .nutrition-group h3{font-size:13px;color:var(--label-2);margin:14px 0 2px}
 .empty .ico{font-size:34px;color:var(--label-2);margin-bottom:12px;display:flex;justify-content:center}
 .steps-list{

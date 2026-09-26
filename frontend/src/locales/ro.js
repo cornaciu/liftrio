@@ -1,6 +1,18 @@
 // Romanian UI translations. English source strings are the lookup keys.
 export default {
   "Nutrition": "Nutriție",
+  "Nutrition today": "Nutriția de azi",
+  "Open diary": "Deschide jurnalul",
+  "eaten": "consumate",
+  "Remaining today": "Rămase astăzi",
+  "Over target": "Peste țintă",
+  "Calories today": "Calorii astăzi",
+  "Daily target": "Țintă zilnică",
+  "Set your daily targets": "Setează țintele zilnice",
+  "foods": "alimente",
+  "Nothing logged yet": "Nimic înregistrat încă",
+  "Recently logged": "Înregistrate recent",
+  "Food search is temporarily unavailable. You can add the food manually.": "Căutarea alimentelor este temporar indisponibilă. Poți adăuga alimentul manual.",
   "Track calories and macros, scan a barcode or add a meal.": "Urmărește caloriile și macronutrienții, scanează codul de bare sau adaugă o masă.",
   "Calories": "Calorii",
   "Protein": "Proteine",
