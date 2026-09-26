@@ -880,8 +880,9 @@ h4.sec{
 .nutrition-meals button{padding:8px 10px;border-radius:9px;background:var(--surface-2);font-size:13px}
 .nutrition-meals button.on{background:var(--acc-soft);color:var(--acc)}
 .nutrition-search{display:flex;gap:8px;margin:10px 0}
-.nutrition-search .field{min-width:0;flex:1;background:var(--surface-2);border-radius:10px;padding:10px 12px;min-height:44px}
-.nutrition-search .btn{flex:none}
+.nutrition-search .field{min-width:0;width:0;flex:1 1 0;background:var(--surface-2);border-radius:10px;padding:10px 12px;min-height:44px}
+.nutrition-search .btn{width:auto;flex:none;min-width:88px;padding:10px 14px;font-size:15px}
+.nutrition-actions .btn{width:auto;flex:1 1 180px;font-size:15px}
 .nutrition-result{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--sep);text-align:left}
 .nutrition-result span:first-child{min-width:0;display:flex;flex-direction:column;gap:2px}
 .nutrition-result span:last-child,.nutrition-result small{color:var(--label-2);font-size:12px}
