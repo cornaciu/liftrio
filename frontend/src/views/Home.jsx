@@ -74,6 +74,11 @@ export default function Home() {
       </div>
     </div>
 
+    <div className="card tappable" role="button" tabIndex={0} onClick={() => nav('/nutrition')} onKeyDown={e => { if (e.key === 'Enter') nav('/nutrition') }}>
+      <div className="row between"><h2 style={{ margin: 0 }}>{t('Nutrition')}</h2><Icon name="chevronRight" /></div>
+      <div className="muted small" style={{ marginTop: 6 }}>{t('Track calories and macros, scan a barcode or add a meal.')}</div>
+    </div>
+
     {!S.routines.length && !S.active && (
       <div className="card">
         <div className="row" style={{ gap: 10, marginBottom: 6 }}>
