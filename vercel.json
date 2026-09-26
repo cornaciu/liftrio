@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "buildCommand": "npm run build",
+  "outputDirectory": "frontend/dist",
+  "rewrites": [
+    { "source": "/api/:route*", "destination": "/api/handler?route=:route*" },
+    { "source": "/((?!api/|assets/|icon-|manifest.json|sw.js).*)", "destination": "/index.html" }
+  ],
+  "functions": { "api/handler.js": { "maxDuration": 30 } }
+}

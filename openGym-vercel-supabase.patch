@@ -1,0 +1,1030 @@
+From e6a1324f4d336f4931f0598db0464647cbb8beb7 Mon Sep 17 00:00:00 2001
+From: Codex <codex@openai.com>
+Date: Sat, 26 Sep 2026 10:58:12 +0200
+Subject: [PATCH] Add Vercel and Supabase deployment adapter
+
+---
+ .gitignore           |   5 +
+ .vercelignore        |   9 +
+ api/handler.js       | 258 ++++++++++++++++++
+ docs/VERCEL.md       |  23 ++
+ package-lock.json    | 629 +++++++++++++++++++++++++++++++++++++++++++
+ package.json         |  13 +
+ supabase/opengym.sql |   7 +
+ vercel.json          |  11 +
+ 8 files changed, 955 insertions(+)
+ create mode 100644 .gitignore
+ create mode 100644 .vercelignore
+ create mode 100644 api/handler.js
+ create mode 100644 docs/VERCEL.md
+ create mode 100644 package-lock.json
+ create mode 100644 package.json
+ create mode 100644 supabase/opengym.sql
+ create mode 100644 vercel.json
+
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+index 0000000..3a21b4b
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,5 @@
++node_modules/
++frontend/node_modules/
++frontend/dist/
++.vercel/
++.env*
+diff --git a/.vercelignore b/.vercelignore
+new file mode 100644
+index 0000000..3766883
+--- /dev/null
++++ b/.vercelignore
+@@ -0,0 +1,9 @@
++node_modules
++frontend/node_modules
++frontend/dist
++media
++data
++api/server.js
++api/Dockerfile
++api/package.json
++api/package-lock.json
+diff --git a/api/handler.js b/api/handler.js
+new file mode 100644
+index 0000000..fc352a5
+--- /dev/null
++++ b/api/handler.js
+@@ -0,0 +1,258 @@
++// Vercel adapter for openGym. Persistent state and one-use WebAuthn challenges
++// live in Supabase Postgres; no process memory or writable filesystem is needed.
++import crypto from 'node:crypto';
++import pg from 'pg';
++import webpush from 'web-push';
++import {
++  generateRegistrationOptions, verifyRegistrationResponse,
++  generateAuthenticationOptions, verifyAuthenticationResponse
++} from '@simplewebauthn/server';
++
++const pool = new pg.Pool({ connectionString: process.env.POSTGRES_URL, max: 2, idleTimeoutMillis: 10000 });
++const RP_ID = process.env.RP_ID || 'open-gym-bay.vercel.app';
++const ORIGIN = process.env.ORIGIN || `https://${RP_ID}`;
++const RP_NAME = process.env.RP_NAME || 'openGym';
++const INVITE_ONLY = /^(1|true|yes|on)$/i.test(process.env.INVITE_ONLY || '');
++const ADMIN_UIDS = (process.env.ADMIN_UIDS || '').split(',').map(s => s.trim()).filter(Boolean);
++const SESSION_DAYS = Math.max(1, +(process.env.SESSION_DAYS || 90) || 90);
++const SECURE = ORIGIN.startsWith('https:') ? ' Secure;' : '';
++const emptyDb = () => ({ users: [], creds: [], subs: [], invites: [] });
++const isAdmin = user => !!user && (user.admin === true || ADMIN_UIDS.includes(user.id));
++const bodyOf = req => {
++  if (typeof req.body === 'string') return JSON.parse(req.body || '{}');
++  return req.body && typeof req.body === 'object' ? req.body : {};
++};
++const send = (res, code, object, headers = {}) => {
++  res.writeHead(code, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', ...headers });
++  res.end(JSON.stringify(object));
++};
++
++export default async function handler(req, res) {
++  if (!process.env.POSTGRES_URL) return send(res, 503, { error: 'database not configured' });
++  const client = await pool.connect();
++  try {
++    await client.query('begin');
++    // Serialize writes to the small instance-wide document, including credential
++    // counters and invite consumption. Separate per-user states are independent.
++    await client.query("insert into public.opengym_kv(key,value) values ('db','{}') on conflict do nothing");
++    const row = await client.query("select value from public.opengym_kv where key='db' for update");
++    const db = { ...emptyDb(), ...row.rows[0].value };
++    const get = async key => (await client.query('select value from public.opengym_kv where key=$1', [key])).rows[0]?.value ?? null;
++    const put = async (key, value) => client.query('insert into public.opengym_kv(key,value) values ($1,$2::jsonb) on conflict(key) do update set value=excluded.value', [key, JSON.stringify(value)]);
++    const take = async key => (await client.query('delete from public.opengym_kv where key=$1 returning value', [key])).rows[0]?.value ?? null;
++    const saveDb = async () => put('db', db);
++    let secret = await get('secret');
++    if (!secret) { secret = crypto.randomBytes(32).toString('hex'); await put('secret', secret); }
++    const sign = payload => payload + '.' + crypto.createHmac('sha256', secret).update(payload).digest('base64url');
++    const sessionVersion = user => user.sv || 0;
++    const sessionCookie = user => `gymsid=${sign(`${user.id}:${Date.now() + SESSION_DAYS * 86400000}:${sessionVersion(user)}`)}; Path=/; Max-Age=${SESSION_DAYS * 86400}; HttpOnly;${SECURE} SameSite=Lax`;
++    const clearCookie = `gymsid=; Path=/; Max-Age=0; HttpOnly;${SECURE} SameSite=Lax`;
++    const readSession = () => {
++      const token = (req.headers.cookie || '').split(';').map(s => s.trim()).find(s => s.startsWith('gymsid='))?.slice(7);
++      if (!token) return null;
++      const dot = token.lastIndexOf('.');
++      if (dot < 0) return null;
++      const payload = token.slice(0, dot), mac = token.slice(dot + 1);
++      const expected = crypto.createHmac('sha256', secret).update(payload).digest('base64url');
++      try { if (!crypto.timingSafeEqual(Buffer.from(mac), Buffer.from(expected))) return null; }
++      catch { return null; }
++      const [uid, exp, version] = payload.split(':');
++      if (!uid || +exp < Date.now()) return null;
++      const user = db.users.find(u => u.id === uid);
++      if (!user || user.disabled || Number(version ?? 0) !== sessionVersion(user)) return null;
++      return user;
++    };
++    const requireUser = () => {
++      const user = readSession();
++      if (!user) send(res, 401, { error: 'not signed in' });
++      return user;
++    };
++    const requireAdmin = () => {
++      const user = requireUser();
++      if (user && !isAdmin(user)) { send(res, 403, { error: 'forbidden' }); return null; }
++      return user;
++    };
++    const challenge = async data => {
++      const cid = crypto.randomBytes(16).toString('base64url');
++      await put(`challenge:${cid}`, { ...data, exp: Date.now() + 300000 });
++      return cid;
++    };
++    const consumeChallenge = async cid => {
++      if (typeof cid !== 'string' || !/^[\w-]{20,50}$/.test(cid)) return null;
++      const result = await take(`challenge:${cid}`);
++      return result?.exp > Date.now() ? result : null;
++    };
++    const stateOf = uid => get(`state:${uid}`);
++    const route = String(req.query?.route || '').replace(/^\/+/, '') || new URL(req.url, ORIGIN).pathname.replace(/^\/api\//, '');
++    const key = `${req.method} /api/${route}`;
++    const body = ['POST', 'PUT'].includes(req.method) ? bodyOf(req) : {};
++    let vapid = await get('vapid');
++    if (!vapid) { vapid = webpush.generateVAPIDKeys(); await put('vapid', vapid); }
++    webpush.setVapidDetails(process.env.VAPID_SUBJECT || ORIGIN, vapid.publicKey, vapid.privateKey);
++    const sendPush = async (uid, payload) => {
++      const subs = db.subs.filter(s => s.userId === uid);
++      await Promise.all(subs.map(async sub => {
++        try { await webpush.sendNotification({ endpoint: sub.endpoint, keys: sub.keys }, JSON.stringify(payload)); }
++        catch (error) {
++          if ([404, 410].includes(error.statusCode)) db.subs = db.subs.filter(s => s.endpoint !== sub.endpoint);
++          else console.error('push failed', error.statusCode || error.message);
++        }
++      }));
++      await saveDb();
++    };
++
++    switch (key) {
++      case 'GET /api/health': send(res, 200, { ok: true, users: db.users.length }); break;
++      case 'GET /api/config': send(res, 200, { invite_only: INVITE_ONLY }); break;
++      case 'GET /api/me': {
++        const user = requireUser();
++        if (user) send(res, 200, { user: { id: user.id, name: user.name, admin: isAdmin(user) } });
++        break;
++      }
++      case 'POST /api/register/options': {
++        const name = String(body.name || '').trim().slice(0, 40);
++        const code = String(body.code || '').trim().toUpperCase();
++        if (!name) { send(res, 400, { error: 'name required' }); break; }
++        if (INVITE_ONLY && !db.invites.some(i => i.code === code && !i.usedBy && !i.revoked)) { send(res, 403, { error: 'a valid invite code is required' }); break; }
++        const uid = crypto.randomBytes(12).toString('base64url');
++        const options = await generateRegistrationOptions({ rpName: RP_NAME, rpID: RP_ID, userID: Buffer.from(uid), userName: name, userDisplayName: name, attestationType: 'none', authenticatorSelection: { residentKey: 'required', userVerification: 'preferred' }, excludeCredentials: [] });
++        const cid = await challenge({ challenge: options.challenge, uid, name, code });
++        send(res, 200, { cid, options }); break;
++      }
++      case 'POST /api/register/verify': {
++        const c = await consumeChallenge(body.cid);
++        if (!c?.uid) { send(res, 400, { error: 'challenge expired — try again' }); break; }
++        let verification;
++        try { verification = await verifyRegistrationResponse({ response: body.credential, expectedChallenge: c.challenge, expectedOrigin: ORIGIN, expectedRPID: RP_ID, requireUserVerification: false }); }
++        catch (e) { send(res, 400, { error: 'verification failed: ' + e.message }); break; }
++        if (!verification.verified) { send(res, 400, { error: 'not verified' }); break; }
++        const { credential } = verification.registrationInfo;
++        if (db.creds.some(x => x.id === credential.id)) { send(res, 409, { error: 'credential already registered' }); break; }
++        const invite = INVITE_ONLY ? db.invites.find(i => i.code === c.code && !i.usedBy && !i.revoked) : null;
++        if (INVITE_ONLY && !invite) { send(res, 403, { error: 'invite code is no longer valid' }); break; }
++        const user = { id: c.uid, name: c.name, created: new Date().toISOString() };
++        if (invite) { user.invitedBy = invite.code; invite.usedBy = user.id; invite.usedAt = user.created; }
++        db.users.push(user);
++        db.creds.push({ id: credential.id, userId: user.id, publicKey: Buffer.from(credential.publicKey).toString('base64url'), counter: credential.counter || 0, transports: body.credential?.response?.transports || [] });
++        await saveDb();
++        send(res, 200, { user: { id: user.id, name: user.name, admin: isAdmin(user) } }, { 'Set-Cookie': sessionCookie(user) }); break;
++      }
++      case 'POST /api/login/options': {
++        const options = await generateAuthenticationOptions({ rpID: RP_ID, userVerification: 'preferred', allowCredentials: [] });
++        const cid = await challenge({ challenge: options.challenge });
++        send(res, 200, { cid, options }); break;
++      }
++      case 'POST /api/login/verify': {
++        const c = await consumeChallenge(body.cid);
++        if (!c) { send(res, 400, { error: 'challenge expired — try again' }); break; }
++        const cred = db.creds.find(x => x.id === body.credential?.id);
++        if (!cred) { send(res, 404, { error: 'unknown passkey — create a profile first' }); break; }
++        let verification;
++        try { verification = await verifyAuthenticationResponse({ response: body.credential, expectedChallenge: c.challenge, expectedOrigin: ORIGIN, expectedRPID: RP_ID, requireUserVerification: false, credential: { id: cred.id, publicKey: Buffer.from(cred.publicKey, 'base64url'), counter: cred.counter, transports: cred.transports } }); }
++        catch (e) { send(res, 400, { error: 'verification failed: ' + e.message }); break; }
++        if (!verification.verified) { send(res, 400, { error: 'not verified' }); break; }
++        cred.counter = verification.authenticationInfo.newCounter;
++        await saveDb();
++        const user = db.users.find(u => u.id === cred.userId);
++        if (!user) send(res, 500, { error: 'user missing' });
++        else if (user.disabled) send(res, 403, { error: 'this account has been disabled' });
++        else send(res, 200, { user: { id: user.id, name: user.name, admin: isAdmin(user) } }, { 'Set-Cookie': sessionCookie(user) });
++        break;
++      }
++      case 'POST /api/logout': send(res, 200, { ok: true }, { 'Set-Cookie': clearCookie }); break;
++      case 'POST /api/logout/all': {
++        const user = requireUser(); if (!user) break;
++        user.sv = sessionVersion(user) + 1; await saveDb();
++        send(res, 200, { ok: true }, { 'Set-Cookie': clearCookie }); break;
++      }
++      case 'GET /api/data': {
++        const user = requireUser(); if (!user) break;
++        send(res, 200, { state: await stateOf(user.id) }); break;
++      }
++      case 'PUT /api/data': {
++        const user = requireUser(); if (!user) break;
++        if (!body.state || typeof body.state !== 'object' || Array.isArray(body.state)) { send(res, 400, { error: 'state required' }); break; }
++        delete body.state.active;
++        await put(`state:${user.id}`, body.state);
++        send(res, 200, { ok: true, ts: body.state._ts || null }); break;
++      }
++      case 'GET /api/push/public-key': send(res, 200, { key: vapid.publicKey }); break;
++      case 'POST /api/push/subscribe': {
++        const user = requireUser(); if (!user) break;
++        const sub = body.subscription;
++        if (!sub?.endpoint || !sub?.keys?.p256dh || !sub?.keys?.auth) { send(res, 400, { error: 'invalid subscription' }); break; }
++        db.subs = db.subs.filter(s => s.endpoint !== sub.endpoint);
++        db.subs.push({ userId: user.id, endpoint: sub.endpoint, keys: sub.keys, created: new Date().toISOString() });
++        await saveDb(); send(res, 200, { ok: true }); break;
++      }
++      case 'POST /api/push/unsubscribe': {
++        const user = requireUser(); if (!user) break;
++        db.subs = db.subs.filter(s => !(s.userId === user.id && s.endpoint === body.endpoint));
++        await saveDb(); send(res, 200, { ok: true }); break;
++      }
++      case 'POST /api/push/test': {
++        const user = requireUser(); if (!user) break;
++        await sendPush(user.id, { title: 'openGym', body: 'Test notification ✅', tag: 'test' });
++        send(res, 200, { ok: true }); break;
++      }
++      case 'POST /api/push/rest-timer':
++      case 'POST /api/push/rest-timer/cancel': {
++        const user = requireUser(); if (!user) break;
++        send(res, 501, { error: 'background rest-timer alerts require a persistent worker' }); break;
++      }
++      case 'POST /api/activity': {
++        const user = requireUser(); if (user) send(res, 200, { ok: true }); break;
++      }
++      case 'GET /api/admin/users': {
++        if (!requireAdmin()) break;
++        const users = await Promise.all(db.users.map(async u => {
++          const S = await stateOf(u.id) || {};
++          const workouts = S.workouts || [];
++          return { id: u.id, name: u.name, created: u.created || null, disabled: !!u.disabled, admin: isAdmin(u), invitedBy: u.invitedBy || null, workouts: workouts.length, lastWorkout: workouts.at(-1)?.d || null, lastSync: S._ts || null, hasPush: db.subs.some(s => s.userId === u.id), live: null };
++        }));
++        send(res, 200, { users, invite_only: INVITE_ONLY, now: Date.now() }); break;
++      }
++      case 'GET /api/admin/user': {
++        if (!requireAdmin()) break;
++        const id = new URL(req.url, ORIGIN).searchParams.get('id') || req.query?.id;
++        const u = db.users.find(x => x.id === id);
++        if (!u) { send(res, 404, { error: 'no such user' }); break; }
++        const S = await stateOf(u.id) || {};
++        send(res, 200, { user: { id: u.id, name: u.name, created: u.created || null, disabled: !!u.disabled, admin: isAdmin(u), invitedBy: u.invitedBy || null }, unit: S.unit || 'kg', lastSync: S._ts || null, routines: (S.routines || []).map(r => ({ id: r.id, name: r.name, emoji: r.emoji, count: (r.ex || []).length })), bodyweight: S.bodyweight || [], workouts: (S.workouts || []).slice().reverse() }); break;
++      }
++      case 'POST /api/admin/user/disable': {
++        if (!requireAdmin()) break;
++        const u = db.users.find(x => x.id === body.id);
++        if (!u) send(res, 404, { error: 'no such user' });
++        else if (isAdmin(u)) send(res, 400, { error: 'cannot disable an admin' });
++        else { u.disabled = !!body.disabled; await saveDb(); send(res, 200, { ok: true, id: u.id, disabled: u.disabled }); }
++        break;
++      }
++      case 'GET /api/admin/invites': {
++        if (!requireAdmin()) break;
++        send(res, 200, { invites: db.invites.map(i => ({ ...i, usedByName: i.usedBy ? db.users.find(u => u.id === i.usedBy)?.name || null : null })), invite_only: INVITE_ONLY }); break;
++      }
++      case 'POST /api/admin/invites/new': {
++        const admin = requireAdmin(); if (!admin) break;
++        let code;
++        do { code = crypto.randomBytes(8).toString('hex').toUpperCase(); } while (db.invites.some(i => i.code === code));
++        const invite = { code, note: String(body.note || '').slice(0, 60), createdBy: admin.id, created: new Date().toISOString() };
++        db.invites.push(invite); await saveDb(); send(res, 200, { invite }); break;
++      }
++      case 'POST /api/admin/invites/revoke': {
++        if (!requireAdmin()) break;
++        const inv = db.invites.find(i => i.code === String(body.code || '').toUpperCase());
++        if (!inv) send(res, 404, { error: 'no such code' });
++        else if (inv.usedBy) send(res, 400, { error: 'already used — cannot revoke' });
++        else { db.invites = db.invites.filter(i => i.code !== inv.code); await saveDb(); send(res, 200, { ok: true }); }
++        break;
++      }
++      default: send(res, 404, { error: 'not found' });
++    }
++    await client.query('commit');
++  } catch (error) {
++    await client.query('rollback').catch(() => {});
++    console.error('openGym API', error);
++    if (!res.headersSent) send(res, 500, { error: 'server error' });
++  } finally { client.release(); }
++}
+diff --git a/docs/VERCEL.md b/docs/VERCEL.md
+new file mode 100644
+index 0000000..2760222
+--- /dev/null
++++ b/docs/VERCEL.md
+@@ -0,0 +1,23 @@
++# Vercel + Supabase
++
++The Vercel project uses this repository root, `npm run build`, and `frontend/dist`.
++Supabase's Vercel integration supplies `POSTGRES_URL` to the server function.
++Do not expose this URL or a Supabase secret in Vite's `VITE_` variables.
++
++Run `supabase/opengym.sql` once in the database SQL editor. Set these Vercel
++environment variables for Production (and Preview if using preview deployments):
++
++- `RP_ID=open-gym-bay.vercel.app` (or the final custom hostname, without scheme)
++- `ORIGIN=https://open-gym-bay.vercel.app` (or the matching full custom origin)
++- `RP_NAME=openGym`
++- `INVITE_ONLY=true` is optional; leave false for first registration.
++
++Passkeys are tied to the hostname. Changing domains later means registering new
++passkeys on the new hostname. The exercise media uses the pinned public exercise
++dataset CDN rather than bundling ~140 MB into the Vercel deployment.
++
++The Vercel version persists profiles, credentials, sessions, and workout state in
++Postgres. Web push test and subscriptions work, but background rest-timer push,
++scheduled daily reminders, and live admin presence need a durable worker and are
++not available on serverless functions. Do not rely on those alerts until a worker
++is added.
+diff --git a/package-lock.json b/package-lock.json
+new file mode 100644
+index 0000000..18edf8a
+--- /dev/null
++++ b/package-lock.json
+@@ -0,0 +1,629 @@
++{
++  "name": "opengym-vercel",
++  "lockfileVersion": 3,
++  "requires": true,
++  "packages": {
++    "": {
++      "name": "opengym-vercel",
++      "dependencies": {
++        "@simplewebauthn/server": "^13.1.1",
++        "pg": "^8.16.3",
++        "web-push": "^3.6.7"
++      }
++    },
++    "node_modules/@hexagon/base64": {
++      "version": "1.1.28",
++      "resolved": "https://registry.npmjs.org/@hexagon/base64/-/base64-1.1.28.tgz",
++      "integrity": "sha512-lhqDEAvWixy3bZ+UOYbPwUbBkwBq5C1LAJ/xPC8Oi+lL54oyakv/npbA0aU2hgCsx/1NUd4IBvV03+aUBWxerw==",
++      "license": "MIT"
++    },
++    "node_modules/@levischuck/tiny-cbor": {
++      "version": "0.2.11",
++      "resolved": "https://registry.npmjs.org/@levischuck/tiny-cbor/-/tiny-cbor-0.2.11.tgz",
++      "integrity": "sha512-llBRm4dT4Z89aRsm6u2oEZ8tfwL/2l6BwpZ7JcyieouniDECM5AqNgr/y08zalEIvW3RSK4upYyybDcmjXqAow==",
++      "license": "MIT"
++    },
++    "node_modules/@peculiar/asn1-android": {
++      "version": "2.9.5",
++      "resolved": "https://registry.npmjs.org/@peculiar/asn1-android/-/asn1-android-2.9.5.tgz",
++      "integrity": "sha512-KnNE4l033gbJ3ZzfYk7fJpSZwhd5xT+dPAnrB8bcwqylHiLN2zjZ0OyFao0LDIOI/ZdXRabV0n3Ww/KvpgZq6w==",
++      "license": "MIT",
++      "dependencies": {
++        "@peculiar/asn1-schema": "^2.9.5",
++        "asn1js": "^3.0.10",
++        "tslib": "^2.8.1"
++      },
++      "engines": {
++        "node": ">=14"
++      }
++    },
++    "node_modules/@peculiar/asn1-cms": {
++      "version": "2.9.5",
++      "resolved": "https://registry.npmjs.org/@peculiar/asn1-cms/-/asn1-cms-2.9.5.tgz",
++      "integrity": "sha512-4Ivz0fsyFofe0bslNsYcGN9+iETdHX4v+BFwIPr+K/BAt61sHXECP63ff9FntU9zcfVQELJFdUG9so44OjUlBQ==",
++      "license": "MIT",
++      "dependencies": {
++        "@peculiar/asn1-schema": "^2.9.5",
++        "@peculiar/asn1-x509": "^2.9.5",
++        "@peculiar/asn1-x509-attr": "^2.9.5",
++        "asn1js": "^3.0.10",
++        "tslib": "^2.8.1"
++      },
++      "engines": {
++        "node": ">=14"
++      }
++    },
++    "node_modules/@peculiar/asn1-csr": {
++      "version": "2.9.5",
++      "resolved": "https://registry.npmjs.org/@peculiar/asn1-csr/-/asn1-csr-2.9.5.tgz",
++      "integrity": "sha512-9dO6PcoJeI+1xJ4rG7eINMa6f9Ix/QdRs5UGZ0D7v/R3TzmsbVr5cqAgfYw4xgS9U54ouHYqEz0bIZBbM/UY1g==",
++      "license": "MIT",
++      "dependencies": {
++        "@peculiar/asn1-schema": "^2.9.5",
++        "@peculiar/asn1-x509": "^2.9.5",
++        "asn1js": "^3.0.10",
++        "tslib": "^2.8.1"
++      },
++      "engines": {
++        "node": ">=14"
++      }
++    },
++    "node_modules/@peculiar/asn1-ecc": {
++      "version": "2.9.5",
++      "resolved": "https://registry.npmjs.org/@peculiar/asn1-ecc/-/asn1-ecc-2.9.5.tgz",
++      "integrity": "sha512-OD+HLlcV7wCL64w0rheX/C0J31DbJce0nf8ulv3UNftQ617JEZE3sQ4cMN6PotXWlJ1M5GQx90G3bywtdKOstw==",
++      "license": "MIT",
++      "dependencies": {
++        "@peculiar/asn1-schema": "^2.9.5",
++        "@peculiar/asn1-x509": "^2.9.5",
++        "asn1js": "^3.0.10",
++        "tslib": "^2.8.1"
++      },
++      "engines": {
++        "node": ">=14"
++      }
++    },
++    "node_modules/@peculiar/asn1-pfx": {
++      "version": "2.9.5",
++      "resolved": "https://registry.npmjs.org/@peculiar/asn1-pfx/-/asn1-pfx-2.9.5.tgz",
++      "integrity": "sha512-btcH7lbcD4410qnjHvv7F0kEuMNKbX8CFAZSs9CDPWHKzT1byLPHYeR40AnUw9z4CzsijMY0daBFYUvVx75sdA==",
++      "license": "MIT",
++      "dependencies": {
++        "@peculiar/asn1-cms": "^2.9.5",
++        "@peculiar/asn1-pkcs8": "^2.9.5",
++        "@peculiar/asn1-rsa": "^2.9.5",
++        "@peculiar/asn1-schema": "^2.9.5",
++        "asn1js": "^3.0.10",
++        "tslib": "^2.8.1"
++      },
++      "engines": {
++        "node": ">=14"
++      }
++    },
++    "node_modules/@peculiar/asn1-pkcs8": {
++      "version": "2.9.5",
++      "resolved": "https://registry.npmjs.org/@peculiar/asn1-pkcs8/-/asn1-pkcs8-2.9.5.tgz",
++      "integrity": "sha512-c7UghAGQdBfAHL9JdwcJkAc/lDJKNXfCdYXPXlf8BZdD/fVJjJnXKHxX4gyLhkFTvnGhME7caieSgc2ROtqYTQ==",
++      "license": "MIT",
++      "dependencies": {
++        "@peculiar/asn1-schema": "^2.9.5",
++        "@peculiar/asn1-x509": "^2.9.5",
++        "asn1js": "^3.0.10",
++        "tslib": "^2.8.1"
++      },
++      "engines": {
++        "node": ">=14"
++      }
++    },
++    "node_modules/@peculiar/asn1-pkcs9": {
++      "version": "2.9.5",
++      "resolved": "https://registry.npmjs.org/@peculiar/asn1-pkcs9/-/asn1-pkcs9-2.9.5.tgz",
++      "integrity": "sha512-4R/zMgLSHbQIZRBwP1KzX6iuNHmW3xFWwu9TS9A00N60fmQqp9DkkqnQFyd0mAYMQTrQefuzQ/yP4U8sOLGUgQ==",
++      "license": "MIT",
++      "dependencies": {
++        "@peculiar/asn1-cms": "^2.9.5",
++        "@peculiar/asn1-pfx": "^2.9.5",
++        "@peculiar/asn1-pkcs8": "^2.9.5",
++        "@peculiar/asn1-schema": "^2.9.5",
++        "@peculiar/asn1-x509": "^2.9.5",
++        "@peculiar/asn1-x509-attr": "^2.9.5",
++        "asn1js": "^3.0.10",
++        "tslib": "^2.8.1"
++      },
++      "engines": {
++        "node": ">=14"
++      }
++    },
++    "node_modules/@peculiar/asn1-rsa": {
++      "version": "2.9.5",
++      "resolved": "https://registry.npmjs.org/@peculiar/asn1-rsa/-/asn1-rsa-2.9.5.tgz",
++      "integrity": "sha512-kHwBLVMkm9ljlM521ovS7y4z4mr8xuHTdNyyoPlDvckBwFKSgs9HqKBryLBeqHqL2YpIgl+Vspl7kzNGG2phzA==",
++      "license": "MIT",
++      "dependencies": {
++        "@peculiar/asn1-schema": "^2.9.5",
++        "@peculiar/asn1-x509": "^2.9.5",
++        "asn1js": "^3.0.10",
++        "tslib": "^2.8.1"
++      },
++      "engines": {
++        "node": ">=14"
++      }
++    },
++    "node_modules/@peculiar/asn1-schema": {
++      "version": "2.9.5",
++      "resolved": "https://registry.npmjs.org/@peculiar/asn1-schema/-/asn1-schema-2.9.5.tgz",
++      "integrity": "sha512-Ez3wLKVjaxdsLcgeWN4OE31QkM7oBOgKuuBJxldRYAkfYw2C+8zJPcSd/SThnbhszsEOlAmoaS5kIIkN29fGKQ==",
++      "license": "MIT",
++      "dependencies": {
++        "@peculiar/utils": "^2.0.2",
++        "asn1js": "^3.0.10",
++        "tslib": "^2.8.1"
++      },
++      "engines": {
++        "node": ">=14"
++      }
++    },
++    "node_modules/@peculiar/asn1-x509": {
++      "version": "2.9.5",
++      "resolved": "https://registry.npmjs.org/@peculiar/asn1-x509/-/asn1-x509-2.9.5.tgz",
++      "integrity": "sha512-NP3ecvN6zTDlwCvogIWL7MJN9AZNuskkIbnlhrlkB97Mn2EqirBUQ8GKzsOmdAL3pRvjGu1Uk/a4DNfiZrWxhw==",
++      "license": "MIT",
++      "dependencies": {
++        "@peculiar/asn1-schema": "^2.9.5",
++        "@peculiar/utils": "^2.0.2",
++        "asn1js": "^3.0.10",
++        "tslib": "^2.8.1"
++      },
++      "engines": {
++        "node": ">=14"
++      }
++    },
++    "node_modules/@peculiar/asn1-x509-attr": {
++      "version": "2.9.5",
++      "resolved": "https://registry.npmjs.org/@peculiar/asn1-x509-attr/-/asn1-x509-attr-2.9.5.tgz",
++      "integrity": "sha512-PlbL1a74RZiry7puPCZ5hdk/puvivxYJPbjadr2i7DBjHCJFEKCfTRPKL3DILeZFtzJjn95J5EBtSc4/TB9/6Q==",
++      "license": "MIT",
++      "dependencies": {
++        "@peculiar/asn1-schema": "^2.9.5",
++        "@peculiar/asn1-x509": "^2.9.5",
++        "asn1js": "^3.0.10",
++        "tslib": "^2.8.1"
++      },
++      "engines": {
++        "node": ">=14"
++      }
++    },
++    "node_modules/@peculiar/utils": {
++      "version": "2.0.3",
++      "resolved": "https://registry.npmjs.org/@peculiar/utils/-/utils-2.0.3.tgz",
++      "integrity": "sha512-+oL3HPFRIZ1St2K50lWCXiioIgSoxzz7R1J3uF6neO2yl1sgmpgY6XXJH4BdpoDkMWznQTeYF6oWNDZLCdQ4eQ==",
++      "license": "MIT",
++      "dependencies": {
++        "tslib": "^2.8.1"
++      }
++    },
++    "node_modules/@peculiar/x509": {
++      "version": "1.14.3",
++      "resolved": "https://registry.npmjs.org/@peculiar/x509/-/x509-1.14.3.tgz",
++      "integrity": "sha512-C2Xj8FZ0uHWeCXXqX5B4/gVFQmtSkiuOolzAgutjTfseNOHT3pUjljDZsTSxXFGgio54bCzVFqmEOUrIVk8RDA==",
++      "license": "MIT",
++      "dependencies": {
++        "@peculiar/asn1-cms": "^2.6.0",
++        "@peculiar/asn1-csr": "^2.6.0",
++        "@peculiar/asn1-ecc": "^2.6.0",
++        "@peculiar/asn1-pkcs9": "^2.6.0",
++        "@peculiar/asn1-rsa": "^2.6.0",
++        "@peculiar/asn1-schema": "^2.6.0",
++        "@peculiar/asn1-x509": "^2.6.0",
++        "pvtsutils": "^1.3.6",
++        "reflect-metadata": "^0.2.2",
++        "tslib": "^2.8.1",
++        "tsyringe": "^4.10.0"
++      },
++      "engines": {
++        "node": ">=20.0.0"
++      }
++    },
++    "node_modules/@simplewebauthn/server": {
++      "version": "13.3.3",
++      "resolved": "https://registry.npmjs.org/@simplewebauthn/server/-/server-13.3.3.tgz",
++      "integrity": "sha512-LelX/lcy5cjc15A86i/aNxHhB5eU7dd20QsbP0VLAf9e38+SLlsnqCCyecx3xqfGofhmX05h1J9fKRYWxw+luA==",
++      "license": "MIT",
++      "dependencies": {
++        "@hexagon/base64": "^1.1.27",
++        "@levischuck/tiny-cbor": "^0.2.2",
++        "@peculiar/asn1-android": "^2.6.0",
++        "@peculiar/asn1-ecc": "^2.6.1",
++        "@peculiar/asn1-rsa": "^2.6.1",
++        "@peculiar/asn1-schema": "^2.6.0",
++        "@peculiar/asn1-x509": "^2.6.1",
++        "@peculiar/x509": "^1.14.3"
++      },
++      "engines": {
++        "node": ">=20.0.0"
++      }
++    },
++    "node_modules/agent-base": {
++      "version": "7.1.4",
++      "resolved": "https://registry.npmjs.org/agent-base/-/agent-base-7.1.4.tgz",
++      "integrity": "sha512-MnA+YT8fwfJPgBx3m60MNqakm30XOkyIoH1y6huTQvC0PwZG7ki8NacLBcrPbNoo8vEZy7Jpuk7+jMO+CUovTQ==",
++      "license": "MIT",
++      "engines": {
++        "node": ">= 14"
++      }
++    },
++    "node_modules/asn1.js": {
++      "version": "5.4.1",
++      "resolved": "https://registry.npmjs.org/asn1.js/-/asn1.js-5.4.1.tgz",
++      "integrity": "sha512-+I//4cYPccV8LdmBLiX8CYvf9Sp3vQsrqu2QNXRcrbiWvcx/UdlFiqUJJzxRQxgsZmvhXhn4cSKeSmoFjVdupA==",
++      "license": "MIT",
++      "dependencies": {
++        "bn.js": "^4.0.0",
++        "inherits": "^2.0.1",
++        "minimalistic-assert": "^1.0.0",
++        "safer-buffer": "^2.1.0"
++      }
++    },
++    "node_modules/asn1js": {
++      "version": "3.0.10",
++      "resolved": "https://registry.npmjs.org/asn1js/-/asn1js-3.0.10.tgz",
++      "integrity": "sha512-S2s3aOytiKdFRdulw2qPE51MzjzVOisppcVv7jVFR+Kw0kxwvFrDcYA0h7Ndqbmj0HkMIXYWaoj7fli8kgx1eg==",
++      "license": "BSD-3-Clause",
++      "dependencies": {
++        "pvtsutils": "^1.3.6",
++        "pvutils": "^1.1.5",
++        "tslib": "^2.8.1"
++      },
++      "engines": {
++        "node": ">=12.0.0"
++      }
++    },
++    "node_modules/bn.js": {
++      "version": "4.12.5",
++      "resolved": "https://registry.npmjs.org/bn.js/-/bn.js-4.12.5.tgz",
++      "integrity": "sha512-3aRg6/JxfffFD+OlOjOFR3Vo79l39ooBTFucxx+MT3dhCtzn3EmiUPQo+6/OZuI2jbXi3YKgmiTFBgChQMwIRQ==",
++      "license": "MIT"
++    },
++    "node_modules/buffer-equal-constant-time": {
++      "version": "1.0.1",
++      "resolved": "https://registry.npmjs.org/buffer-equal-constant-time/-/buffer-equal-constant-time-1.0.1.tgz",
++      "integrity": "sha512-zRpUiDwd/xk6ADqPMATG8vc9VPrkck7T07OIx0gnjmJAnHnTVXNQG3vfvWNuiZIkwu9KrKdA1iJKfsfTVxE6NA==",
++      "license": "BSD-3-Clause"
++    },
++    "node_modules/debug": {
++      "version": "4.4.3",
++      "resolved": "https://registry.npmjs.org/debug/-/debug-4.4.3.tgz",
++      "integrity": "sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA==",
++      "license": "MIT",
++      "dependencies": {
++        "ms": "^2.1.3"
++      },
++      "engines": {
++        "node": ">=6.0"
++      },
++      "peerDependenciesMeta": {
++        "supports-color": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/ecdsa-sig-formatter": {
++      "version": "1.0.11",
++      "resolved": "https://registry.npmjs.org/ecdsa-sig-formatter/-/ecdsa-sig-formatter-1.0.11.tgz",
++      "integrity": "sha512-nagl3RYrbNv6kQkeJIpt6NJZy8twLB/2vtz6yN9Z4vRKHN4/QZJIEbqohALSgwKdnksuY3k5Addp5lg8sVoVcQ==",
++      "license": "Apache-2.0",
++      "dependencies": {
++        "safe-buffer": "^5.0.1"
++      }
++    },
++    "node_modules/http_ece": {
++      "version": "1.2.0",
++      "resolved": "https://registry.npmjs.org/http_ece/-/http_ece-1.2.0.tgz",
++      "integrity": "sha512-JrF8SSLVmcvc5NducxgyOrKXe3EsyHMgBFgSaIUGmArKe+rwr0uphRkRXvwiom3I+fpIfoItveHrfudL8/rxuA==",
++      "license": "MIT",
++      "engines": {
++        "node": ">=16"
++      }
++    },
++    "node_modules/https-proxy-agent": {
++      "version": "7.0.6",
++      "resolved": "https://registry.npmjs.org/https-proxy-agent/-/https-proxy-agent-7.0.6.tgz",
++      "integrity": "sha512-vK9P5/iUfdl95AI+JVyUuIcVtd4ofvtrOr3HNtM2yxC9bnMbEdp3x01OhQNnjb8IJYi38VlTE3mBXwcfvywuSw==",
++      "license": "MIT",
++      "dependencies": {
++        "agent-base": "^7.1.2",
++        "debug": "4"
++      },
++      "engines": {
++        "node": ">= 14"
++      }
++    },
++    "node_modules/inherits": {
++      "version": "2.0.4",
++      "resolved": "https://registry.npmjs.org/inherits/-/inherits-2.0.4.tgz",
++      "integrity": "sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ==",
++      "license": "ISC"
++    },
++    "node_modules/jwa": {
++      "version": "2.0.1",
++      "resolved": "https://registry.npmjs.org/jwa/-/jwa-2.0.1.tgz",
++      "integrity": "sha512-hRF04fqJIP8Abbkq5NKGN0Bbr3JxlQ+qhZufXVr0DvujKy93ZCbXZMHDL4EOtodSbCWxOqR8MS1tXA5hwqCXDg==",
++      "license": "MIT",
++      "dependencies": {
++        "buffer-equal-constant-time": "^1.0.1",
++        "ecdsa-sig-formatter": "1.0.11",
++        "safe-buffer": "^5.0.1"
++      }
++    },
++    "node_modules/jws": {
++      "version": "4.0.1",
++      "resolved": "https://registry.npmjs.org/jws/-/jws-4.0.1.tgz",
++      "integrity": "sha512-EKI/M/yqPncGUUh44xz0PxSidXFr/+r0pA70+gIYhjv+et7yxM+s29Y+VGDkovRofQem0fs7Uvf4+YmAdyRduA==",
++      "license": "MIT",
++      "dependencies": {
++        "jwa": "^2.0.1",
++        "safe-buffer": "^5.0.1"
++      }
++    },
++    "node_modules/minimalistic-assert": {
++      "version": "1.0.1",
++      "resolved": "https://registry.npmjs.org/minimalistic-assert/-/minimalistic-assert-1.0.1.tgz",
++      "integrity": "sha512-UtJcAD4yEaGtjPezWuO9wC4nwUnVH/8/Im3yEHQP4b67cXlD/Qr9hdITCU1xDbSEXg2XKNaP8jsReV7vQd00/A==",
++      "license": "ISC"
++    },
++    "node_modules/minimist": {
++      "version": "1.2.8",
++      "resolved": "https://registry.npmjs.org/minimist/-/minimist-1.2.8.tgz",
++      "integrity": "sha512-2yyAR8qBkN3YuheJanUpWC5U3bb5osDywNB8RzDVlDwDHbocAJveqqj1u8+SVD7jkWT4yvsHCpWqqWqAxb0zCA==",
++      "license": "MIT",
++      "funding": {
++        "url": "https://github.com/sponsors/ljharb"
++      }
++    },
++    "node_modules/ms": {
++      "version": "2.1.3",
++      "resolved": "https://registry.npmjs.org/ms/-/ms-2.1.3.tgz",
++      "integrity": "sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==",
++      "license": "MIT"
++    },
++    "node_modules/pg": {
++      "version": "8.23.0",
++      "resolved": "https://registry.npmjs.org/pg/-/pg-8.23.0.tgz",
++      "integrity": "sha512-Ip2EQCngowJLGOfCwkFhPXU7/ljlhn6Rxlmy4XYfL2Y+vyRM59+8uR2xqRWKdYmbXmxCFOAmKxBuSUCdF34qLg==",
++      "license": "MIT",
++      "dependencies": {
++        "pg-connection-string": "^2.14.0",
++        "pg-pool": "^3.14.0",
++        "pg-protocol": "^1.16.0",
++        "pg-types": "2.2.0",
++        "pgpass": "1.0.5"
++      },
++      "engines": {
++        "node": ">= 16.0.0"
++      },
++      "optionalDependencies": {
++        "pg-cloudflare": "^1.4.0"
++      },
++      "peerDependencies": {
++        "pg-native": ">=3.0.1"
++      },
++      "peerDependenciesMeta": {
++        "pg-native": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/pg-cloudflare": {
++      "version": "1.4.0",
++      "resolved": "https://registry.npmjs.org/pg-cloudflare/-/pg-cloudflare-1.4.0.tgz",
++      "integrity": "sha512-Vo7z/6rrQYxpNRylp4Tlob2elzbh+N/MOQbxFVWCxS7oEx6jF53GTJFxK2WWpKuBRkmiin4Mt+xofFDjx09R0A==",
++      "license": "MIT",
++      "optional": true
++    },
++    "node_modules/pg-connection-string": {
++      "version": "2.14.0",
++      "resolved": "https://registry.npmjs.org/pg-connection-string/-/pg-connection-string-2.14.0.tgz",
++      "integrity": "sha512-XwWDGcLRGCXAR8F/AM5bG7Q+A3Wm2s6QeEjlOKZLlH3UYcguiqCWKyWXVag5TLTIjR7oOJUY8kcADaZgWPyLeg==",
++      "license": "MIT"
++    },
++    "node_modules/pg-int8": {
++      "version": "1.0.1",
++      "resolved": "https://registry.npmjs.org/pg-int8/-/pg-int8-1.0.1.tgz",
++      "integrity": "sha512-WCtabS6t3c8SkpDBUlb1kjOs7l66xsGdKpIPZsg4wR+B3+u9UAum2odSsF9tnvxg80h4ZxLWMy4pRjOsFIqQpw==",
++      "license": "ISC",
++      "engines": {
++        "node": ">=4.0.0"
++      }
++    },
++    "node_modules/pg-pool": {
++      "version": "3.14.0",
++      "resolved": "https://registry.npmjs.org/pg-pool/-/pg-pool-3.14.0.tgz",
++      "integrity": "sha512-gKtPkFdQPU3DksooVLi9LsjZxrsBUZIpa+7aVx+LV5pNh0KzP4Zleud2po+ConrxbuXGBJ6Hfer6hdgpIBpBaw==",
++      "license": "MIT",
++      "peerDependencies": {
++        "pg": ">=8.0"
++      }
++    },
++    "node_modules/pg-protocol": {
++      "version": "1.16.0",
++      "resolved": "https://registry.npmjs.org/pg-protocol/-/pg-protocol-1.16.0.tgz",
++      "integrity": "sha512-sILXutLVjCLjcDuOmvhX5e2Z4cS5qG/6Bu3VkpFwdf/633ElGLpEh9bgmuI5I4sqKqkifQiGyiCcx1HdtrK7tg==",
++      "license": "MIT"
++    },
++    "node_modules/pg-types": {
++      "version": "2.2.0",
++      "resolved": "https://registry.npmjs.org/pg-types/-/pg-types-2.2.0.tgz",
++      "integrity": "sha512-qTAAlrEsl8s4OiEQY69wDvcMIdQN6wdz5ojQiOy6YRMuynxenON0O5oCpJI6lshc6scgAY8qvJ2On/p+CXY0GA==",
++      "license": "MIT",
++      "dependencies": {
++        "pg-int8": "1.0.1",
++        "postgres-array": "~2.0.0",
++        "postgres-bytea": "~1.0.0",
++        "postgres-date": "~1.0.4",
++        "postgres-interval": "^1.1.0"
++      },
++      "engines": {
++        "node": ">=4"
++      }
++    },
++    "node_modules/pgpass": {
++      "version": "1.0.5",
++      "resolved": "https://registry.npmjs.org/pgpass/-/pgpass-1.0.5.tgz",
++      "integrity": "sha512-FdW9r/jQZhSeohs1Z3sI1yxFQNFvMcnmfuj4WBMUTxOrAyLMaTcE1aAMBiTlbMNaXvBCQuVi0R7hd8udDSP7ug==",
++      "license": "MIT",
++      "dependencies": {
++        "split2": "^4.1.0"
++      }
++    },
++    "node_modules/postgres-array": {
++      "version": "2.0.0",
++      "resolved": "https://registry.npmjs.org/postgres-array/-/postgres-array-2.0.0.tgz",
++      "integrity": "sha512-VpZrUqU5A69eQyW2c5CA1jtLecCsN2U/bD6VilrFDWq5+5UIEVO7nazS3TEcHf1zuPYO/sqGvUvW62g86RXZuA==",
++      "license": "MIT",
++      "engines": {
++        "node": ">=4"
++      }
++    },
++    "node_modules/postgres-bytea": {
++      "version": "1.0.1",
++      "resolved": "https://registry.npmjs.org/postgres-bytea/-/postgres-bytea-1.0.1.tgz",
++      "integrity": "sha512-5+5HqXnsZPE65IJZSMkZtURARZelel2oXUEO8rH83VS/hxH5vv1uHquPg5wZs8yMAfdv971IU+kcPUczi7NVBQ==",
++      "license": "MIT",
++      "engines": {
++        "node": ">=0.10.0"
++      }
++    },
++    "node_modules/postgres-date": {
++      "version": "1.0.7",
++      "resolved": "https://registry.npmjs.org/postgres-date/-/postgres-date-1.0.7.tgz",
++      "integrity": "sha512-suDmjLVQg78nMK2UZ454hAG+OAW+HQPZ6n++TNDUX+L0+uUlLywnoxJKDou51Zm+zTCjrCl0Nq6J9C5hP9vK/Q==",
++      "license": "MIT",
++      "engines": {
++        "node": ">=0.10.0"
++      }
++    },
++    "node_modules/postgres-interval": {
++      "version": "1.2.0",
++      "resolved": "https://registry.npmjs.org/postgres-interval/-/postgres-interval-1.2.0.tgz",
++      "integrity": "sha512-9ZhXKM/rw350N1ovuWHbGxnGh/SNJ4cnxHiM0rxE4VN41wsg8P8zWn9hv/buK00RP4WvlOyr/RBDiptyxVbkZQ==",
++      "license": "MIT",
++      "dependencies": {
++        "xtend": "^4.0.0"
++      },
++      "engines": {
++        "node": ">=0.10.0"
++      }
++    },
++    "node_modules/pvtsutils": {
++      "version": "1.3.6",
++      "resolved": "https://registry.npmjs.org/pvtsutils/-/pvtsutils-1.3.6.tgz",
++      "integrity": "sha512-PLgQXQ6H2FWCaeRak8vvk1GW462lMxB5s3Jm673N82zI4vqtVUPuZdffdZbPDFRoU8kAhItWFtPCWiPpp4/EDg==",
++      "license": "MIT",
++      "dependencies": {
++        "tslib": "^2.8.1"
++      }
++    },
++    "node_modules/pvutils": {
++      "version": "1.2.0",
++      "resolved": "https://registry.npmjs.org/pvutils/-/pvutils-1.2.0.tgz",
++      "integrity": "sha512-BbubeCEyTuQjVMakvJQ/Sxbc93F2pwmbsxONT/ZRrwU7Ua38d8unYTwXpTVLAKJ4BDuH9IGztCjQcd/N/39Dvg==",
++      "license": "MIT",
++      "engines": {
++        "node": ">=16.0.0"
++      }
++    },
++    "node_modules/reflect-metadata": {
++      "version": "0.2.2",
++      "resolved": "https://registry.npmjs.org/reflect-metadata/-/reflect-metadata-0.2.2.tgz",
++      "integrity": "sha512-urBwgfrvVP/eAyXx4hluJivBKzuEbSQs9rKWCrCkbSxNv8mxPcUZKeuoF3Uy4mJl3Lwprp6yy5/39VWigZ4K6Q==",
++      "license": "Apache-2.0"
++    },
++    "node_modules/safe-buffer": {
++      "version": "5.2.1",
++      "resolved": "https://registry.npmjs.org/safe-buffer/-/safe-buffer-5.2.1.tgz",
++      "integrity": "sha512-rp3So07KcdmmKbGvgaNxQSJr7bGVSVk5S9Eq1F+ppbRo70+YeaDxkw5Dd8NPN+GD6bjnYm2VuPuCXmpuYvmCXQ==",
++      "funding": [
++        {
++          "type": "github",
++          "url": "https://github.com/sponsors/feross"
++        },
++        {
++          "type": "patreon",
++          "url": "https://www.patreon.com/feross"
++        },
++        {
++          "type": "consulting",
++          "url": "https://feross.org/support"
++        }
++      ],
++      "license": "MIT"
++    },
++    "node_modules/safer-buffer": {
++      "version": "2.1.2",
++      "resolved": "https://registry.npmjs.org/safer-buffer/-/safer-buffer-2.1.2.tgz",
++      "integrity": "sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg==",
++      "license": "MIT"
++    },
++    "node_modules/split2": {
++      "version": "4.2.0",
++      "resolved": "https://registry.npmjs.org/split2/-/split2-4.2.0.tgz",
++      "integrity": "sha512-UcjcJOWknrNkF6PLX83qcHM6KHgVKNkV62Y8a5uYDVv9ydGQVwAHMKqHdJje1VTWpljG0WYpCDhrCdAOYH4TWg==",
++      "license": "ISC",
++      "engines": {
++        "node": ">= 10.x"
++      }
++    },
++    "node_modules/tslib": {
++      "version": "2.8.1",
++      "resolved": "https://registry.npmjs.org/tslib/-/tslib-2.8.1.tgz",
++      "integrity": "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==",
++      "license": "0BSD"
++    },
++    "node_modules/tsyringe": {
++      "version": "4.10.0",
++      "resolved": "https://registry.npmjs.org/tsyringe/-/tsyringe-4.10.0.tgz",
++      "integrity": "sha512-axr3IdNuVIxnaK5XGEUFTu3YmAQ6lllgrvqfEoR16g/HGnYY/6We4oWENtAnzK6/LpJ2ur9PAb80RBt7/U4ugw==",
++      "license": "MIT",
++      "dependencies": {
++        "tslib": "^1.9.3"
++      },
++      "engines": {
++        "node": ">= 6.0.0"
++      }
++    },
++    "node_modules/tsyringe/node_modules/tslib": {
++      "version": "1.14.1",
++      "resolved": "https://registry.npmjs.org/tslib/-/tslib-1.14.1.tgz",
++      "integrity": "sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg==",
++      "license": "0BSD"
++    },
++    "node_modules/web-push": {
++      "version": "3.6.7",
++      "resolved": "https://registry.npmjs.org/web-push/-/web-push-3.6.7.tgz",
++      "integrity": "sha512-OpiIUe8cuGjrj3mMBFWY+e4MMIkW3SVT+7vEIjvD9kejGUypv8GPDf84JdPWskK8zMRIJ6xYGm+Kxr8YkPyA0A==",
++      "license": "MPL-2.0",
++      "dependencies": {
++        "asn1.js": "^5.3.0",
++        "http_ece": "1.2.0",
++        "https-proxy-agent": "^7.0.0",
++        "jws": "^4.0.0",
++        "minimist": "^1.2.5"
++      },
++      "bin": {
++        "web-push": "src/cli.js"
++      },
++      "engines": {
++        "node": ">= 16"
++      }
++    },
++    "node_modules/xtend": {
++      "version": "4.0.2",
++      "resolved": "https://registry.npmjs.org/xtend/-/xtend-4.0.2.tgz",
++      "integrity": "sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ==",
++      "license": "MIT",
++      "engines": {
++        "node": ">=0.4"
++      }
++    }
++  }
++}
+diff --git a/package.json b/package.json
+new file mode 100644
+index 0000000..0d05c9d
+--- /dev/null
++++ b/package.json
+@@ -0,0 +1,13 @@
++{
++  "name": "opengym-vercel",
++  "private": true,
++  "type": "module",
++  "scripts": {
++    "build": "npm ci --prefix frontend && VITE_IMG_BASE=https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/ VITE_GIF_BASE=https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/ npm run build --prefix frontend"
++  },
++  "dependencies": {
++    "@simplewebauthn/server": "^13.1.1",
++    "pg": "^8.16.3",
++    "web-push": "^3.6.7"
++  }
++}
+diff --git a/supabase/opengym.sql b/supabase/opengym.sql
+new file mode 100644
+index 0000000..44070d5
+--- /dev/null
++++ b/supabase/opengym.sql
+@@ -0,0 +1,7 @@
++create table if not exists public.opengym_kv (
++  key text primary key,
++  value jsonb not null
++);
++
++alter table public.opengym_kv enable row level security;
++revoke all on public.opengym_kv from anon, authenticated;
+diff --git a/vercel.json b/vercel.json
+new file mode 100644
+index 0000000..70615a2
+--- /dev/null
++++ b/vercel.json
+@@ -0,0 +1,11 @@
++{
++  "$schema": "https://openapi.vercel.sh/vercel.json",
++  "framework": "vite",
++  "buildCommand": "npm run build",
++  "outputDirectory": "frontend/dist",
++  "rewrites": [
++    { "source": "/api/:route*", "destination": "/api/handler?route=:route*" },
++    { "source": "/((?!api/|assets/|icon-|manifest.json|sw.js).*)", "destination": "/index.html" }
++  ],
++  "functions": { "api/handler.js": { "maxDuration": 30 } }
++}
+-- 
+2.51.1
+
