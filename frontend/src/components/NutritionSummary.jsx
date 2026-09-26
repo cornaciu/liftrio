@@ -18,7 +18,7 @@ export default function NutritionSummary({ nutrition, date, compact = false }) {
   return <div className={'nutrition-summary' + (compact ? ' compact' : '')}>
     <div className="nutrition-energy">
       <div className="nutrition-ring" style={{ '--progress': `${progress}%` }}>
-        <div><strong>{fmtNum(totals.kcal)}</strong><span>{t('eaten')} · kcal</span></div>
+        <div><strong>{fmtNum(totals.kcal)}</strong><span>kcal</span></div>
       </div>
       <div className="nutrition-energy-text">
         <span className="nutrition-kicker"><Icon name="flame" /> {targets.kcal ? t(remaining >= 0 ? 'Remaining today' : 'Over target') : t('Calories today')}</span>

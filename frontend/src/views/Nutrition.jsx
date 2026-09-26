@@ -61,6 +61,7 @@ export default function Nutrition() {
   const [grams, setGrams] = useState(100)
   const [query, setQuery] = useState('')
   const [barcode, setBarcode] = useState('')
+  const [barcodeEntry, setBarcodeEntry] = useState(false)
   const [results, setResults] = useState([])
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
@@ -135,10 +136,12 @@ export default function Nutrition() {
 
     {showAdd && <div className="card nutrition-add-panel" ref={addRef}>
       <div className="row between"><h2>{t('Add food')} · {t(meal)}</h2><button className="iconbtn" aria-label={t('Close')} onClick={() => setShowAdd(false)}><Icon name="xmark" /></button></div>
-      <div className="nutrition-meals">{MEALS.map(m => <button key={m} className={meal === m ? 'on' : ''} onClick={() => setMeal(m)}>{t(m)}</button>)}</div>
-      <form onSubmit={e => { e.preventDefault(); if (query.trim().length >= 2) search({ q: query.trim() }) }} className="nutrition-search"><TextField aria-label={t('Search a food or brand')} value={query} onChange={e => setQuery(e.target.value)} placeholder={t('Search a food or brand')} /><Button type="submit" variant="primary" disabled={busy}>{t('Search')}</Button></form>
-      <div className="nutrition-actions"><Button type="button" icon="magnifier" onClick={() => setScanning(true)}>{t('Scan barcode')}</Button><Button type="button" icon="plus" onClick={() => setManual(v => !v)}>{t('Add manually')}</Button></div>
-      <form className="nutrition-search" onSubmit={e => { e.preventDefault(); if (/^\d{8,14}$/.test(barcode)) search({ code: barcode }) }}><TextField aria-label={t('Or enter barcode digits')} inputMode="numeric" pattern="[0-9]{8,14}" value={barcode} onChange={e => setBarcode(e.target.value)} placeholder={t('Or enter barcode digits')} /><Button type="submit">{t('Find')}</Button></form>
+      <div className="nutrition-meals" aria-label={t('Choose meal')}>{MEALS.map(m => <button type="button" key={m} aria-pressed={meal === m} className={meal === m ? 'on' : ''} onClick={() => setMeal(m)}>{t(m)}</button>)}</div>
+      <label className="nutrition-search-label">{t('Search a food or brand')}</label>
+      <form onSubmit={e => { e.preventDefault(); if (query.trim().length >= 2) search({ q: query.trim() }) }} className="nutrition-search"><TextField aria-label={t('Search a food or brand')} value={query} onChange={e => setQuery(e.target.value)} placeholder={t('Search food or brand')} /><Button type="submit" variant="primary" disabled={busy}>{t('Search')}</Button></form>
+      <div className="nutrition-actions"><Button type="button" variant="tinted" icon="barcode" onClick={() => { setScanning(true); setBarcodeEntry(false) }}>{t('Scan barcode')}</Button><Button type="button" variant="tinted" icon="plus" onClick={() => setManual(v => !v)}>{t('Add manually')}</Button></div>
+      <button className="nutrition-barcode-toggle" type="button" aria-expanded={barcodeEntry} onClick={() => setBarcodeEntry(v => !v)}>{t('Enter barcode manually')} <Icon name="chevronRight" className={barcodeEntry ? 'nutrition-chevron open' : 'nutrition-chevron'} /></button>
+      {barcodeEntry && <form className="nutrition-search nutrition-barcode-form" onSubmit={e => { e.preventDefault(); if (/^\d{8,14}$/.test(barcode)) search({ code: barcode }) }}><TextField aria-label={t('Or enter barcode digits')} inputMode="numeric" pattern="[0-9]{8,14}" value={barcode} onChange={e => setBarcode(e.target.value)} placeholder={t('Or enter barcode digits')} /><Button type="submit">{t('Find')}</Button></form>}
       {scanning && <Scanner onClose={() => setScanning(false)} onCode={code => { setScanning(false); setBarcode(code); search({ code }) }} />}
       {busy && <p className="small muted">{t('Searching…')}</p>}
       {message && <p className="small muted" role="status">{message}</p>}
@@ -146,7 +149,7 @@ export default function Nutrition() {
       {results.map((item, i) => <button key={item.code || i} className="nutrition-result" onClick={() => select(item)}><span><strong>{item.name}</strong><small>{item.brand}</small></span><span>{fmtNum(item.per100.kcal)} kcal / 100 g</span></button>)}
       {manual && <div className="nutrition-form"><TextField value={custom.name} onChange={e => setCustom({ ...custom, name: e.target.value })} placeholder={t('Food name')} /><p className="small muted">{t('Nutrition values per 100 g, from the product label.')}</p><div className="nutrition-grid">{NUTRIENTS.map(k => <label key={k} className="nutrition-input">{t(LABELS[k])}<NumberField value={custom[k]} onChange={v => setCustom(c => ({ ...c, [k]: v }))} /></label>)}</div><Button onClick={saveCustom}>{t('Continue')}</Button></div>}
       {food && <div className="nutrition-form"><strong>{food.name}</strong>{food.brand && <span className="small muted">{food.brand}</span>}<p className="small muted">{t('Check the product label. Values are per 100 g.')}: {NUTRIENTS.map(k => `${t(LABELS[k])}: ${fmtNum(food.per100[k])}`).join(' · ')}</p><label className="nutrition-input">{t('Amount eaten (g)')}<NumberField value={grams} onChange={setGrams} /></label><Button variant="primary" onClick={add} disabled={!grams || grams > 10000}>{t('Add to diary')}</Button></div>}
-      <p className="small muted">{t('Product data: Open Food Facts. Check the label before logging.')}</p>
+      <p className="nutrition-source-note">{t('Product data: Open Food Facts. Check the label before logging.')}</p>
     </div>}
   </div>
 }
