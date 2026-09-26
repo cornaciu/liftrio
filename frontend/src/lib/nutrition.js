@@ -14,12 +14,20 @@ export function foodFromProduct(product) {
   const n = product.nutriments || {};
   const hasData = ['energy-kcal_100g', 'energy_100g', 'proteins_100g', 'carbohydrates_100g', 'fat_100g'].some(k => n[k] != null && Number.isFinite(Number(n[k])));
   if (!hasData || !product.product_name && !product.product_name_ro) return null;
+  const protein = clean(n.proteins_100g);
+  const carbs = clean(n.carbohydrates_100g);
+  const fat = clean(n.fat_100g);
+  const reportedKcal = clean(n['energy-kcal_100g'] ?? (Number(n.energy_100g) / 4.184));
+  const macroKcal = caloriesFromMacros({ protein, carbs, fat });
+  // Community product data can contain a unit or transcription error in energy.
+  // Reject entries where the listed macros make the reported calories implausible.
+  if (macroKcal >= 40 && reportedKcal > 0 && reportedKcal < macroKcal * 0.45) return null;
   return {
     name: product.product_name_ro || product.product_name,
     brand: product.brands || '', code: product.code || '',
     per100: {
-      kcal: clean(n['energy-kcal_100g'] ?? (Number(n.energy_100g) / 4.184)),
-      protein: clean(n.proteins_100g), carbs: clean(n.carbohydrates_100g), fat: clean(n.fat_100g)
+      kcal: reportedKcal || macroKcal,
+      protein, carbs, fat
     }
   };
 }

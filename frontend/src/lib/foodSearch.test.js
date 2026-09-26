@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { groupFoodResults, rankFoodResults } from './foodSearch.js'
+import { foodFromProduct } from './nutrition.js'
 
 const food = (name, { brand = '', kcal = 120, protein = 25, carbs = 0, fat = 2, code = '' } = {}) => ({
   name, brand, code, per100: { kcal, protein, carbs, fat }
@@ -35,5 +36,28 @@ describe('food search results', () => {
     ])
 
     expect(groups[0].variants).toHaveLength(1)
+  })
+
+  it('rejects impossible calorie values that conflict with the listed macros', () => {
+    const result = foodFromProduct({
+      product_name: 'Grilled chicken breast',
+      nutriments: {
+        'energy-kcal_100g': 1.4,
+        proteins_100g: 21.4,
+        carbohydrates_100g: 4.3,
+        fat_100g: 2.9
+      }
+    })
+
+    expect(result).toBeNull()
+  })
+
+  it('derives calories from macros only when the database has no energy value', () => {
+    const result = foodFromProduct({
+      product_name: 'Chicken breast',
+      nutriments: { proteins_100g: 23, carbohydrates_100g: 0, fat_100g: 2 }
+    })
+
+    expect(result.per100.kcal).toBe(110)
   })
 })
