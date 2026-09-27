@@ -1012,6 +1012,14 @@ h4.sec{
 .settings-page .lrow-i{background:var(--surface-2)!important;color:var(--label-2)}
 .settings-subhead{padding:12px 14px 6px;color:var(--label-3);font-size:11px;font-weight:600;letter-spacing:.075em;text-transform:uppercase}
 .settings-accent{padding:13px 14px 15px;border-top:1px solid var(--sep);display:flex;flex-direction:column;gap:11px}
+.settings-page .lrow:has(.seg-inline):not(:has(.helpbtn)){
+  display:grid;grid-template-columns:32px minmax(0,1fr);align-items:center;
+  column-gap:12px;row-gap:7px;padding:12px 14px;
+}
+.settings-page .lrow:has(.seg-inline):not(:has(.helpbtn)) .seg-inline{
+  grid-column:2;width:min(100%,260px);justify-self:start;margin-top:2px;
+}
+.settings-page .settings-accent .swatches{justify-content:center;max-width:246px;margin:0 auto;gap:12px 14px}
 
 /* --- supersets --- */
 .ss-label{
