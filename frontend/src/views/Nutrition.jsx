@@ -5,6 +5,7 @@ import { t, dateLocale } from '../lib/i18n.js'
 import { todayISO, isoOf, fmtNum } from '../lib/format.js'
 import { DEFAULT_TARGETS, NUTRIENTS, caloriesFromMacros, foodFromProduct, totalsFor } from '../lib/nutrition.js'
 import { groupFoodResults, rankFoodResults } from '../lib/foodSearch.js'
+import { foodsFromEntries, mergeImportedEntries, parseEatTrackWorkbook } from '../lib/nutrition-import.js'
 import { Button, NumberField, TextField } from '../components/ui.jsx'
 import Icon from '../components/Icon.jsx'
 import NutritionSummary from '../components/NutritionSummary.jsx'
@@ -71,6 +72,9 @@ export default function Nutrition() {
   const [manual, setManual] = useState(false)
   const [editTargets, setEditTargets] = useState(false)
   const [showAdd, setShowAdd] = useState(false)
+  const [importPreview, setImportPreview] = useState(null)
+  const [importBusy, setImportBusy] = useState(false)
+  const importRef = useRef(null)
   const addRef = useRef(null)
   const [custom, setCustom] = useState({ name: '', kcal: 0, protein: 0, carbs: 0, fat: 0 })
   const totals = totalsFor(entries, date)
@@ -84,17 +88,56 @@ export default function Nutrition() {
   const search = async params => {
     setMessage(''); setBusy(true); setResults([])
     try {
-      const { products, market } = await lookup(params)
+      let products = [], market = 'local'
+      try { ({ products, market } = await lookup(params)) }
+      catch (error) { if (!nutrition.foods?.length) throw error }
       if (params.code && products.length === 1) {
         select(products[0])
         return
       }
-      const ranked = params.code ? products : rankFoodResults(products, params.q)
+      const localFoods = (nutrition.foods || []).filter(item => {
+        const haystack = `${item.name} ${item.brand || ''}`.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+        return params.code ? item.code === params.code : params.q.toLowerCase().split(/\s+/).every(word => haystack.includes(word.normalize('NFD').replace(/[\u0300-\u036f]/g, '')))
+      })
+      const ranked = params.code ? [...localFoods, ...products] : rankFoodResults([...localFoods, ...products], params.q)
       setResults(groupFoodResults(ranked))
-      if (!products.length) setMessage(t('No product found. Add it manually and check the label.'))
+      if (!products.length && !localFoods.length && market !== 'local') setMessage(t('No product found. Add it manually and check the label.'))
+      else if (!products.length && !localFoods.length) setMessage(t('Food search is temporarily unavailable. You can add the food manually.'))
       else if (market === 'global') setMessage(t('No Romanian matches. Showing international products.'))
     } catch (e) { setMessage(e.message) }
     finally { setBusy(false) }
+  }
+  const readEatTrack = async file => {
+    setImportBusy(true); setImportPreview(null); setMessage('')
+    try {
+      const XLSX = await import('xlsx')
+      const workbook = XLSX.read(await file.arrayBuffer(), { type: 'array', cellDates: false })
+      const rowsBySheet = Object.fromEntries(workbook.SheetNames.map(name => [name, XLSX.utils.sheet_to_json(workbook.Sheets[name], { header: 1, defval: '' })]))
+      const parsed = parseEatTrackWorkbook({ ...workbook, Sheets: rowsBySheet })
+      const dates = [...new Set(parsed.entries.map(entry => entry.date))].sort()
+      const duplicateCheck = mergeImportedEntries(entries, parsed.entries)
+      const libraryCheck = foodsFromEntries(duplicateCheck.additions.map(entry => ({ ...entry })), nutrition.foods || [])
+      setImportPreview({ ...parsed, fileName: file.name, dates, newEntryCount: duplicateCheck.added, duplicateCount: duplicateCheck.skippedDuplicates, newFoodCount: libraryCheck.added.length })
+    } catch (error) {
+      setMessage(error?.message || t('Could not read this Eat & Track export.'))
+    } finally { setImportBusy(false) }
+  }
+  const confirmEatTrackImport = () => {
+    if (!importPreview) return
+    const lastImportedDate = importPreview.dates.at(-1)
+    update(s => {
+      s.nutrition ||= { targets: DEFAULT_TARGETS, entries: [], foods: [] }
+      s.nutrition.entries ||= []
+      s.nutrition.foods ||= []
+      const freshEntries = importPreview.entries.map(entry => ({ ...entry, per100: { ...entry.per100 } }))
+      const merged = mergeImportedEntries(s.nutrition.entries, freshEntries)
+      const library = foodsFromEntries(merged.additions, s.nutrition.foods)
+      s.nutrition.entries = merged.entries
+      s.nutrition.foods = library.foods
+    })
+    if (lastImportedDate) setDate(lastImportedDate)
+    setMessage(t('Eat & Track import completed.'))
+    setImportPreview(null)
   }
   const select = item => { setFood(item); setGrams(100); setResults([]); setScanning(false); setManual(false) }
   const add = () => {
@@ -135,7 +178,16 @@ export default function Nutrition() {
       </div>}
     </div>
 
-    <div className="nutrition-section-head"><h2>{t('Food diary')}</h2><span className="small muted">{fmtNum(totals.kcal)} kcal</span></div>
+    <div className="nutrition-section-head"><div><h2>{t('Food diary')}</h2><span className="small muted">{fmtNum(totals.kcal)} kcal</span></div><Button type="button" variant="tinted" icon="upload" onClick={() => importRef.current?.click()}>{t('Import Eat & Track')}</Button></div>
+    <input ref={importRef} type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden onChange={event => { const file = event.target.files?.[0]; if (file) readEatTrack(file); event.target.value = '' }} />
+    {importBusy && <div className="card nutrition-import-preview"><span>{t('Reading Eat & Track export…')}</span></div>}
+    {importPreview && <div className="card nutrition-import-preview" role="status">
+      <div><strong>{t('Ready to import from Eat & Track')}</strong><span className="small muted">{importPreview.fileName}</span></div>
+      <p className="small muted">{t('{0} food entries across {1} days', importPreview.entries.length, importPreview.dates.length)} · {importPreview.dates[0]}{importPreview.dates.length > 1 ? ` – ${importPreview.dates[importPreview.dates.length - 1]}` : ''}</p>
+      <p className="small muted">{t('{0} entries will be added; {1} new foods will be saved to your library.', importPreview.newEntryCount, importPreview.newFoodCount)}{importPreview.duplicateCount ? ` ${t('{0} already imported entries will be skipped.', importPreview.duplicateCount)}` : ''}</p>
+      {importPreview.skipped.length > 0 && <p className="small muted">{t('{0} entries without a readable portion weight will be skipped.', importPreview.skipped.length)}</p>}
+      <div className="nutrition-import-actions"><Button type="button" variant="primary" onClick={confirmEatTrackImport} disabled={!importPreview.newEntryCount}>{t('Import foods and diary')}</Button><Button type="button" variant="tinted" onClick={() => setImportPreview(null)}>{t('Cancel')}</Button></div>
+    </div>}
     {MEALS.map(m => { const items = selected.filter(e => e.meal === m); const mealCalories = items.reduce((sum, e) => sum + (e.per100?.kcal || 0) * e.grams / 100, 0); return <div className="card nutrition-meal-card" key={m}>
       <div className="nutrition-meal-head"><div><h3>{t(m)}</h3><span className="small muted">{items.length ? `${fmtNum(mealCalories)} kcal · ${items.length} ${t('foods')}` : t('Nothing logged yet')}</span></div><button className="nutrition-add" onClick={() => openAdd(m)} aria-label={`${t('Add food')} · ${t(m)}`}><Icon name="plus" /> {t('Add food')}</button></div>
       {items.map(entry => <div key={entry.id} className="nutrition-entry"><div><strong>{entry.name}</strong><div className="small muted">{fmtNum(entry.grams)} g · P {fmtNum(entry.per100.protein * entry.grams / 100)} g · C {fmtNum(entry.per100.carbs * entry.grams / 100)} g · F {fmtNum(entry.per100.fat * entry.grams / 100)} g</div></div><div className="nutrition-entry-side"><strong>{fmtNum(entry.per100.kcal * entry.grams / 100)}</strong><button className="iconbtn" aria-label={t('Delete')} onClick={() => update(s => { s.nutrition.entries = s.nutrition.entries.filter(e => e.id !== entry.id) })}><Icon name="trash" /></button></div></div>)}

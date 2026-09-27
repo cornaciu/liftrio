@@ -906,6 +906,13 @@ h4.sec{
 .nutrition-day-card>.row strong{text-align:center;font-size:15px}
 .nutrition-section-head{display:flex;align-items:baseline;justify-content:space-between;margin:22px 3px 10px}
 .nutrition-section-head h2{font-size:21px;margin:0}
+.nutrition-section-head>div{min-width:0}
+.nutrition-section-head>.btn{flex:none;min-height:38px;padding:8px 10px;font-size:12px;white-space:nowrap}
+.nutrition-import-preview{display:grid;gap:9px;margin-bottom:12px;padding:14px!important}
+.nutrition-import-preview>div:first-child{display:flex;flex-direction:column;gap:3px;min-width:0}
+.nutrition-import-preview p{margin:0;line-height:1.45}
+.nutrition-import-actions{display:flex;gap:8px;flex-wrap:wrap}
+.nutrition-import-actions .btn{min-height:40px}
 .nutrition-meal-card{padding:0 16px!important}
 .nutrition-meal-head{display:flex;align-items:center;justify-content:space-between;min-height:77px}
 .nutrition-meal-head h3{font-size:17px;margin:0 0 4px}
