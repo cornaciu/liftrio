@@ -123,3 +123,14 @@ export function mergeImportedEntries(existing = [], imported = []) {
   const additions = imported.filter(entry => !entry.importRef || !refs.has(entry.importRef))
   return { entries: [...existing, ...additions], additions, added: additions.length, skippedDuplicates: imported.length - additions.length }
 }
+
+/** Return daily micronutrient summaries that are missing or differ from an import. */
+export function microTotalsToUpdate(existing = {}, imported = {}, tolerance = 0.001) {
+  return Object.fromEntries(Object.entries(imported).filter(([date, incoming]) => {
+    const current = existing[date]
+    return !current || ['fiber', 'salt'].some(nutrient =>
+      Number.isFinite(Number(incoming?.[nutrient])) &&
+      Math.abs(Number(current[nutrient] || 0) - Number(incoming[nutrient])) > tolerance
+    )
+  }))
+}

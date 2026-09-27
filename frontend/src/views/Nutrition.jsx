@@ -5,7 +5,7 @@ import { t, dateLocale } from '../lib/i18n.js'
 import { todayISO, isoOf, fmtNum } from '../lib/format.js'
 import { DEFAULT_TARGETS, NUTRIENTS, caloriesFromMacros, foodFromProduct, totalsFor } from '../lib/nutrition.js'
 import { groupFoodResults, rankFoodResults } from '../lib/foodSearch.js'
-import { foodsFromEntries, mergeImportedEntries, parseEatTrackWorkbook } from '../lib/nutrition-import.js'
+import { foodsFromEntries, mergeImportedEntries, microTotalsToUpdate, parseEatTrackWorkbook } from '../lib/nutrition-import.js'
 import { Button, NumberField, TextField } from '../components/ui.jsx'
 import Icon from '../components/Icon.jsx'
 import NutritionSummary from '../components/NutritionSummary.jsx'
@@ -117,7 +117,8 @@ export default function Nutrition() {
       const dates = [...new Set(parsed.entries.map(entry => entry.date))].sort()
       const duplicateCheck = mergeImportedEntries(entries, parsed.entries)
       const libraryCheck = foodsFromEntries(duplicateCheck.additions.map(entry => ({ ...entry })), nutrition.foods || [])
-      setImportPreview({ ...parsed, fileName: file.name, dates, newEntryCount: duplicateCheck.added, duplicateCount: duplicateCheck.skippedDuplicates, newFoodCount: libraryCheck.added.length })
+      const microUpdates = microTotalsToUpdate(nutrition.dailyMicros || {}, parsed.dailyMicros || {})
+      setImportPreview({ ...parsed, fileName: file.name, dates, newEntryCount: duplicateCheck.added, duplicateCount: duplicateCheck.skippedDuplicates, newFoodCount: libraryCheck.added.length, microUpdateCount: Object.keys(microUpdates).length })
     } catch (error) {
       setMessage(error?.message || t('Could not read this Eat & Track export.'))
     } finally { setImportBusy(false) }
@@ -181,7 +182,7 @@ export default function Nutrition() {
       </div>}
     </div>
 
-    <div className="nutrition-section-head"><div className="nutrition-section-title"><h2>{t('Food diary')}</h2><span className="small muted">{fmtNum(totals.kcal)} kcal</span></div><Button type="button" variant="tinted" icon="upload" onClick={() => importRef.current?.click()}>{t('Import Eat & Track')}</Button></div>
+    <div className="nutrition-section-head"><div className="nutrition-section-title"><h2>{t('Food diary')}</h2></div><Button type="button" variant="tinted" icon="upload" onClick={() => importRef.current?.click()}>{t('Import Eat & Track')}</Button></div>
     <input ref={importRef} type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden onChange={event => { const file = event.target.files?.[0]; if (file) readEatTrack(file); event.target.value = '' }} />
     {importBusy && <div className="card nutrition-import-preview"><span>{t('Reading Eat & Track export…')}</span></div>}
     {importPreview && <div className="card nutrition-import-preview" role="status">
@@ -189,8 +190,9 @@ export default function Nutrition() {
       <p className="small muted">{t('{0} food entries across {1} days', importPreview.entries.length, importPreview.dates.length)} · {importPreview.dates[0]}{importPreview.dates.length > 1 ? ` – ${importPreview.dates[importPreview.dates.length - 1]}` : ''}</p>
       <p className="small muted">{t('{0} entries will be added; {1} new foods will be saved to your library.', importPreview.newEntryCount, importPreview.newFoodCount)}{importPreview.duplicateCount ? ` ${t('{0} already imported entries will be skipped.', importPreview.duplicateCount)}` : ''}</p>
       {Object.keys(importPreview.dailyMicros || {}).length > 0 && <p className="small muted">{t('Fiber and salt totals from the daily summary will also be imported.')}</p>}
+      {importPreview.microUpdateCount > 0 && <p className="small muted">{t('{0} days of fiber and salt totals will be added or updated.', importPreview.microUpdateCount)}</p>}
       {importPreview.skipped.length > 0 && <p className="small muted">{t('{0} entries without a readable portion weight will be skipped.', importPreview.skipped.length)}</p>}
-      <div className="nutrition-import-actions"><Button type="button" variant="primary" onClick={confirmEatTrackImport} disabled={!importPreview.newEntryCount}>{t('Import foods and diary')}</Button><Button type="button" variant="tinted" onClick={() => setImportPreview(null)}>{t('Cancel')}</Button></div>
+      <div className="nutrition-import-actions"><Button type="button" variant="primary" onClick={confirmEatTrackImport} disabled={!importPreview.newEntryCount && !importPreview.microUpdateCount}>{importPreview.newEntryCount ? t('Import foods and diary') : t('Update fiber and salt totals')}</Button><Button type="button" variant="tinted" onClick={() => setImportPreview(null)}>{t('Cancel')}</Button></div>
     </div>}
     {MEALS.map(m => { const items = selected.filter(e => e.meal === m); const mealCalories = items.reduce((sum, e) => sum + (e.per100?.kcal || 0) * e.grams / 100, 0); return <div className="card nutrition-meal-card" key={m}>
       <div className="nutrition-meal-head"><div><h3>{t(m)}</h3><span className="small muted">{items.length ? `${fmtNum(mealCalories)} kcal · ${items.length} ${t('foods')}` : t('Nothing logged yet')}</span></div><button className="nutrition-add" onClick={() => openAdd(m)} aria-label={`${t('Add food')} · ${t(m)}`}><Icon name="plus" /> {t('Add food')}</button></div>
