@@ -29,7 +29,24 @@ passkeys on the new hostname. The exercise media uses the pinned public exercise
 dataset CDN rather than bundling ~140 MB into the Vercel deployment.
 
 The Vercel version persists profiles, credentials, sessions, and workout state in
-Postgres. Web push test and subscriptions work, but background rest-timer push,
-scheduled daily reminders, and live admin presence need a durable worker and are
-not available on serverless functions. Do not rely on those alerts until a worker
-is added.
+Postgres. Web push subscriptions and test alerts are supported. Rest-timer alerts
+are stored in Postgres and dispatched by a Supabase Cron job. Vercel Hobby Cron
+cannot run frequently enough for this, so configure Supabase using
+`supabase/rest_timer_cron.sql`:
+
+1. Generate a secret with `openssl rand -hex 32`.
+2. Add it in Vercel → Project Settings → Environment Variables as
+   `REST_TIMER_CRON_SECRET` for Production, then redeploy.
+3. Replace the secret placeholder in `supabase/rest_timer_cron.sql` with the same
+   value, run the SQL once in Supabase SQL Editor, and confirm the URL matches the
+   production domain.
+4. On iPhone, install the site using Share → Add to Home Screen, open that home
+   screen app, sign in, then enable Push notifications in openGym Settings. iOS
+   web push requires a Home Screen web app and notification permission.
+
+The one-minute Supabase job means a web push can arrive up to about a minute after
+the rest timer ends. The timer recalculates from its end timestamp when the app
+returns to the foreground. A live countdown displayed on the iPhone Lock Screen
+requires an installed native iOS app with an ActivityKit Live Activity; a Vercel
+website/PWA cannot publish that lock-screen interface. The Capacitor native build
+can schedule a local rest alert with iOS when notification permission is granted.

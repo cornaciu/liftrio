@@ -257,6 +257,7 @@ export default {
   "Freestyle workout — add your first exercise.": "Antrenament liber. Adaugă primul exercițiu.",
   "Finish workout early · {0} exercises": "Încheie mai devreme · {0} exerciții",
   "Rest over — next set!": "Pauza s-a terminat. Seria următoare!",
+  "Enable notifications in Settings to get rest alerts.": "Activează notificările din Setări pentru a primi alerte la finalul pauzei.",
   "Hi {0}": "Salut, {0}",
   "This week": "Săptămâna aceasta",
   "{0} — in progress": "{0} — în desfășurare",

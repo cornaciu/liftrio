@@ -27,7 +27,7 @@ const INVITE_ONLY = /^(1|true|yes|on)$/i.test(process.env.INVITE_ONLY || '');
 const ADMIN_UIDS = (process.env.ADMIN_UIDS || '').split(',').map(s => s.trim()).filter(Boolean);
 const SESSION_DAYS = Math.max(1, +(process.env.SESSION_DAYS || 90) || 90);
 const SECURE = ORIGIN.startsWith('https:') ? ' Secure;' : '';
-const emptyDb = () => ({ users: [], creds: [], subs: [], invites: [], coachLinks: [], coachPlans: [] });
+const emptyDb = () => ({ users: [], creds: [], subs: [], invites: [], coachLinks: [], coachPlans: [], restTimers: [] });
 const isAdmin = user => !!user && (user.admin === true || ADMIN_UIDS.includes(user.id));
 const bodyOf = req => {
   if (typeof req.body === 'string') return JSON.parse(req.body || '{}');
@@ -214,9 +214,35 @@ export default async function handler(req, res) {
         send(res, 200, { ok: true }); break;
       }
       case 'POST /api/push/rest-timer':
+      {
+        const user = requireUser(); if (!user) break;
+        const requested = Number(body.seconds);
+        if (!Number.isFinite(requested) || requested < 1) { send(res, 400, { error: 'seconds required' }); break; }
+        const seconds = Math.min(3600, Math.round(requested));
+        if (!db.subs.some(s => s.userId === user.id)) { send(res, 409, { error: 'push notifications are not enabled for this account' }); break; }
+        db.restTimers = (db.restTimers || []).filter(t => t.userId !== user.id);
+        const endsAt = Date.now() + seconds * 1000;
+        db.restTimers.push({ userId: user.id, endsAt });
+        await saveDb(); send(res, 200, { ok: true, endsAt }); break;
+      }
       case 'POST /api/push/rest-timer/cancel': {
         const user = requireUser(); if (!user) break;
-        send(res, 501, { error: 'background rest-timer alerts require a persistent worker' }); break;
+        db.restTimers = (db.restTimers || []).filter(t => t.userId !== user.id);
+        await saveDb(); send(res, 200, { ok: true }); break;
+      }
+      case 'POST /api/push/rest-timer/dispatch': {
+        const expected = process.env.REST_TIMER_CRON_SECRET || '';
+        const provided = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
+        const a = Buffer.from(provided), b = Buffer.from(expected);
+        if (!expected || a.length !== b.length || !crypto.timingSafeEqual(a, b)) { send(res, 401, { error: 'unauthorized' }); break; }
+        const now = Date.now();
+        const due = (db.restTimers || []).filter(t => t.endsAt <= now);
+        db.restTimers = (db.restTimers || []).filter(t => t.endsAt > now);
+        await saveDb();
+        for (const timer of due) await sendPush(timer.userId, {
+          title: 'Pauza s-a încheiat 💪', body: 'E timpul pentru următoarea serie.', tag: 'rest-timer'
+        });
+        send(res, 200, { ok: true, delivered: due.length }); break;
       }
       case 'POST /api/activity': {
         const user = requireUser(); if (user) send(res, 200, { ok: true }); break;
