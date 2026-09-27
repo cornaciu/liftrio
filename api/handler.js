@@ -129,12 +129,13 @@ export default async function handler(req, res) {
       }
       case 'POST /api/register/options': {
         const name = String(body.name || '').trim().slice(0, 40);
+        const role = body.role === 'trainer' ? 'trainer' : 'member';
         const code = String(body.code || '').trim().toUpperCase();
         if (!name) { send(res, 400, { error: 'name required' }); break; }
         if (INVITE_ONLY && !db.invites.some(i => i.code === code && !i.usedBy && !i.revoked)) { send(res, 403, { error: 'a valid invite code is required' }); break; }
         const uid = crypto.randomBytes(12).toString('base64url');
         const options = await generateRegistrationOptions({ rpName: RP_NAME, rpID: RP_ID, userID: Buffer.from(uid), userName: name, userDisplayName: name, attestationType: 'none', authenticatorSelection: { residentKey: 'required', userVerification: 'preferred' }, excludeCredentials: [] });
-        const cid = await challenge({ challenge: options.challenge, uid, name, code });
+        const cid = await challenge({ challenge: options.challenge, uid, name, code, role });
         send(res, 200, { cid, options }); break;
       }
       case 'POST /api/register/verify': {
@@ -148,7 +149,7 @@ export default async function handler(req, res) {
         if (db.creds.some(x => x.id === credential.id)) { send(res, 409, { error: 'credential already registered' }); break; }
         const invite = INVITE_ONLY ? db.invites.find(i => i.code === c.code && !i.usedBy && !i.revoked) : null;
         if (INVITE_ONLY && !invite) { send(res, 403, { error: 'invite code is no longer valid' }); break; }
-        const user = { id: c.uid, name: c.name, created: new Date().toISOString() };
+        const user = { id: c.uid, name: c.name, created: new Date().toISOString(), trainer: c.role === 'trainer' };
         if (invite) { user.invitedBy = invite.code; invite.usedBy = user.id; invite.usedAt = user.created; }
         db.users.push(user);
         db.creds.push({ id: credential.id, userId: user.id, publicKey: Buffer.from(credential.publicKey).toString('base64url'), counter: credential.counter || 0, transports: body.credential?.response?.transports || [] });

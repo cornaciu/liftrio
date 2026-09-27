@@ -269,6 +269,7 @@ const routes = {
     const body = await readBody(req);
     const name = String(body.name || '').trim().slice(0, 40);
     if (!name) return json(res, 400, { error: 'name required' });
+    const role = body.role === 'trainer' ? 'trainer' : 'member';
     const code = String(body.code || '').trim().toUpperCase();
     if (INVITE_ONLY && !db.invites.some(i => i.code === code && !i.usedBy && !i.revoked))
       return json(res, 403, { error: 'a valid invite code is required' });
@@ -280,7 +281,7 @@ const routes = {
       authenticatorSelection: { residentKey: 'required', userVerification: 'preferred' },
       excludeCredentials: []
     });
-    const cid = putChallenge({ challenge: options.challenge, name, uid, code });
+    const cid = putChallenge({ challenge: options.challenge, name, uid, code, role });
     json(res, 200, { cid, options });
   },
 
@@ -307,7 +308,7 @@ const routes = {
       invite = db.invites.find(i => i.code === c.code && !i.usedBy && !i.revoked);
       if (!invite) return json(res, 403, { error: 'invite code is no longer valid — ask for a new one' });
     }
-    const user = { id: c.uid, name: c.name, created: new Date().toISOString() };
+    const user = { id: c.uid, name: c.name, created: new Date().toISOString(), trainer: c.role === 'trainer' };
     if (invite) { user.invitedBy = invite.code; invite.usedBy = user.id; invite.usedAt = user.created; }
     db.users.push(user);
     db.creds.push({
