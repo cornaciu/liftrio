@@ -125,7 +125,7 @@ export default function Nutrition() {
     <div className="hdr"><button className="iconbtn" onClick={() => nav('/home')} aria-label={t('Home')}><Icon name="chevronLeft" /></button><h1 style={{ marginLeft: 10 }}>{t('Nutrition')}</h1></div>
     <div className="card nutrition-day-card">
       <div className="row between"><button className="iconbtn" onClick={() => moveDay(-1)} aria-label={t('Previous day')}><Icon name="chevronLeft" /></button><strong>{new Date(date + 'T12:00:00').toLocaleDateString(dateLocale(), { weekday: 'long', day: 'numeric', month: 'long' })}</strong><button className="iconbtn" onClick={() => moveDay(1)} aria-label={t('Next day')}><Icon name="chevronRight" /></button></div>
-      <NutritionSummary nutrition={nutrition} date={date} />
+      <NutritionSummary nutrition={nutrition} date={date} state={S} />
       <button className="nutrition-target-toggle" onClick={() => setEditTargets(v => !v)} aria-expanded={editTargets}><Icon name="target" /><span>{editTargets ? t('Hide daily targets') : t('Set daily targets')}</span><Icon name="chevronRight" className={editTargets ? 'nutrition-chevron open' : 'nutrition-chevron'} /></button>
       {editTargets && <div className="nutrition-target-panel">
         <label className="nutrition-input nutrition-kcal-input">{t('Calorie goal')} (kcal)<NumberField value={targets.kcal} onChange={v => setTarget('kcal', v)} decimal={false} /></label>

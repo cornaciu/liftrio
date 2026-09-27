@@ -747,13 +747,21 @@ function DayAssign({ day, close }) {
 export const dayAssignSheet = day => ui().openSheet(close => <DayAssign day={day} close={close} />)
 
 /* ============================ workout detail ============================ */
+const energyCaption = energy => {
+  if (!energy) return t('Record body weight to estimate calories')
+  const basis = energy.durationSource === 'inferred'
+    ? t('Estimated active calories · duration inferred from completed sets')
+    : t('Estimated active calories · based on time, body weight and completed sets')
+  return basis + (energy.weightSource === 'latest' ? ' · ' + t('using your latest body weight') : '')
+}
+
 function WorkoutDetail({ w, close }) {
   const st = useStore(s => s.S)
   const energy = estimateWorkoutEnergy(w, st)
   return <>
     <h3>{w.name}</h3>
-    <div className="muted small" style={{ marginBottom: 12 }}>{[fmtDate(w.d, true), ...durPart(w.end - w.start), fmtVol(w.vol, st.unit), ...(w.bw ? [fmtNum(w.bw) + ' ' + st.unit] : [])].join(' · ')}</div>
-    <div className="workout-energy"><Icon name="flame" /><div><strong>{energy ? `~${fmtNum(energy.kcal)} kcal` : '— kcal'}</strong><small>{energy ? t('Estimated active calories · based on time, body weight and completed sets') : t('A valid duration and body weight are needed for an estimate')}</small></div></div>
+    <div className="muted small" style={{ marginBottom: 12 }}>{[fmtDate(w.d, true), ...(energy?.durationSource === 'inferred' ? [t('~{0} min estimated', energy.minutes)] : durPart(w.end - w.start)), fmtVol(w.vol, st.unit), ...(w.bw ? [fmtNum(w.bw) + ' ' + (w.unit || st.unit)] : [])].join(' · ')}</div>
+    <div className="workout-energy"><Icon name="flame" /><div><strong>{energy ? `~${fmtNum(energy.kcal)} kcal` : '— kcal'}</strong><small>{energyCaption(energy)}</small></div></div>
     {w.entries.map((e, i) => {
       const ex = EXIDX[e.id]
       return <div key={i} className="row" style={{ marginBottom: 12, alignItems: 'flex-start' }}>
@@ -817,7 +825,7 @@ export function WorkoutRow({ w, onClick }) {
   return <div className="item" onClick={onClick}>
     <span className="lrow-i" style={{ width: 34, height: 34, borderRadius: 8, fontSize: 19 }}><Icon name={glyph} /></span>
     <div className="grow"><div className="tt">{w.name}</div>
-      <div className="ss">{[fmtDate(w.d, true), ...durPart(w.end - w.start), t('{0} sets', setsDone(w)), fmtVol(w.vol, st.unit), ...(energy ? [`~${fmtNum(energy.kcal)} kcal`] : [])].join(' · ')}</div></div>
+      <div className="ss">{[fmtDate(w.d, true), ...(energy?.durationSource === 'inferred' ? [t('~{0} min estimated', energy.minutes)] : durPart(w.end - w.start)), t('{0} sets', setsDone(w)), fmtVol(w.vol, st.unit), ...(energy ? [`~${fmtNum(energy.kcal)} kcal`] : [])].join(' · ')}</div></div>
     {w.prs && w.prs.length > 0 && <span className="pr"><Icon name="trophy" />{w.prs.length} PR</span>}
     <Icon name="chevronRight" className="chev" />
   </div>
@@ -918,7 +926,7 @@ function FinishSummary({ w, prs, e1prs = [], close }) {
       <div className="tile"><div className="l">{t('Sets')}</div><div className="v" style={{ fontSize: '1.1rem' }}>{setsDone(w)}</div></div>
       <div className="tile"><div className="l">{t('PRs')}</div><div className="v" style={{ fontSize: 20 }}>{prs.length || '—'}</div></div>
     </div>
-    <div className="workout-energy"><Icon name="flame" /><div><strong>{energy ? `~${fmtNum(energy.kcal)} kcal` : '— kcal'}</strong><small>{energy ? t('Estimated active calories · based on time, body weight and completed sets') : t('A valid duration and body weight are needed for an estimate')}</small></div></div>
+    <div className="workout-energy"><Icon name="flame" /><div><strong>{energy ? `~${fmtNum(energy.kcal)} kcal` : '— kcal'}</strong><small>{energyCaption(energy)}</small></div></div>
     {(prs.length > 0 || e1prs.length > 0) && <div style={{ textAlign: 'left', marginBottom: 12 }}>
       {prs.map(id => <div key={id} className="small accent capitalize row" style={{ gap: 5 }}><Icon name="trophy" style={{ fontSize: 13 }} />{t('New PR:')} {(EXIDX[id] || {}).n || id}</div>)}
       {e1prs.map(p => <div key={p.id} className="small accent capitalize row" style={{ gap: 5 }}><Icon name="chartLine" style={{ fontSize: 13 }} />{t('Best estimated 1RM:')} {(EXIDX[p.id] || {}).n || p.id} · {fmtNum(p.est)} {st.unit}</div>)}

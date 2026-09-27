@@ -848,6 +848,9 @@ h4.sec{
 .nutrition-kicker{display:inline-flex;align-items:center;gap:5px;color:var(--acc);font-size:13px;font-weight:600}
 .nutrition-energy-text>strong{font-size:30px;line-height:1;letter-spacing:-.04em}
 .nutrition-energy-text small{font-size:14px;font-weight:400;color:var(--label-2);letter-spacing:0}
+.nutrition-workout-credit{display:flex;align-items:center;gap:8px;margin:-3px 0 15px;padding:10px 12px;border-radius:11px;background:color-mix(in srgb,var(--acc) 9%,var(--surface-2));color:var(--label);font-size:13px}
+.nutrition-workout-credit .icn{color:var(--acc);font-size:17px}
+.nutrition-workout-credit strong{margin-left:auto;color:var(--acc);font-size:15px;white-space:nowrap}
 .nutrition-macro-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
 .nutrition-macro{font-size:12px;min-width:0;padding:11px 10px;border-radius:11px;background:var(--surface-2)}
 .nutrition-macro .row{margin-bottom:5px}

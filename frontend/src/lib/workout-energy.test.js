@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { estimateWorkoutEnergy } from './workout-energy.js'
+import { estimateWorkoutEnergy, workoutCaloriesForDate } from './workout-energy.js'
 
 const start = new Date('2026-09-27T10:00:00Z').getTime()
 const set = (w = 60, rir = 2) => ({ done: true, w, r: 10, rir })
@@ -30,9 +30,29 @@ describe('workout active calorie estimate', () => {
     expect(result.weightSource).toBe('prior')
   })
 
-  it('does not invent calories for missing duration, missing weight or zero completed sets', () => {
+  it('infers duration for older imports with no usable times', () => {
     const w = workout()
-    expect(estimateWorkoutEnergy({ ...w, end: w.start }, { unit: 'kg' })).toBeNull()
+    const imported = estimateWorkoutEnergy({ ...w, end: w.start, bw: null }, {
+      unit: 'kg', bodyweight: [{ d: '2026-09-28', w: 74 }]
+    })
+    expect(imported.durationSource).toBe('inferred')
+    expect(imported.minutes).toBe(44)
+    expect(imported.weightSource).toBe('latest')
+    expect(imported.kcal).toBeGreaterThan(0)
+  })
+
+  it('totals completed workouts only on their own date', () => {
+    const first = workout()
+    const second = { ...workout(), bw: 75, end: start, id: 'older-import' }
+    const S = { unit: 'kg', bodyweight: [], workouts: [first, second, { ...workout(), d: '2026-09-26' }] }
+    expect(workoutCaloriesForDate(S, '2026-09-27')).toBe(
+      estimateWorkoutEnergy(first, S).kcal + estimateWorkoutEnergy(second, S).kcal
+    )
+    expect(workoutCaloriesForDate(S, '2026-09-25')).toBe(0)
+  })
+
+  it('needs body weight and completed sets to make an estimate', () => {
+    const w = workout()
     expect(estimateWorkoutEnergy({ ...w, bw: null }, { unit: 'kg', bodyweight: [] })).toBeNull()
     expect(estimateWorkoutEnergy(workout([{ done: false, w: 60, r: 10 }]), { unit: 'kg' })).toBeNull()
   })

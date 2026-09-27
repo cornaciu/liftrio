@@ -77,7 +77,7 @@ export default function Home() {
 
     <div className="card tappable" role="button" tabIndex={0} onClick={() => nav('/nutrition')} onKeyDown={e => { if (e.key === 'Enter') nav('/nutrition') }}>
       <div className="row between nutrition-home-head"><h2 style={{ margin: 0 }}><Icon name="flame" /> {t('Nutrition today')}</h2><span className="nutrition-home-action">{t('Open diary')} <Icon name="chevronRight" /></span></div>
-      <NutritionSummary nutrition={S.nutrition} date={todayISO()} compact />
+      <NutritionSummary nutrition={S.nutrition} date={todayISO()} state={S} compact />
     </div>
 
     {!S.routines.length && !S.active && (
