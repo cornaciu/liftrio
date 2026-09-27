@@ -134,3 +134,17 @@ export function microTotalsToUpdate(existing = {}, imported = {}, tolerance = 0.
     )
   }))
 }
+
+/** Keep the imported daily summary on the journal rows as a durable fallback. */
+export function attachDailyMicros(entries = [], dailyMicros = {}) {
+  const attachedDates = new Set()
+  return entries.map(entry => {
+    const copy = { ...entry }
+    delete copy.dailyMicros
+    if (copy.source === 'eat-track' && dailyMicros[copy.date] && !attachedDates.has(copy.date)) {
+      copy.dailyMicros = { ...dailyMicros[copy.date] }
+      attachedDates.add(copy.date)
+    }
+    return copy
+  })
+}

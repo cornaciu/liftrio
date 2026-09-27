@@ -5,7 +5,7 @@ import { t, dateLocale } from '../lib/i18n.js'
 import { todayISO, isoOf, fmtNum } from '../lib/format.js'
 import { DEFAULT_TARGETS, NUTRIENTS, caloriesFromMacros, foodFromProduct, totalsFor } from '../lib/nutrition.js'
 import { groupFoodResults, rankFoodResults } from '../lib/foodSearch.js'
-import { foodsFromEntries, mergeImportedEntries, microTotalsToUpdate, parseEatTrackWorkbook } from '../lib/nutrition-import.js'
+import { attachDailyMicros, foodsFromEntries, mergeImportedEntries, microTotalsToUpdate, parseEatTrackWorkbook } from '../lib/nutrition-import.js'
 import { Button, NumberField, TextField } from '../components/ui.jsx'
 import Icon from '../components/Icon.jsx'
 import NutritionSummary from '../components/NutritionSummary.jsx'
@@ -134,7 +134,7 @@ export default function Nutrition() {
       const freshEntries = importPreview.entries.map(entry => ({ ...entry, per100: { ...entry.per100 } }))
       const merged = mergeImportedEntries(s.nutrition.entries, freshEntries)
       const library = foodsFromEntries(merged.additions, s.nutrition.foods)
-      s.nutrition.entries = merged.entries
+      s.nutrition.entries = attachDailyMicros(merged.entries, importPreview.dailyMicros || {})
       s.nutrition.foods = library.foods
       Object.assign(s.nutrition.dailyMicros, importPreview.dailyMicros || {})
     })

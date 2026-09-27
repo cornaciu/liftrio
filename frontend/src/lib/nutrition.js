@@ -36,16 +36,19 @@ export function foodFromProduct(product) {
 
 export function totalsFor(entries, date, importedMicros = {}) {
   const totals = Object.fromEntries(NUTRIENTS.map(key => [key, 0]));
+  let embeddedSummary = null
   // Eat & Track's itemized sheet omits fiber and salt, but its daily summary includes both.
   // Keep these source totals as a dated baseline, then add foods logged in openGym afterward.
   for (const entry of entries || []) {
     if (entry.date !== date) continue;
+    if (entry.source === 'eat-track' && entry.dailyMicros) embeddedSummary = entry.dailyMicros
     const factor = clean(entry.grams) / 100;
     for (const key of ['kcal', 'protein', 'carbs', 'fat']) totals[key] += clean(entry.per100?.[key]) * factor;
     if (entry.source !== 'eat-track') {
       for (const key of ['fiber', 'salt']) totals[key] += clean(entry.per100?.[key]) * factor;
     }
   }
-  for (const key of ['fiber', 'salt']) totals[key] += clean(importedMicros?.[date]?.[key]);
+  const dailySummary = embeddedSummary || importedMicros?.[date]
+  for (const key of ['fiber', 'salt']) totals[key] += clean(dailySummary?.[key]);
   return Object.fromEntries(NUTRIENTS.map(key => [key, Math.round(totals[key] * 10) / 10]));
 }

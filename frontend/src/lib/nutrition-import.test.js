@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { foodsFromEntries, mergeImportedEntries, microTotalsToUpdate, parseEatTrackWorkbook, sameLibraryFood } from './nutrition-import.js'
+import { attachDailyMicros, foodsFromEntries, mergeImportedEntries, microTotalsToUpdate, parseEatTrackWorkbook, sameLibraryFood } from './nutrition-import.js'
 import { totalsFor } from './nutrition.js'
 
 const workbook = { SheetNames: ['Jurnal', 'Jurnal (Sumar)'], Sheets: { Jurnal: [
@@ -49,6 +49,13 @@ describe('Eat & Track nutrition import', () => {
     expect(microTotalsToUpdate({}, incoming)).toEqual(incoming)
     expect(microTotalsToUpdate(incoming, incoming)).toEqual({})
     expect(microTotalsToUpdate({ '2026-09-22': { fiber: 0, salt: 0 } }, incoming)).toEqual(incoming)
+  })
+
+  it('persists daily Eat & Track micronutrients with journal rows as a sync-safe fallback', () => {
+    const parsed = parseEatTrackWorkbook(workbook, () => 'entry')
+    const attached = attachDailyMicros(parsed.entries, parsed.dailyMicros)
+    expect(attached.filter(entry => entry.dailyMicros)).toHaveLength(1)
+    expect(totalsFor(attached, '2026-09-22')).toMatchObject({ fiber: 24.5, salt: 5.2 })
   })
 
   it('rejects exports without the detailed food journal', () => {
