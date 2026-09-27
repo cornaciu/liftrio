@@ -21,4 +21,14 @@ describe('daily nutrition and workout balance', () => {
     const otherDate = renderToStaticMarkup(<NutritionSummary nutrition={nutrition} date="2026-09-26" state={S} />)
     expect(otherDate).not.toContain('Workout calories')
   })
+
+  it('centers the calorie value and shows imported fiber and salt totals', () => {
+    const date = '2026-09-27'
+    const html = renderToStaticMarkup(<NutritionSummary nutrition={{ entries: [], dailyMicros: { [date]: { fiber: 17.77, salt: 9.069 } } }} date={date} state={{ workouts: [] }} />)
+    expect(html).toContain('class="nutrition-ring-center"')
+    expect(html).toContain('Fiber')
+    expect(html).toContain('17.8')
+    expect(html).toContain('Salt')
+    expect(html).toContain('9.1')
+  })
 })

@@ -872,9 +872,9 @@ h4.sec{
 .nutrition-summary{padding:16px 2px 2px}
 .nutrition-energy{display:flex;align-items:center;gap:22px;padding:4px 0 18px}
 .nutrition-ring{width:114px;height:114px;flex:none;border-radius:50%;padding:8px;background:conic-gradient(var(--acc) var(--progress),var(--surface-3) 0);box-shadow:0 0 0 4px var(--surface-2)}
-.nutrition-ring>div{width:100%;height:100%;background:var(--surface);border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center}
-.nutrition-ring strong{font-size:25px;line-height:1.1;letter-spacing:-.04em}
-.nutrition-ring span{font-size:11px;color:var(--label-2);white-space:nowrap}
+.nutrition-ring-center{width:100%;height:100%;background:var(--surface);border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-align:center;overflow:hidden}
+.nutrition-ring strong{display:block;max-width:100%;font-size:clamp(14px,5vw,21px);line-height:1.05;letter-spacing:-.045em;font-variant-numeric:tabular-nums;white-space:nowrap;text-align:center}
+.nutrition-ring span{display:block;width:100%;font-size:11px;line-height:1.1;color:var(--label-2);white-space:nowrap;text-align:center}
 .nutrition-energy-text{display:flex;flex-direction:column;gap:5px;min-width:0}
 .nutrition-kicker{display:inline-flex;align-items:center;gap:5px;color:var(--acc);font-size:13px;font-weight:600}
 .nutrition-energy-text>strong{font-size:30px;line-height:1;letter-spacing:-.04em}
@@ -890,24 +890,35 @@ h4.sec{
 .nutrition-macro-label:before{content:"";width:7px;height:7px;flex:none;border-radius:50%;background:var(--macro-color)}
 .nutrition-macro .row span:last-child{font-variant-numeric:tabular-nums}
 .nutrition-macro .nutrition-track i{background:var(--macro-color)}
+.nutrition-micro-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:9px}
+.nutrition-micro{min-width:0;padding:10px;border-radius:10px;background:var(--surface-2);font-size:12px}
+.nutrition-micro-head{display:flex;align-items:center;justify-content:space-between;gap:6px;min-width:0}
+.nutrition-micro-head>span:last-child{white-space:nowrap;font-variant-numeric:tabular-nums}
+.nutrition-micro-head strong{font-size:14px}
+.nutrition-micro .nutrition-track{margin-top:7px}
+.nutrition-micro .nutrition-track i{background:var(--macro-color)}
 .nutrition-summary.compact{padding:14px 0 0}
 .nutrition-summary.compact .nutrition-ring{width:82px;height:82px;padding:6px}
-.nutrition-summary.compact .nutrition-ring strong{font-size:20px}
+.nutrition-summary.compact .nutrition-ring strong{font-size:clamp(11px,3.4vw,15px)}
 .nutrition-summary.compact .nutrition-energy{gap:16px;padding-bottom:13px}
 .nutrition-summary.compact .nutrition-energy-text>strong{font-size:26px}
 .nutrition-summary.compact .nutrition-macro-list{gap:8px}
 .nutrition-summary.compact .nutrition-macro{font-size:11px}
 .nutrition-summary.compact .nutrition-macro .row{gap:3px}
+.nutrition-summary.compact .nutrition-micro-list{gap:8px;margin-top:8px}
+.nutrition-summary.compact .nutrition-micro{padding:9px 8px;font-size:11px}
+.nutrition-summary.compact .nutrition-micro-head strong{font-size:13px}
 .nutrition-home-head{gap:12px}
 .nutrition-home-head h2{display:flex;align-items:center;gap:8px;font-size:19px}
 .nutrition-home-head h2 .icn{color:var(--acc)}
 .nutrition-home-action{display:inline-flex;align-items:center;gap:4px;flex:none;padding:8px 9px;border-radius:9px;background:var(--acc-soft);color:var(--acc);font-size:13px;font-weight:600}
 .nutrition-day-card{padding-bottom:16px}
 .nutrition-day-card>.row strong{text-align:center;font-size:15px}
-.nutrition-section-head{display:flex;align-items:baseline;justify-content:space-between;margin:22px 3px 10px}
+.nutrition-section-head{display:flex;flex-direction:column;align-items:stretch;gap:9px;margin:22px 3px 10px}
 .nutrition-section-head h2{font-size:21px;margin:0}
-.nutrition-section-head>div{min-width:0}
-.nutrition-section-head>.btn{flex:none;min-height:38px;padding:8px 10px;font-size:12px;white-space:nowrap}
+.nutrition-section-title{display:flex;align-items:baseline;justify-content:space-between;gap:10px;min-width:0}
+.nutrition-section-title h2{min-width:0}
+.nutrition-section-head>.btn{align-self:flex-start;min-height:38px;padding:8px 12px;font-size:13px;white-space:nowrap}
 .nutrition-import-preview{display:grid;gap:9px;margin-bottom:12px;padding:14px!important}
 .nutrition-import-preview>div:first-child{display:flex;flex-direction:column;gap:3px;min-width:0}
 .nutrition-import-preview p{margin:0;line-height:1.45}
@@ -937,6 +948,7 @@ h4.sec{
 .nutrition-target-panel{display:grid;gap:14px;margin-top:15px;padding:15px;border-radius:12px;background:var(--surface-2)}
 .nutrition-kcal-input .num{font-size:21px;font-weight:600}
 .nutrition-target-macros{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.nutrition-target-micros{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
 .nutrition-target-panel .nutrition-input .num{background:var(--surface);min-width:0}
 .nutrition-calculated{padding:12px;border-radius:10px;background:var(--surface);font-size:13px}
 .nutrition-calculated>div{display:flex;justify-content:space-between;gap:8px;align-items:baseline}

@@ -9,9 +9,13 @@ const MACROS = [
   ['carbs', 'Carbs', 'var(--orange)'],
   ['fat', 'Fat', 'var(--pink)']
 ]
+const MICROS = [
+  ['fiber', 'Fiber', 'var(--teal)'],
+  ['salt', 'Salt', 'var(--purple)']
+]
 
 export default function NutritionSummary({ nutrition, date, state, compact = false }) {
-  const totals = totalsFor(nutrition?.entries, date)
+  const totals = totalsFor(nutrition?.entries, date, nutrition?.dailyMicros)
   const targets = { ...DEFAULT_TARGETS, ...nutrition?.targets }
   const workoutKcal = workoutCaloriesForDate(state, date)
   const available = Number(targets.kcal) + workoutKcal
@@ -21,7 +25,7 @@ export default function NutritionSummary({ nutrition, date, state, compact = fal
   return <div className={'nutrition-summary' + (compact ? ' compact' : '')}>
     <div className="nutrition-energy">
       <div className="nutrition-ring" style={{ '--progress': `${progress}%` }}>
-        <div><strong>{fmtNum(totals.kcal)}</strong><span>kcal</span></div>
+        <div className="nutrition-ring-center"><strong>{fmtNum(totals.kcal)}</strong><span>kcal</span></div>
       </div>
       <div className="nutrition-energy-text">
         <span className="nutrition-kicker"><Icon name="flame" /> {targets.kcal ? t(remaining >= 0 ? 'Remaining today' : 'Over target') : t('Calories today')}</span>
@@ -33,6 +37,10 @@ export default function NutritionSummary({ nutrition, date, state, compact = fal
     <div className="nutrition-macro-list">{MACROS.map(([key, label, color]) => <div className="nutrition-macro" key={key} style={{ '--macro-color': color }}>
       <div className="row between"><span className="nutrition-macro-label">{t(label)}</span><span><strong>{fmtNum(totals[key])}</strong>{targets[key] > 0 && <span className="muted"> / {fmtNum(targets[key])}</span>} g</span></div>
       <div className="nutrition-track"><i style={{ width: `${Math.min(100, targets[key] ? totals[key] / targets[key] * 100 : 0)}%` }} /></div>
+    </div>)}</div>
+    <div className="nutrition-micro-list">{MICROS.map(([key, label, color]) => <div className="nutrition-micro" key={key} style={{ '--macro-color': color }}>
+      <div className="nutrition-micro-head"><span className="nutrition-macro-label">{t(label)}</span><span><strong>{fmtNum(totals[key])}</strong>{targets[key] > 0 && <span className="muted"> / {fmtNum(targets[key])}</span>} g</span></div>
+      {targets[key] > 0 && <div className="nutrition-track"><i style={{ width: `${Math.min(100, totals[key] / targets[key] * 100)}%` }} /></div>}
     </div>)}</div>
   </div>
 }

@@ -1,5 +1,7 @@
 import { NUTRIENTS } from './nutrition.js'
 
+const MACROS = ['kcal', 'protein', 'carbs', 'fat']
+
 const MONTHS_RO = {
   ianuarie: 1, februarie: 2, martie: 3, aprilie: 4, mai: 5, iunie: 6,
   iulie: 7, august: 8, septembrie: 9, octombrie: 10, noiembrie: 11, decembrie: 12
@@ -18,6 +20,12 @@ function dateFromHeader(value) {
   const month = MONTHS_RO[key(match[2])]
   if (!month) return null
   return `${match[3]}-${String(month).padStart(2, '0')}-${String(match[1]).padStart(2, '0')}`
+}
+
+function dateFromSummary(value) {
+  const match = text(value).match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/)
+  if (!match) return null
+  return `${match[3]}-${String(match[2]).padStart(2, '0')}-${String(match[1]).padStart(2, '0')}`
 }
 
 function gramsFromServing(value) {
@@ -40,6 +48,26 @@ export function parseEatTrackWorkbook(workbook, idFactory = () => crypto.randomU
   const rows = workbook.Sheets[sheetName]
   const entries = []
   const skipped = []
+  const summarySheet = workbook.SheetNames?.find(name => key(name).startsWith('jurnal sumar'))
+  const dailyMicros = {}
+  if (summarySheet) {
+    const summaryRows = workbook.Sheets[summarySheet] || []
+    const header = (summaryRows[0] || []).map(key)
+    const dateIndex = header.indexOf('data')
+    const fiberIndex = header.findIndex(value => value.startsWith('fibre') || value.startsWith('fiber'))
+    const saltIndex = header.findIndex(value => value.startsWith('sare') || value.startsWith('salt'))
+    const saltScale = saltIndex >= 0 && header[saltIndex].includes('mg') ? 1000 : 1
+    if (dateIndex >= 0) {
+      for (const row of summaryRows.slice(1)) {
+        const summaryDate = dateFromSummary(row[dateIndex])
+        if (!summaryDate) continue
+        dailyMicros[summaryDate] = {
+          ...(fiberIndex >= 0 ? { fiber: number(row[fiberIndex]) } : {}),
+          ...(saltIndex >= 0 ? { salt: number(row[saltIndex]) / saltScale } : {})
+        }
+      }
+    }
+  }
   let date = null
   let meal = null
   let inFoodTable = false
@@ -58,11 +86,11 @@ export function parseEatTrackWorkbook(workbook, idFactory = () => crypto.randomU
     const consumed = {
       protein: number(row[2]), carbs: number(row[3]), fat: number(row[4]), kcal: number(row[5])
     }
-    if (!grams || !NUTRIENTS.every(nutrient => Number.isFinite(consumed[nutrient]))) {
+    if (!grams || !MACROS.every(nutrient => Number.isFinite(consumed[nutrient]))) {
       skipped.push({ name, row: rowIndex + 1, reason: !grams ? 'missing serving weight' : 'invalid nutrition values' })
       continue
     }
-    const per100 = Object.fromEntries(NUTRIENTS.map(nutrient => [nutrient, Math.round(consumed[nutrient] / grams * 1000) / 10]))
+    const per100 = Object.fromEntries(NUTRIENTS.map(nutrient => [nutrient, MACROS.includes(nutrient) ? Math.round(consumed[nutrient] / grams * 1000) / 10 : 0]))
     entries.push({
       id: idFactory(), importRef: `eat-track:${date}:${rowIndex + 1}`, source: 'eat-track',
       date, meal, name, brand: '', grams, per100
@@ -70,7 +98,7 @@ export function parseEatTrackWorkbook(workbook, idFactory = () => crypto.randomU
   }
 
   if (!entries.length) throw new Error('No food entries with measurable portions were found in the “Jurnal” sheet.')
-  return { entries, skipped }
+  return { entries, skipped, dailyMicros }
 }
 
 export function sameLibraryFood(a, b) {

@@ -11,7 +11,7 @@ import Icon from '../components/Icon.jsx'
 import NutritionSummary from '../components/NutritionSummary.jsx'
 
 const MEALS = ['Breakfast', 'Lunch', 'Dinner', 'Snacks']
-const LABELS = { kcal: 'Calories', protein: 'Protein', carbs: 'Carbs', fat: 'Fat' }
+const LABELS = { kcal: 'Calories', protein: 'Protein', carbs: 'Carbs', fat: 'Fat', fiber: 'Fiber', salt: 'Salt' }
 
 async function lookup(params) {
   const response = await fetch('/api/food?' + new URLSearchParams(params))
@@ -77,7 +77,7 @@ export default function Nutrition() {
   const importRef = useRef(null)
   const addRef = useRef(null)
   const [custom, setCustom] = useState({ name: '', kcal: 0, protein: 0, carbs: 0, fat: 0 })
-  const totals = totalsFor(entries, date)
+  const totals = totalsFor(entries, date, nutrition.dailyMicros)
   const selected = entries.filter(e => e.date === date)
   const recent = [...entries].reverse().filter((e, i, all) => all.findIndex(other => (other.code || other.name) === (e.code || e.name)) === i).slice(0, 6)
   useEffect(() => { if (showAdd) addRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }) }, [showAdd, meal])
@@ -129,11 +129,13 @@ export default function Nutrition() {
       s.nutrition ||= { targets: DEFAULT_TARGETS, entries: [], foods: [] }
       s.nutrition.entries ||= []
       s.nutrition.foods ||= []
+      s.nutrition.dailyMicros ||= {}
       const freshEntries = importPreview.entries.map(entry => ({ ...entry, per100: { ...entry.per100 } }))
       const merged = mergeImportedEntries(s.nutrition.entries, freshEntries)
       const library = foodsFromEntries(merged.additions, s.nutrition.foods)
       s.nutrition.entries = merged.entries
       s.nutrition.foods = library.foods
+      Object.assign(s.nutrition.dailyMicros, importPreview.dailyMicros || {})
     })
     if (lastImportedDate) setDate(lastImportedDate)
     setMessage(t('Eat & Track import completed.'))
@@ -159,7 +161,7 @@ export default function Nutrition() {
     s.nutrition.targets ||= {}
     const previous = { ...DEFAULT_TARGETS, ...s.nutrition.targets }
     s.nutrition.targets[key] = value
-    if (key !== 'kcal' && (!previous.kcal || previous.kcal === caloriesFromMacros(previous))) {
+    if (['protein', 'carbs', 'fat'].includes(key) && (!previous.kcal || previous.kcal === caloriesFromMacros(previous))) {
       s.nutrition.targets.kcal = caloriesFromMacros(s.nutrition.targets)
     }
   })
@@ -173,24 +175,26 @@ export default function Nutrition() {
       {editTargets && <div className="nutrition-target-panel">
         <label className="nutrition-input nutrition-kcal-input">{t('Calorie goal')} (kcal)<NumberField value={targets.kcal} onChange={v => setTarget('kcal', v)} decimal={false} /></label>
         <div className="nutrition-target-macros">{['protein', 'carbs', 'fat'].map(k => <label key={k} className="nutrition-input">{t(LABELS[k])} (g)<NumberField value={targets[k]} onChange={v => setTarget(k, v)} /></label>)}</div>
+        <div className="nutrition-target-micros">{['fiber', 'salt'].map(k => <label key={k} className="nutrition-input">{t(LABELS[k])} (g)<NumberField value={targets[k]} onChange={v => setTarget(k, v)} /></label>)}</div>
         <div className="nutrition-calculated"><div><span>{t('Calculated from macros')}</span><strong>{fmtNum(macroCalories)} kcal</strong></div><small>{t('Protein and carbs: 4 kcal/g · fat: 9 kcal/g')}</small></div>
         {Math.abs(targetDifference) >= 1 && <div className="nutrition-target-difference"><span>{t('Difference from calorie goal')}: {fmtNum(Math.abs(targetDifference))} kcal</span><button onClick={() => setTarget('kcal', macroCalories)}>{t('Use macro total')}</button></div>}
       </div>}
     </div>
 
-    <div className="nutrition-section-head"><div><h2>{t('Food diary')}</h2><span className="small muted">{fmtNum(totals.kcal)} kcal</span></div><Button type="button" variant="tinted" icon="upload" onClick={() => importRef.current?.click()}>{t('Import Eat & Track')}</Button></div>
+    <div className="nutrition-section-head"><div className="nutrition-section-title"><h2>{t('Food diary')}</h2><span className="small muted">{fmtNum(totals.kcal)} kcal</span></div><Button type="button" variant="tinted" icon="upload" onClick={() => importRef.current?.click()}>{t('Import Eat & Track')}</Button></div>
     <input ref={importRef} type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden onChange={event => { const file = event.target.files?.[0]; if (file) readEatTrack(file); event.target.value = '' }} />
     {importBusy && <div className="card nutrition-import-preview"><span>{t('Reading Eat & Track export…')}</span></div>}
     {importPreview && <div className="card nutrition-import-preview" role="status">
       <div><strong>{t('Ready to import from Eat & Track')}</strong><span className="small muted">{importPreview.fileName}</span></div>
       <p className="small muted">{t('{0} food entries across {1} days', importPreview.entries.length, importPreview.dates.length)} · {importPreview.dates[0]}{importPreview.dates.length > 1 ? ` – ${importPreview.dates[importPreview.dates.length - 1]}` : ''}</p>
       <p className="small muted">{t('{0} entries will be added; {1} new foods will be saved to your library.', importPreview.newEntryCount, importPreview.newFoodCount)}{importPreview.duplicateCount ? ` ${t('{0} already imported entries will be skipped.', importPreview.duplicateCount)}` : ''}</p>
+      {Object.keys(importPreview.dailyMicros || {}).length > 0 && <p className="small muted">{t('Fiber and salt totals from the daily summary will also be imported.')}</p>}
       {importPreview.skipped.length > 0 && <p className="small muted">{t('{0} entries without a readable portion weight will be skipped.', importPreview.skipped.length)}</p>}
       <div className="nutrition-import-actions"><Button type="button" variant="primary" onClick={confirmEatTrackImport} disabled={!importPreview.newEntryCount}>{t('Import foods and diary')}</Button><Button type="button" variant="tinted" onClick={() => setImportPreview(null)}>{t('Cancel')}</Button></div>
     </div>}
     {MEALS.map(m => { const items = selected.filter(e => e.meal === m); const mealCalories = items.reduce((sum, e) => sum + (e.per100?.kcal || 0) * e.grams / 100, 0); return <div className="card nutrition-meal-card" key={m}>
       <div className="nutrition-meal-head"><div><h3>{t(m)}</h3><span className="small muted">{items.length ? `${fmtNum(mealCalories)} kcal · ${items.length} ${t('foods')}` : t('Nothing logged yet')}</span></div><button className="nutrition-add" onClick={() => openAdd(m)} aria-label={`${t('Add food')} · ${t(m)}`}><Icon name="plus" /> {t('Add food')}</button></div>
-      {items.map(entry => <div key={entry.id} className="nutrition-entry"><div><strong>{entry.name}</strong><div className="small muted">{fmtNum(entry.grams)} g · P {fmtNum(entry.per100.protein * entry.grams / 100)} g · C {fmtNum(entry.per100.carbs * entry.grams / 100)} g · F {fmtNum(entry.per100.fat * entry.grams / 100)} g</div></div><div className="nutrition-entry-side"><strong>{fmtNum(entry.per100.kcal * entry.grams / 100)}</strong><button className="iconbtn" aria-label={t('Delete')} onClick={() => update(s => { s.nutrition.entries = s.nutrition.entries.filter(e => e.id !== entry.id) })}><Icon name="trash" /></button></div></div>)}
+      {items.map(entry => <div key={entry.id} className="nutrition-entry"><div><strong>{entry.name}</strong><div className="small muted">{fmtNum(entry.grams)} g · P {fmtNum(entry.per100.protein * entry.grams / 100)} g · C {fmtNum(entry.per100.carbs * entry.grams / 100)} g · F {fmtNum(entry.per100.fat * entry.grams / 100)} g{(entry.per100.fiber || entry.per100.salt) ? ` · ${t('Fiber')} ${fmtNum((entry.per100.fiber || 0) * entry.grams / 100)} g · ${t('Salt')} ${fmtNum((entry.per100.salt || 0) * entry.grams / 100)} g` : ''}</div></div><div className="nutrition-entry-side"><strong>{fmtNum(entry.per100.kcal * entry.grams / 100)}</strong><button className="iconbtn" aria-label={t('Delete')} onClick={() => update(s => { s.nutrition.entries = s.nutrition.entries.filter(e => e.id !== entry.id) })}><Icon name="trash" /></button></div></div>)}
     </div> })}
 
     {showAdd && <div className="card nutrition-add-panel" ref={addRef}>
@@ -209,10 +213,10 @@ export default function Nutrition() {
         ? <button key={`${group.name}-${group.brand}-${i}`} className="nutrition-result" onClick={() => select(group.variants[0])}><span><strong>{group.name}</strong><small>{group.brand}</small></span><span>{fmtNum(group.variants[0].per100.kcal)} kcal / 100 g</span></button>
         : <details key={`${group.name}-${group.brand}-${i}`} className="nutrition-result-group">
           <summary className="nutrition-result"><span><strong>{group.name}</strong><small>{group.brand || t('Unbranded entry')} · {group.variants.length} {t('options')}</small></span><span>{t('Choose')}</span></summary>
-          <div className="nutrition-result-variants">{group.variants.map((item, variantIndex) => <button key={item.code || `${item.per100.kcal}-${item.per100.protein}-${item.per100.carbs}-${item.per100.fat}-${variantIndex}`} className="nutrition-result-variant" onClick={() => select(item)}><span>{t('Option')} {variantIndex + 1}</span><span>{fmtNum(item.per100.kcal)} kcal / 100 g<small>P {fmtNum(item.per100.protein)} g · C {fmtNum(item.per100.carbs)} g · F {fmtNum(item.per100.fat)} g</small></span></button>)}</div>
+          <div className="nutrition-result-variants">{group.variants.map((item, variantIndex) => <button key={item.code || `${item.per100.kcal}-${item.per100.protein}-${item.per100.carbs}-${item.per100.fat}-${variantIndex}`} className="nutrition-result-variant" onClick={() => select(item)}><span>{t('Option')} {variantIndex + 1}</span><span>{fmtNum(item.per100.kcal)} kcal / 100 g<small>P {fmtNum(item.per100.protein)} g · C {fmtNum(item.per100.carbs)} g · F {fmtNum(item.per100.fat)} g · Fi {fmtNum(item.per100.fiber || 0)} g · {t('Salt')}: {fmtNum(item.per100.salt || 0)} g</small></span></button>)}</div>
         </details>)}
-      {manual && <div className="nutrition-form"><TextField value={custom.name} onChange={e => setCustom({ ...custom, name: e.target.value })} placeholder={t('Food name')} /><p className="small muted">{t('Nutrition values per 100 g, from the product label.')}</p><div className="nutrition-grid">{NUTRIENTS.map(k => <label key={k} className="nutrition-input">{t(LABELS[k])}<NumberField value={custom[k]} onChange={v => setCustom(c => ({ ...c, [k]: v }))} /></label>)}</div><Button onClick={saveCustom}>{t('Continue')}</Button></div>}
-      {food && <div className="nutrition-form"><strong>{food.name}</strong>{food.brand && <span className="small muted">{food.brand}</span>}<p className="small muted">{t('Check the product label. Values are per 100 g.')}: {NUTRIENTS.map(k => `${t(LABELS[k])}: ${fmtNum(food.per100[k])}`).join(' · ')}</p><label className="nutrition-input">{t('Amount eaten (g)')}<NumberField value={grams} onChange={setGrams} /></label><Button variant="primary" onClick={add} disabled={!grams || grams > 10000}>{t('Add to diary')}</Button></div>}
+      {manual && <div className="nutrition-form"><TextField value={custom.name} onChange={e => setCustom({ ...custom, name: e.target.value })} placeholder={t('Food name')} /><p className="small muted">{t('Nutrition values per 100 g, from the product label.')}</p><div className="nutrition-grid">{NUTRIENTS.map(k => <label key={k} className="nutrition-input">{t(LABELS[k])}{k === 'salt' ? ' (g)' : k === 'fiber' ? ' (g)' : ''}<NumberField value={custom[k] ?? 0} onChange={v => setCustom(c => ({ ...c, [k]: v }))} /></label>)}</div><Button onClick={saveCustom}>{t('Continue')}</Button></div>}
+      {food && <div className="nutrition-form"><strong>{food.name}</strong>{food.brand && <span className="small muted">{food.brand}</span>}<p className="small muted">{t('Check the product label. Values are per 100 g.')}: {NUTRIENTS.map(k => `${t(LABELS[k])}: ${fmtNum(food.per100[k] || 0)}${k === 'kcal' ? '' : ' g'}`).join(' · ')}</p><label className="nutrition-input">{t('Amount eaten (g)')}<NumberField value={grams} onChange={setGrams} /></label><Button variant="primary" onClick={add} disabled={!grams || grams > 10000}>{t('Add to diary')}</Button></div>}
       <p className="nutrition-source-note">{t('Product data: Open Food Facts. Check the label before logging.')}</p>
     </div>}
   </div>

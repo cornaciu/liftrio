@@ -12,7 +12,7 @@ const normalize = value => String(value || '')
       : word)
   .join(' ')
 
-const macroKey = item => ['kcal', 'protein', 'carbs', 'fat']
+const macroKey = item => ['kcal', 'protein', 'carbs', 'fat', 'fiber', 'salt']
   .map(key => Math.round((Number(item.per100?.[key]) || 0) * 10) / 10)
   .join(':')
 
