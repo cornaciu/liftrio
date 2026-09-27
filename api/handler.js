@@ -3,6 +3,7 @@
 import crypto from 'node:crypto';
 import pg from 'pg';
 import webpush from 'web-push';
+import { coachingRoute, roleOf } from '../shared/coaching.js';
 import {
   generateRegistrationOptions, verifyRegistrationResponse,
   generateAuthenticationOptions, verifyAuthenticationResponse
@@ -26,7 +27,7 @@ const INVITE_ONLY = /^(1|true|yes|on)$/i.test(process.env.INVITE_ONLY || '');
 const ADMIN_UIDS = (process.env.ADMIN_UIDS || '').split(',').map(s => s.trim()).filter(Boolean);
 const SESSION_DAYS = Math.max(1, +(process.env.SESSION_DAYS || 90) || 90);
 const SECURE = ORIGIN.startsWith('https:') ? ' Secure;' : '';
-const emptyDb = () => ({ users: [], creds: [], subs: [], invites: [] });
+const emptyDb = () => ({ users: [], creds: [], subs: [], invites: [], coachLinks: [], coachPlans: [] });
 const isAdmin = user => !!user && (user.admin === true || ADMIN_UIDS.includes(user.id));
 const bodyOf = req => {
   if (typeof req.body === 'string') return JSON.parse(req.body || '{}');
@@ -112,12 +113,18 @@ export default async function handler(req, res) {
       await saveDb();
     };
 
+    if (await coachingRoute({ key, db, user: readSession(), body, saveDb,
+      reply: (code, payload) => send(res, code, payload), adminUids: ADMIN_UIDS })) {
+      await client.query('commit');
+      return;
+    }
+
     switch (key) {
       case 'GET /api/health': send(res, 200, { ok: true, users: db.users.length }); break;
       case 'GET /api/config': send(res, 200, { invite_only: INVITE_ONLY }); break;
       case 'GET /api/me': {
         const user = requireUser();
-        if (user) send(res, 200, { user: { id: user.id, name: user.name, admin: isAdmin(user) } });
+        if (user) send(res, 200, { user: { id: user.id, name: user.name, admin: isAdmin(user), role: roleOf(user, ADMIN_UIDS) } });
         break;
       }
       case 'POST /api/register/options': {
@@ -146,7 +153,7 @@ export default async function handler(req, res) {
         db.users.push(user);
         db.creds.push({ id: credential.id, userId: user.id, publicKey: Buffer.from(credential.publicKey).toString('base64url'), counter: credential.counter || 0, transports: body.credential?.response?.transports || [] });
         await saveDb();
-        send(res, 200, { user: { id: user.id, name: user.name, admin: isAdmin(user) } }, { 'Set-Cookie': sessionCookie(user) }); break;
+        send(res, 200, { user: { id: user.id, name: user.name, admin: isAdmin(user), role: roleOf(user, ADMIN_UIDS) } }, { 'Set-Cookie': sessionCookie(user) }); break;
       }
       case 'POST /api/login/options': {
         const options = await generateAuthenticationOptions({ rpID: RP_ID, userVerification: 'preferred', allowCredentials: [] });
@@ -167,7 +174,7 @@ export default async function handler(req, res) {
         const user = db.users.find(u => u.id === cred.userId);
         if (!user) send(res, 500, { error: 'user missing' });
         else if (user.disabled) send(res, 403, { error: 'this account has been disabled' });
-        else send(res, 200, { user: { id: user.id, name: user.name, admin: isAdmin(user) } }, { 'Set-Cookie': sessionCookie(user) });
+        else send(res, 200, { user: { id: user.id, name: user.name, admin: isAdmin(user), role: roleOf(user, ADMIN_UIDS) } }, { 'Set-Cookie': sessionCookie(user) });
         break;
       }
       case 'POST /api/logout': send(res, 200, { ok: true }, { 'Set-Cookie': clearCookie }); break;
@@ -219,7 +226,7 @@ export default async function handler(req, res) {
         const users = await Promise.all(db.users.map(async u => {
           const S = await stateOf(u.id) || {};
           const workouts = S.workouts || [];
-          return { id: u.id, name: u.name, created: u.created || null, disabled: !!u.disabled, admin: isAdmin(u), invitedBy: u.invitedBy || null, workouts: workouts.length, lastWorkout: workouts.at(-1)?.d || null, lastSync: S._ts || null, hasPush: db.subs.some(s => s.userId === u.id), live: null };
+          return { id: u.id, name: u.name, created: u.created || null, disabled: !!u.disabled, admin: isAdmin(u), role: roleOf(u, ADMIN_UIDS), invitedBy: u.invitedBy || null, workouts: workouts.length, lastWorkout: workouts.at(-1)?.d || null, lastSync: S._ts || null, hasPush: db.subs.some(s => s.userId === u.id), live: null };
         }));
         send(res, 200, { users, invite_only: INVITE_ONLY, now: Date.now() }); break;
       }
@@ -229,14 +236,21 @@ export default async function handler(req, res) {
         const u = db.users.find(x => x.id === id);
         if (!u) { send(res, 404, { error: 'no such user' }); break; }
         const S = await stateOf(u.id) || {};
-        send(res, 200, { user: { id: u.id, name: u.name, created: u.created || null, disabled: !!u.disabled, admin: isAdmin(u), invitedBy: u.invitedBy || null }, unit: S.unit || 'kg', lastSync: S._ts || null, routines: (S.routines || []).map(r => ({ id: r.id, name: r.name, emoji: r.emoji, count: (r.ex || []).length })), bodyweight: S.bodyweight || [], workouts: (S.workouts || []).slice().reverse() }); break;
+        send(res, 200, { user: { id: u.id, name: u.name, created: u.created || null, disabled: !!u.disabled, admin: isAdmin(u), role: roleOf(u, ADMIN_UIDS), invitedBy: u.invitedBy || null }, unit: S.unit || 'kg', lastSync: S._ts || null, routines: (S.routines || []).map(r => ({ id: r.id, name: r.name, emoji: r.emoji, count: (r.ex || []).length })), bodyweight: S.bodyweight || [], workouts: (S.workouts || []).slice().reverse() }); break;
       }
       case 'POST /api/admin/user/disable': {
         if (!requireAdmin()) break;
         const u = db.users.find(x => x.id === body.id);
         if (!u) send(res, 404, { error: 'no such user' });
         else if (isAdmin(u)) send(res, 400, { error: 'cannot disable an admin' });
-        else { u.disabled = !!body.disabled; await saveDb(); send(res, 200, { ok: true, id: u.id, disabled: u.disabled }); }
+        else {
+          u.disabled = !!body.disabled;
+          if (u.disabled) {
+            db.coachLinks = (db.coachLinks || []).filter(l => l.trainerId !== u.id);
+            (db.coachPlans || []).forEach(p => { if (p.trainerId === u.id && p.status === 'pending') p.status = 'withdrawn'; });
+          }
+          await saveDb(); send(res, 200, { ok: true, id: u.id, disabled: u.disabled });
+        }
         break;
       }
       case 'GET /api/admin/invites': {

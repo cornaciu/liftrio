@@ -103,10 +103,10 @@ export const useStore = create((set, get) => {
     },
 
     async pushState() {
-      if (!get().user) return
+      if (!get().user) return false
       clearTimeout(pushTm)
-      try { await api('/api/data', { method: 'PUT', body: JSON.stringify({ state: get().S }) }); localStorage.removeItem('gym_dirty') }
-      catch (e) { localStorage.setItem('gym_dirty', '1') }
+      try { await api('/api/data', { method: 'PUT', body: JSON.stringify({ state: get().S }) }); localStorage.removeItem('gym_dirty'); return true }
+      catch (e) { localStorage.setItem('gym_dirty', '1'); return false }
     },
     async pullState() {
       try {

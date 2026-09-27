@@ -34,6 +34,16 @@ function UserDetail({ id, onChanged, close }) {
       .then(() => { toast(disabled ? 'User disabled' : 'User enabled'); onChanged(); close() })
       .catch(e => toast(e.message))
   }
+  const setRole = role => {
+    if (role === u.role) return
+    confirmSheet({ title: 'Change role for ' + u.name + '?',
+      message: role === 'admin' ? 'Admins can manage accounts and view all workout histories.'
+        : role === 'trainer' ? 'Trainers can send plans only to people who allow them.'
+          : 'This removes trainer access and withdraws pending plans.',
+      confirmText: 'Set ' + role,
+      onConfirm: () => api('/api/admin/user/role', { method: 'POST', body: JSON.stringify({ id: u.id, role }) })
+        .then(() => { toast('Role updated'); onChanged(); close() }).catch(e => toast(e.message)) })
+  }
   return <>
     <h3 className="capitalize">{u.name}</h3>
     <div className="row" style={{ gap: 6, flexWrap: 'wrap', margin: '8px 0 12px' }}>
@@ -42,6 +52,11 @@ function UserDetail({ id, onChanged, close }) {
       {u.invitedBy && <span className="tag">invite {u.invitedBy}</span>}
       <span className="tag">joined {u.created ? fmtDate(u.created.slice(0, 10)) : '—'}</span>
     </div>
+    <label className="small muted" htmlFor="admin-role">Role</label>
+    <select className="input" id="admin-role" value={u.role || (u.admin ? 'admin' : 'member')}
+      onChange={e => setRole(e.target.value)} style={{ margin: '6px 0 14px' }}>
+      <option value="member">Member</option><option value="trainer">Trainer</option><option value="admin">Admin</option>
+    </select>
     <div className="tiles" style={{ textAlign: 'left' }}>
       <div className="tile"><div className="l">Workouts</div><div className="v" style={{ fontSize: '1.1rem' }}>{d.workouts.length}</div></div>
       <div className="tile"><div className="l">Weigh-ins</div><div className="v" style={{ fontSize: '1.1rem' }}>{d.bodyweight.length}</div></div>
@@ -137,7 +152,7 @@ export default function Admin() {
     <h4 className="sec">Users</h4>
     <div className="list">
       {(users || []).map(u => <div key={u.id} className="item" onClick={() => openUser(u.id)} style={u.disabled ? { opacity: .55 } : null}>
-        <div className="grow"><div className="tt">{u.live && <Icon name="dot" style={{ fontSize: 9, color: 'var(--green)', display: 'inline-block', marginRight: 5 }} />}{u.name} {u.admin && <span className="tag acc" style={{ marginLeft: 4 }}>admin</span>}{u.disabled && <span className="tag" style={{ marginLeft: 4, color: 'var(--red)' }}>off</span>}</div>
+        <div className="grow"><div className="tt">{u.live && <Icon name="dot" style={{ fontSize: 9, color: 'var(--green)', display: 'inline-block', marginRight: 5 }} />}{u.name} {u.role !== 'member' && <span className="tag acc" style={{ marginLeft: 4 }}>{u.role}</span>}{u.disabled && <span className="tag" style={{ marginLeft: 4, color: 'var(--red)' }}>off</span>}</div>
           <div className="ss">{u.live ? 'training now · ' + u.live.name : u.workouts + ' workouts' + (u.lastWorkout ? ' · last ' + fmtDate(u.lastWorkout) : '') + ' · synced ' + rel(u.lastSync)}</div></div>
         {u.hasPush && <Icon name="bell" title="push enabled" style={{ fontSize: 15, color: 'var(--label-3)' }} />}<Icon name="chevronRight" className="chev" />
       </div>)}
