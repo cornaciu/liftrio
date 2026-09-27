@@ -41,6 +41,7 @@ let db = { users: [], creds: [], subs: [], invites: [] };
 try { db = JSON.parse(fs.readFileSync(dbFile, 'utf8')); } catch {}
 db.subs = db.subs || [];
 db.invites = db.invites || [];
+db.coachDataGrants = db.coachDataGrants || [];
 const isAdmin = user => !!user && (user.admin === true || ADMIN_UIDS.includes(user.id));
 function saveDb() { atomicWrite(dbFile, JSON.stringify(db, null, 2)); }
 function atomicWrite(file, content) {
@@ -504,6 +505,7 @@ const routes = {
     u.disabled = !!body.disabled;
     if (u.disabled) {
       db.coachLinks = (db.coachLinks || []).filter(l => l.trainerId !== u.id);
+      db.coachDataGrants = (db.coachDataGrants || []).filter(g => g.trainerId !== u.id && g.clientId !== u.id);
       (db.coachPlans || []).forEach(p => { if (p.trainerId === u.id && p.status === 'pending') p.status = 'withdrawn'; });
     }
     if (u.disabled) presence.delete(u.id);   // drop them off "training now" at once
@@ -553,7 +555,7 @@ http.createServer(async (req, res) => {
   const handler = routes[key];
   try {
     if (key.startsWith('GET /api/coaching') || key.startsWith('POST /api/coaching') || key === 'POST /api/admin/user/role') {
-      if (await coachingRoute({ key, db, user: readSession(req),
+      if (await coachingRoute({ key, db, user: readSession(req), readState,
         body: req.method === 'POST' ? await readBody(req) : {}, saveDb,
         reply: (code, payload) => json(res, code, payload), adminUids: ADMIN_UIDS })) return;
     }

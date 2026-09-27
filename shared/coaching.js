@@ -23,14 +23,16 @@ const validPlan = plan => {
 // Both the self-hosted API and the Vercel adapter use this policy. The user owns the
 // grant. A trainer never receives another profile's state and can only submit a plan
 // for that user to review and merge into their own state.
-export async function coachingRoute({ key, db, user, body = {}, saveDb, reply, adminUids = [] }) {
+export async function coachingRoute({ key, db, user, body = {}, saveDb, readState, reply, adminUids = [] }) {
   if (!key.startsWith('GET /api/coaching') && !key.startsWith('POST /api/coaching') &&
       key !== 'POST /api/admin/user/role') return false;
   if (!user) { reply(401, { error: 'not signed in' }); return true; }
   db.coachLinks ||= [];
   db.coachPlans ||= [];
+  db.coachDataGrants ||= [];
   const role = roleOf(user, adminUids);
   const linkFor = (trainerId, clientId) => db.coachLinks.find(l => l.trainerId === trainerId && l.clientId === clientId);
+  const dataGrantFor = (trainerId, clientId) => db.coachDataGrants.find(g => g.trainerId === trainerId && g.clientId === clientId);
 
   if (key === 'POST /api/admin/user/role') {
     if (role !== 'admin') { reply(403, { error: 'forbidden' }); return true; }
@@ -43,6 +45,7 @@ export async function coachingRoute({ key, db, user, body = {}, saveDb, reply, a
     target.trainer = body.role === 'trainer';
     if (body.role === 'member') {
       db.coachLinks = db.coachLinks.filter(l => l.trainerId !== target.id);
+      db.coachDataGrants = db.coachDataGrants.filter(g => g.trainerId !== target.id);
       db.coachPlans.forEach(p => { if (p.trainerId === target.id && p.status === 'pending') p.status = 'withdrawn'; });
     }
     await saveDb();
@@ -52,17 +55,56 @@ export async function coachingRoute({ key, db, user, body = {}, saveDb, reply, a
 
   if (key === 'GET /api/coaching') {
     const trainers = db.users.filter(u => u.id !== user.id && !u.disabled && roleOf(u, adminUids) !== 'member')
-      .map(u => ({ id: u.id, name: u.name, role: roleOf(u, adminUids) }));
+      .map(u => ({ id: u.id, name: u.name, role: roleOf(u, adminUids),
+        canSendPlans: !!linkFor(u.id, user.id), canViewDashboard: !!dataGrantFor(u.id, user.id) }));
     const connections = db.coachLinks.filter(l => l.clientId === user.id)
       .map(l => ({ trainerId: l.trainerId, name: db.users.find(u => u.id === l.trainerId)?.name || '', since: l.since }));
-    const clients = role === 'member' ? [] : db.coachLinks.filter(l => l.trainerId === user.id)
-      .map(l => ({ id: l.clientId, name: db.users.find(u => u.id === l.clientId)?.name || '' }))
-      .filter(c => db.users.some(u => u.id === c.id && !u.disabled));
+    const dashboardGrants = db.coachDataGrants.filter(g => g.clientId === user.id).map(g => g.trainerId);
+    const clientIds = role === 'member' ? new Set() : new Set([
+      ...db.coachLinks.filter(l => l.trainerId === user.id).map(l => l.clientId),
+      ...db.coachDataGrants.filter(g => g.trainerId === user.id).map(g => g.clientId)
+    ]);
+    const clients = [...clientIds].map(id => {
+      const client = db.users.find(u => u.id === id && !u.disabled);
+      return client && { id, name: client.name, canSendPlans: !!linkFor(user.id, id), canViewDashboard: !!dataGrantFor(user.id, id) };
+    }).filter(Boolean);
     const assignments = db.coachPlans.filter(p => p.clientId === user.id || p.trainerId === user.id)
       .filter(p => p.clientId === user.id || !!linkFor(user.id, p.clientId))
       .map(p => ({ ...p, trainerName: db.users.find(u => u.id === p.trainerId)?.name || '',
         clientName: db.users.find(u => u.id === p.clientId)?.name || '' }));
-    reply(200, { role, trainers, connections, clients, assignments });
+    reply(200, { role, trainers, connections, dashboardGrants, clients, assignments });
+    return true;
+  }
+
+  if (key === 'POST /api/coaching/data-consent') {
+    const trainer = db.users.find(u => u.id === body.trainerId);
+    if (!trainer || trainer.id === user.id ||
+        (body.allow === true && !activeTrainer(db, trainer.id, adminUids))) {
+      reply(400, { error: 'invalid trainer' }); return true;
+    }
+    if (body.allow === true) {
+      if (!dataGrantFor(trainer.id, user.id)) db.coachDataGrants.push({ trainerId: trainer.id, clientId: user.id, since: new Date().toISOString() });
+    } else if (body.allow === false) {
+      db.coachDataGrants = db.coachDataGrants.filter(g => !(g.trainerId === trainer.id && g.clientId === user.id));
+    } else { reply(400, { error: 'allow must be boolean' }); return true; }
+    await saveDb();
+    reply(200, { ok: true });
+    return true;
+  }
+
+  const clientView = key.match(/^GET \/api\/coaching\/client\/([^/]+)$/);
+  if (clientView) {
+    if (role === 'member') { reply(403, { error: 'trainer role required' }); return true; }
+    let clientId;
+    try { clientId = decodeURIComponent(clientView[1]); } catch { reply(400, { error: 'invalid client id' }); return true; }
+    const client = db.users.find(u => u.id === clientId && !u.disabled);
+    if (!client || clientId === user.id) { reply(404, { error: 'client not found' }); return true; }
+    if (!dataGrantFor(user.id, clientId)) { reply(403, { error: 'client dashboard access required' }); return true; }
+    if (typeof readState !== 'function') { reply(503, { error: 'client data unavailable' }); return true; }
+    const state = await readState(clientId);
+    const keys = ['unit', 'targetW', 'body', 'bodyweight', 'routines', 'week', 'dayPlan', 'workouts', 'nutrition', 'exWeights', 'customEx'];
+    const sharedState = state ? Object.fromEntries(keys.filter(k => Object.hasOwn(state, k)).map(k => [k, state[k]])) : null;
+    reply(200, { client: { id: client.id, name: client.name }, state: sharedState });
     return true;
   }
 

@@ -27,7 +27,7 @@ const INVITE_ONLY = /^(1|true|yes|on)$/i.test(process.env.INVITE_ONLY || '');
 const ADMIN_UIDS = (process.env.ADMIN_UIDS || '').split(',').map(s => s.trim()).filter(Boolean);
 const SESSION_DAYS = Math.max(1, +(process.env.SESSION_DAYS || 90) || 90);
 const SECURE = ORIGIN.startsWith('https:') ? ' Secure;' : '';
-const emptyDb = () => ({ users: [], creds: [], subs: [], invites: [], coachLinks: [], coachPlans: [], restTimers: [] });
+const emptyDb = () => ({ users: [], creds: [], subs: [], invites: [], coachLinks: [], coachPlans: [], coachDataGrants: [], restTimers: [] });
 const isAdmin = user => !!user && (user.admin === true || ADMIN_UIDS.includes(user.id));
 const bodyOf = req => {
   if (typeof req.body === 'string') return JSON.parse(req.body || '{}');
@@ -113,7 +113,7 @@ export default async function handler(req, res) {
       await saveDb();
     };
 
-    if (await coachingRoute({ key, db, user: readSession(), body, saveDb,
+    if (await coachingRoute({ key, db, user: readSession(), body, saveDb, readState: stateOf,
       reply: (code, payload) => send(res, code, payload), adminUids: ADMIN_UIDS })) {
       await client.query('commit');
       return;
@@ -274,6 +274,7 @@ export default async function handler(req, res) {
           u.disabled = !!body.disabled;
           if (u.disabled) {
             db.coachLinks = (db.coachLinks || []).filter(l => l.trainerId !== u.id);
+            db.coachDataGrants = (db.coachDataGrants || []).filter(g => g.trainerId !== u.id && g.clientId !== u.id);
             (db.coachPlans || []).forEach(p => { if (p.trainerId === u.id && p.status === 'pending') p.status = 'withdrawn'; });
           }
           await saveDb(); send(res, 200, { ok: true, id: u.id, disabled: u.disabled });

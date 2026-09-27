@@ -6,7 +6,7 @@ import { api } from '../lib/api.js'
 import { buildPlanBundle, mergePlan, parsePlan } from '../lib/plan-share.js'
 import { t } from '../lib/i18n.js'
 import Icon from '../components/Icon.jsx'
-import { Button } from '../components/ui.jsx'
+import { Button, Switch } from '../components/ui.jsx'
 
 const post = (path, data) => api(path, { method: 'POST', body: JSON.stringify(data) })
 
@@ -37,6 +37,10 @@ export default function Coaching() {
     await post('/api/coaching/consent', { trainerId, allow })
     toast(allow ? t('Trainer access granted') : t('Trainer access revoked'))
   })
+  const shareDashboard = (trainerId, allow) => act(async () => {
+    await post('/api/coaching/data-consent', { trainerId, allow })
+    toast(allow ? t('Dashboard sharing enabled') : t('Dashboard sharing stopped'))
+  })
   const send = () => act(async () => {
     if (!clientId) throw new Error(t('Choose a client'))
     const full = buildPlanBundle(S, S.name || user.name)
@@ -66,6 +70,7 @@ export default function Coaching() {
   })
 
   const connected = new Set((data?.connections || []).map(c => c.trainerId))
+  const dashboardGrants = new Set(data?.dashboardGrants || [])
   const incoming = (data?.assignments || []).filter(a => a.clientId === user.id && a.status === 'pending')
   const sent = (data?.assignments || []).filter(a => a.trainerId === user.id).slice().reverse()
   const isTrainer = data?.role === 'trainer' || data?.role === 'admin'
@@ -78,11 +83,21 @@ export default function Coaching() {
 
     <div className="card">
       <h2>{t('Your trainers')}</h2>
-      <p className="muted small">{t('Allow a trainer to send you plans. You can remove access whenever you want. Each plan still needs your approval.')}</p>
+      <p className="muted small">{t('Plan permission and dashboard sharing are separate. You can change either at any time.')}</p>
       {(data?.trainers || []).map(trainer => <div className="row between" key={trainer.id} style={{ gap: 12, padding: '9px 0', borderBottom: '1px solid var(--sep)' }}>
-        <div><b>{trainer.name}</b><div className="small muted">{trainer.role === 'admin' ? t('Admin') : t('Trainer')}</div></div>
-        <Button size="sm" variant={connected.has(trainer.id) ? 'danger' : 'tinted'} disabled={busy}
-          onClick={() => grant(trainer.id, !connected.has(trainer.id))}>{connected.has(trainer.id) ? t('Revoke access') : t('Allow')}</Button>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <b>{trainer.name}</b><div className="small muted">{trainer.role === 'admin' ? t('Admin') : t('Trainer')}</div>
+          <div className="row between" style={{ gap: 10, marginTop: 9 }}>
+            <div className="small">{t('May send training plans')}</div>
+            <Button size="sm" variant={connected.has(trainer.id) ? 'danger' : 'tinted'} disabled={busy}
+              onClick={() => grant(trainer.id, !connected.has(trainer.id))}>{connected.has(trainer.id) ? t('Revoke access') : t('Allow')}</Button>
+          </div>
+          <div className="row between" style={{ gap: 10, marginTop: 8 }}>
+            <div style={{ minWidth: 0 }}><div className="small">{t('Can view my dashboard')}</div><div className="dim" style={{ fontSize: 11 }}>{t('Nutrition, workouts, weight and history')}</div></div>
+            <Switch checked={dashboardGrants.has(trainer.id)} disabled={busy} ariaLabel={t('Share dashboard with {0}', trainer.name)}
+              onChange={allow => shareDashboard(trainer.id, allow)} />
+          </div>
+        </div>
       </div>)}
       {data && !data.trainers.length && <div className="muted small">{t('No trainers available yet.')}</div>}
     </div>
@@ -111,7 +126,7 @@ export default function Coaching() {
       <label className="small muted" htmlFor="coach-client">{t('Client')}</label>
       <select className="input" id="coach-client" value={clientId} onChange={e => setClientId(e.target.value)}>
         <option value="">{t('Choose a client')}</option>
-        {(data.clients || []).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+        {(data.clients || []).filter(c => c.canSendPlans).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
       </select>
       <label className="small muted" htmlFor="coach-plan" style={{ display: 'block', marginTop: 12 }}>{t('Plan')}</label>
       <select className="input" id="coach-plan" value={selection} onChange={e => setSelection(e.target.value)}>
@@ -122,6 +137,15 @@ export default function Coaching() {
       <Button variant="primary" disabled={busy || !clientId || !S.routines.length} onClick={send}>{t('Send for approval')}</Button>
       {data && !data.clients.length && <p className="muted small">{t('A client must allow you first.')}</p>}
       {sent.length > 0 && <><h4 className="sec">{t('Sent plans')}</h4>{sent.slice(0, 10).map(a => <div className="row between small" key={a.id} style={{ padding: '7px 0' }}><span>{a.clientName} · {a.plan?.name || a.summary?.name || t('Plan')}</span><span className="muted">{t(a.status)}</span></div>)}</>}
+    </div>}
+    {isTrainer && <div className="card">
+      <h2>{t('Client dashboards')}</h2>
+      <p className="muted small">{t('Only clients who explicitly shared their dashboard appear here. Access includes nutrition, training, body weight and history.')}</p>
+      {(data?.clients || []).filter(c => c.canViewDashboard).map(c => <div className="row between" key={c.id} style={{ padding: '8px 0', borderBottom: '1px solid var(--sep)' }}>
+        <div><b>{c.name}</b><div className="small muted">{t(c.canSendPlans ? 'Plan access and dashboard access' : 'Dashboard access only')}</div></div>
+        <Button size="sm" variant="tinted" trailingIcon="chevronRight" onClick={() => nav('/coaching/client/' + encodeURIComponent(c.id))}>{t('View')}</Button>
+      </div>)}
+      {data && !data.clients.some(c => c.canViewDashboard) && <div className="muted small">{t('No clients have shared their dashboard yet.')}</div>}
     </div>}
   </div>
 }
