@@ -2,6 +2,10 @@
 export default {
   "Nutrition": "Nutriție",
   "Nutrition today": "Nutriția de azi",
+  "Estimated active calories so far": "Calorii active estimate până acum",
+  "Estimated active calories · based on time, body weight and completed sets": "Calorii active estimate · pe baza duratei, greutății și seriilor efectuate",
+  "A valid duration and body weight are needed for an estimate": "Sunt necesare durata și greutatea corporală pentru estimare",
+  "Complete a set and record body weight to see an estimate": "Finalizează o serie și înregistrează greutatea pentru estimare",
   "Open diary": "Deschide jurnalul",
   "eaten": "consumate",
   "Remaining today": "Rămase astăzi",

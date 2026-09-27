@@ -14,6 +14,7 @@ import Icon from '../components/Icon.jsx'
 import { Button, Check, NumberField } from '../components/ui.jsx'
 import { nextPrescription, applyPrescription } from '../lib/progression.js'
 import { glyphOf } from '../lib/glyphs.js'
+import { estimateWorkoutEnergy } from '../lib/workout-energy.js'
 
 /* ---------- start chooser (no active workout) ---------- */
 function StartChooser() {
@@ -51,6 +52,19 @@ function Elapsed({ start }) {
     tick(); const iv = setInterval(tick, 1000); return () => clearInterval(iv)
   }, [start])
   return <span>{t}</span>
+}
+
+function LiveEnergy() {
+  const S = useStore(s => s.S)
+  const [now, setNow] = useState(Date.now)
+  useEffect(() => {
+    const tick = () => setNow(Date.now())
+    const iv = setInterval(tick, 15000)
+    document.addEventListener('visibilitychange', tick)
+    return () => { clearInterval(iv); document.removeEventListener('visibilitychange', tick) }
+  }, [])
+  const energy = estimateWorkoutEnergy({ ...S.active, end: now }, S)
+  return <div className="workout-energy live"><Icon name="flame" /><div><strong>{energy ? `~${fmtNum(energy.kcal)} kcal` : '— kcal'}</strong><small>{energy ? t('Estimated active calories so far') : t('Complete a set and record body weight to see an estimate')}</small></div></div>
 }
 
 /* ---------- one exercise block (reps: weight×reps · time: a held duration · cardio: duration+speed) ---------- */
@@ -258,6 +272,7 @@ function ActiveWorkout() {
       <button className="iconbtn" style={{ color: 'var(--acc)' }} aria-label={t('Finish')} onClick={finishWorkout}><Icon name="check" /></button>
     </div>
     <div className="wprog"><i style={{ width: (total ? done / total * 100 : 0) + '%' }} /></div>
+    <LiveEnergy />
 
     {A.entries.length ? <>
       <div className="muted small" style={{ marginBottom: 6 }}>{isSuperset ? t('Superset {0} / {1}', unitIdx + 1, units.length) : t('Exercise {0} / {1}', unitIdx + 1, units.length)}</div>

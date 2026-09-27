@@ -530,6 +530,12 @@ h4.sec{
 /* ------------------------------------------------------------- workout --- */
 .wprog{height:4px;background:var(--surface-2);border-radius:99px;overflow:hidden;margin-bottom:16px}
 .wprog i{display:block;height:100%;background:var(--acc);border-radius:99px;transition:width var(--med) var(--ease)}
+.workout-energy{display:flex;align-items:center;gap:12px;margin:12px 0 16px;padding:13px 15px;border-radius:var(--r-card);background:color-mix(in srgb,var(--acc) 10%,var(--surface));text-align:left}
+.workout-energy>.icn{font-size:23px;color:var(--acc)}
+.workout-energy>div{display:flex;flex-direction:column;min-width:0;gap:3px}
+.workout-energy strong{font-size:21px;line-height:1.1;letter-spacing:-.025em}
+.workout-energy small{color:var(--label-2);font-size:12px;line-height:1.35}
+.workout-energy.live{margin-top:-5px;margin-bottom:17px}
 .exmedia{position:relative;border-radius:var(--r-lg);overflow:hidden;background:#fff;margin-bottom:12px}
 .exmedia img{width:100%;height:320px;object-fit:contain;display:block}
 .exmedia .gifhint,.exmedia .giftoggle{
