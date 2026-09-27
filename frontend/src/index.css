@@ -92,6 +92,7 @@
 :root[data-accent="red"]   { --acc:var(--red);    --acc-2:#d70015; --on-acc:#fff }
 :root[data-accent="teal"]  { --acc:var(--teal);   --acc-2:#0071a4; --on-acc:#000 }
 :root[data-accent="gold"]  { --acc:var(--yellow); --acc-2:#b25000; --on-acc:#000 }
+:root[data-accent="neon"] { --acc:#CCFF00; --acc-2:#93b800; --on-acc:#000 }
 /* Label colour on a filled accent button is picked per accent by measured contrast,
    not by taste. Button text is 17px/600, so the AA bar is 3:1 (large text). White on
    the light-theme green is 2.22:1 and on teal 2.57:1 — both fail, and green is the
@@ -319,6 +320,11 @@ h4.sec{
 
 /* ------------------------------------------------------------ week strip -- */
 .week{display:flex;justify-content:space-between;gap:4px}
+.week-panel{
+  padding:8px 8px 5px;margin:-4px -4px 12px;border-radius:var(--r-lg);
+  background:linear-gradient(145deg,color-mix(in srgb,var(--acc) 9%,var(--surface)),var(--surface) 72%);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--acc) 16%,var(--sep));
+}
 .wday{
   flex:1;text-align:center;padding:8px 2px 9px;border-radius:10px;
   background:none;border:none;transition:background var(--fast);
