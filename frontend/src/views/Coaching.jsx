@@ -90,7 +90,7 @@ export default function Coaching() {
       </div>
     </div>
 
-    <div className="card coach-card">
+    {!isTrainer && <div className="card coach-card">
       <div className="coach-section-head"><span className="coach-section-icon"><Icon name="personCircle" /></span><div><h2>{t('Your trainers')}</h2><p>{t('Plan permission and dashboard sharing are separate. You can change either at any time.')}</p></div></div>
       {(data?.trainers || []).map(trainer => <div className="coach-trainer" key={trainer.id}>
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -108,9 +108,9 @@ export default function Coaching() {
         </div>
       </div>)}
       {data && !data.trainers.length && <div className="coach-empty"><Icon name="personCircle" /><span>{t('No trainers available yet.')}</span></div>}
-    </div>
+    </div>}
 
-    <div className="card coach-card">
+    {!isTrainer && <div className="card coach-card">
       <h2>{t('Plans awaiting your approval')}</h2>
       {incoming.map(a => <div key={a.id} style={{ padding: '12px 0', borderBottom: '1px solid var(--sep)' }}>
         <div style={{ fontWeight: 600 }}>{a.plan.name || a.trainerName}</div>
@@ -126,7 +126,7 @@ export default function Coaching() {
         </div>
       </div>)}
       {data && !incoming.length && <div className="muted small">{t('No plans waiting.')}</div>}
-    </div>
+    </div>}
 
     {isTrainer && <div className="card coach-card">
       <h2>{t('Send a training plan')}</h2>

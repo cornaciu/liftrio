@@ -237,7 +237,7 @@ h4.sec{
    through the title next to it, since the title's column is already free to shrink to nothing.
    Letting the value shrink and ellipsise instead keeps the two out of each other's way. */
 .lrow-v{color:var(--label-2);font-size:17px;letter-spacing:-.012em;flex:0 1 auto;min-width:0;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right}
+  max-width:52%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right}
 .lrow-c{color:var(--label);font-size:15px;flex:none;--icon-stroke:2.4}
 .lrow-k{color:var(--acc);font-size:17px;flex:none;--icon-stroke:2.4}
 .lrow.danger,.lrow.danger .lrow-t{color:var(--red)}
@@ -590,12 +590,13 @@ h4.sec{
 .setrow.done{opacity:.45}
 /* why the next target is what it is (issue #17) */
 .progline{
-  display:flex;align-items:flex-start;gap:7px;margin:6px 0 2px;
+  display:flex;align-items:flex-start;gap:7px;margin:6px 0 2px;min-width:0;max-width:100%;
   font-size:13px;line-height:1.38;color:var(--acc);
 }
 .progline span{flex:1;min-width:0;overflow-wrap:anywhere}
 .progline.warn{color:var(--yellow)}
 .progline svg{flex:none;margin-top:2px}
+.progression-description{max-width:100%;min-width:0;overflow-wrap:anywhere;word-break:normal}
 
 /* Coach permissions: make the two independent grants easy to scan and tap. */
 .coach-page{--coach-gap:12px}
