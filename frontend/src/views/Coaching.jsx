@@ -75,34 +75,42 @@ export default function Coaching() {
   const sent = (data?.assignments || []).filter(a => a.trainerId === user.id).slice().reverse()
   const isTrainer = data?.role === 'trainer' || data?.role === 'admin'
 
-  return <div className="narrow">
+  return <div className="narrow coach-page">
     <div className="hdr">
       <button className="iconbtn" onClick={() => nav('/settings')} aria-label={t('Back')}><Icon name="chevronLeft" /></button>
       <div style={{ flex: 1, marginLeft: 10 }}><h1>{t('Trainer access')}</h1><div className="sub">{t('Your plans stay yours until you accept one')}</div></div>
     </div>
 
-    <div className="card">
-      <h2>{t('Your trainers')}</h2>
-      <p className="muted small">{t('Plan permission and dashboard sharing are separate. You can change either at any time.')}</p>
-      {(data?.trainers || []).map(trainer => <div className="row between" key={trainer.id} style={{ gap: 12, padding: '9px 0', borderBottom: '1px solid var(--sep)' }}>
+    <div className="coach-hero">
+      <div className="coach-hero-icon"><Icon name="shield" /></div>
+      <div className="coach-hero-copy">
+        <div className="coach-eyebrow">{t('Your data, your choice')}</div>
+        <h2>{t('Build a better coaching connection')}</h2>
+        <p>{t('Choose separately whether a trainer can send plans or view your progress.')}</p>
+      </div>
+    </div>
+
+    <div className="card coach-card">
+      <div className="coach-section-head"><span className="coach-section-icon"><Icon name="personCircle" /></span><div><h2>{t('Your trainers')}</h2><p>{t('Plan permission and dashboard sharing are separate. You can change either at any time.')}</p></div></div>
+      {(data?.trainers || []).map(trainer => <div className="coach-trainer" key={trainer.id}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <b>{trainer.name}</b><div className="small muted">{trainer.role === 'admin' ? t('Admin') : t('Trainer')}</div>
-          <div className="row between" style={{ gap: 10, marginTop: 9 }}>
-            <div className="small">{t('May send training plans')}</div>
+          <div className="coach-person"><span className="coach-avatar"><Icon name="person" /></span><div><b>{trainer.name}</b><div className="small muted">{trainer.role === 'admin' ? t('Admin') : t('Trainer')}</div></div></div>
+          <div className="coach-permission">
+            <div className="coach-permission-copy"><b>{t('May send training plans')}</b><span>{t('You approve each plan before it is added.')}</span></div>
             <Button size="sm" variant={connected.has(trainer.id) ? 'danger' : 'tinted'} disabled={busy}
               onClick={() => grant(trainer.id, !connected.has(trainer.id))}>{connected.has(trainer.id) ? t('Revoke access') : t('Allow')}</Button>
           </div>
-          <div className="row between" style={{ gap: 10, marginTop: 8 }}>
-            <div style={{ minWidth: 0 }}><div className="small">{t('Can view my dashboard')}</div><div className="dim" style={{ fontSize: 11 }}>{t('Nutrition, workouts, weight and history')}</div></div>
+          <div className="coach-permission">
+            <div className="coach-permission-copy"><b>{t('Can view my dashboard')}</b><span>{t('Nutrition, workouts, weight and history')}</span></div>
             <Switch checked={dashboardGrants.has(trainer.id)} disabled={busy} ariaLabel={t('Share dashboard with {0}', trainer.name)}
               onChange={allow => shareDashboard(trainer.id, allow)} />
           </div>
         </div>
       </div>)}
-      {data && !data.trainers.length && <div className="muted small">{t('No trainers available yet.')}</div>}
+      {data && !data.trainers.length && <div className="coach-empty"><Icon name="personCircle" /><span>{t('No trainers available yet.')}</span></div>}
     </div>
 
-    <div className="card">
+    <div className="card coach-card">
       <h2>{t('Plans awaiting your approval')}</h2>
       {incoming.map(a => <div key={a.id} style={{ padding: '12px 0', borderBottom: '1px solid var(--sep)' }}>
         <div style={{ fontWeight: 600 }}>{a.plan.name || a.trainerName}</div>
@@ -120,7 +128,7 @@ export default function Coaching() {
       {data && !incoming.length && <div className="muted small">{t('No plans waiting.')}</div>}
     </div>
 
-    {isTrainer && <div className="card">
+    {isTrainer && <div className="card coach-card">
       <h2>{t('Send a training plan')}</h2>
       <p className="muted small">{t('Only people who gave you access appear here. Build the routines in your Plan tab, then send a copy for them to approve.')}</p>
       <label className="small muted" htmlFor="coach-client">{t('Client')}</label>
@@ -138,7 +146,7 @@ export default function Coaching() {
       {data && !data.clients.length && <p className="muted small">{t('A client must allow you first.')}</p>}
       {sent.length > 0 && <><h4 className="sec">{t('Sent plans')}</h4>{sent.slice(0, 10).map(a => <div className="row between small" key={a.id} style={{ padding: '7px 0' }}><span>{a.clientName} · {a.plan?.name || a.summary?.name || t('Plan')}</span><span className="muted">{t(a.status)}</span></div>)}</>}
     </div>}
-    {isTrainer && <div className="card">
+    {isTrainer && <div className="card coach-card">
       <h2>{t('Client dashboards')}</h2>
       <p className="muted small">{t('Only clients who explicitly shared their dashboard appear here. Access includes nutrition, training, body weight and history.')}</p>
       {(data?.clients || []).filter(c => c.canViewDashboard).map(c => <div className="row between" key={c.id} style={{ padding: '8px 0', borderBottom: '1px solid var(--sep)' }}>

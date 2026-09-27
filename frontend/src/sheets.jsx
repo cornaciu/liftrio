@@ -553,6 +553,7 @@ function ExConfig({ ex, existing, onSave, onDelete, close, routine }) {
         {!bw && <Stepper label={t('Weight ({0})', st.unit)} value={c.weight} step={2.5} onChange={v => setC(x => ({ ...x, weight: v }))} />}
       </>}
     </div>
+    {mode === 'reps' && !bw && <div className="weight-help"><Icon name="lightbulb" /><span>{perSide ? t('For dumbbells, enter the weight of one dumbbell. Example: 20 kg in each hand → enter 20 kg, not 40 kg.') : t('For dumbbells, enter the weight of one dumbbell. For a barbell, enter the total weight including the bar.')}</span></div>}
     {mode === 'time' && !bw && <div className="small dim" style={{ marginBottom: 18 }}>
       {t('A timer runs while you hold the set. Leave the weight at 0 for bodyweight holds.')}
     </div>}
@@ -563,7 +564,7 @@ function ExConfig({ ex, existing, onSave, onDelete, close, routine }) {
         <Switch checked={bw} onChange={v => setC(x => ({ ...x, bodyweight: v, weight: v ? 0 : x.weight }))} />
       </Row>
       {mode === 'reps' && <Row icon="shuffle" iconTint="var(--blue)" title={t('Reps per side')}
-        subtitle={perSide ? t('You still log the total: {0} is {1} per side.', c.reps || 0, fmtNum(sideReps(c.reps))) : t('For lunges, single-arm rows and the like.')}>
+        subtitle={perSide ? <>{t('You still log the total: {0} is {1} per side.', c.reps || 0, fmtNum(sideReps(c.reps)))}<br />{t('This toggle changes repetitions only, not the weight.')}</> : t('For lunges, single-arm rows and the like.')}>
         {/* Turning it on rounds the target up to an even number, since half of an odd
             total is a rep one side does not get. */}
         <Switch checked={perSide} onChange={v => setC(x => ({ ...x, side: v || undefined, reps: v ? Math.ceil((x.reps || 0) / 2) * 2 : x.reps }))} />
