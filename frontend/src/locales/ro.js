@@ -357,6 +357,7 @@ export default {
   "Light": "Luminoasă",
   "Accent color": "Culoare de accent",
   "General": "General",
+  "Preferences": "Preferințe",
   "During a workout": "În timpul antrenamentului",
   "Keep screen awake": "Menține ecranul activ",
   "The screen stays on while a workout is running, so you don’t have to unlock your phone between sets.": "Ecranul rămâne aprins în timpul antrenamentului, ca să nu trebuiască să deblochezi telefonul între serii.",

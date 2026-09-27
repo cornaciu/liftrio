@@ -66,7 +66,7 @@ export default function Settings() {
     },
   })
 
-  return <div className="narrow">
+  return <div className="narrow settings-page">
     <div className="hdr">
       <button className="iconbtn" onClick={() => nav('/home')} aria-label={t('Home')}><Icon name="chevronLeft" /></button>
       <div style={{ flex: 1, marginLeft: 10 }}><h1>{t('Settings')}</h1></div>
@@ -100,7 +100,8 @@ export default function Settings() {
     {!user && !DEMO && !MOBILE && <p className="sect-f" style={{ marginTop: -18, marginBottom: 22 }}>{t('Guest mode — data lives only in this browser.')}</p>}
 
     {/* ---------- general ---------- */}
-    <Section title={t('General')} footer={t('Note: switching units only changes the label — logged numbers are not converted.')}>
+    <Section title={t('Preferences')} footer={t('Note: switching units only changes the label — logged numbers are not converted.')}>
+      <div className="settings-subhead">{t('General')}</div>
       <SelectRow
         icon="globe" iconTint="var(--blue)" title={t('Language')}
         value={S.lang || 'en'} onChange={v => update(s => { s.lang = v })}
@@ -114,6 +115,33 @@ export default function Settings() {
           options={[{ value: 'kg', label: 'kg' }, { value: 'lb', label: 'lb' }]}
           value={S.unit} onChange={v => update(s => { s.unit = v })} />
       </Row>
+      <div className="settings-subhead">{t('Appearance')}</div>
+      <Row icon="moon" iconTint="var(--indigo)" title={t('Theme')}>
+        <Segmented
+          className="seg-inline"
+          options={[{ value: 'dark', icon: 'moon', label: t('Dark') }, { value: 'light', icon: 'sun', label: t('Light') }]}
+          value={S.theme === 'light' ? 'light' : 'dark'}
+          onChange={v => update(s => { s.theme = v })}
+        />
+      </Row>
+      {/* The diagram setting changes only how the muscle map is drawn. */}
+      <Row icon="figureStrength" iconTint="var(--teal)" title={t('Body diagram')}>
+        <Segmented
+          className="seg-inline"
+          options={[{ value: 'male', label: t('Male') }, { value: 'female', label: t('Female') }]}
+          value={S.body === 'female' ? 'female' : 'male'}
+          onChange={v => update(s => { s.body = v })}
+        />
+      </Row>
+      <div className="settings-accent">
+        <span className="lrow-t">{t('Accent color')}</span>
+        <div className="swatches">
+          {Object.entries(ACCENTS).map(([k, c]) => (
+            <button key={k} className={'swatch' + ((S.accent || 'lime') === k ? ' on' : '')}
+              style={{ background: c }} onClick={() => update(s => { s.accent = k })} aria-label={k} title={k === 'neon' ? '#CCFF00' : k} />
+          ))}
+        </div>
+      </div>
     </Section>
 
     {/* ---------- during a workout ---------- */}
@@ -142,36 +170,6 @@ export default function Settings() {
     </Section>
 
     {(user || MOBILE) && <NotificationsCard S={S} update={update} toast={toast} />}
-
-    {/* ---------- appearance ---------- */}
-    <Section title={t('Appearance')} footer={DEMO || MOBILE ? undefined : t('synced with your profile')}>
-      <Row icon="moon" iconTint="var(--indigo)" title={t('Theme')}>
-        <Segmented
-          className="seg-inline"
-          options={[{ value: 'dark', icon: 'moon', label: t('Dark') }, { value: 'light', icon: 'sun', label: t('Light') }]}
-          value={S.theme === 'light' ? 'light' : 'dark'}
-          onChange={v => update(s => { s.theme = v })}
-        />
-      </Row>
-      {/* Purely how the muscle map is drawn — nothing else in the app reads this. */}
-      <Row icon="figureStrength" iconTint="var(--teal)" title={t('Body diagram')}>
-        <Segmented
-          className="seg-inline"
-          options={[{ value: 'male', label: t('Male') }, { value: 'female', label: t('Female') }]}
-          value={S.body === 'female' ? 'female' : 'male'}
-          onChange={v => update(s => { s.body = v })}
-        />
-      </Row>
-      <div className="lrow" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 12, paddingTop: 13, paddingBottom: 14 }}>
-        <span className="lrow-t">{t('Accent color')}</span>
-        <div className="swatches">
-          {Object.entries(ACCENTS).map(([k, c]) => (
-            <button key={k} className={'swatch' + ((S.accent || 'lime') === k ? ' on' : '')}
-              style={{ background: c }} onClick={() => update(s => { s.accent = k })} aria-label={k} />
-          ))}
-        </div>
-      </div>
-    </Section>
 
     {/* ---------- data: fill it, bring things over, back it up, wipe it ---------- */}
     <Section title={t('Data')}>
