@@ -88,7 +88,7 @@ export default function Login() {
           </div>
         </div>
         <div className="login-entry">
-          <div className="login-entry-head"><span className="login-entry-line" /><span>L / {t('Account')}</span></div>
+          <div className="login-entry-head"><span className="login-entry-line" /><span>LOGIN / REGISTER</span></div>
           <h2>{t('Ready when you are.')}</h2>
           <p>{DEMO ? t('Live demo — everything stays in this browser.') : t('Passkeys use {0} — no passwords.', BIO)}</p>
           <div className="login-actions">
