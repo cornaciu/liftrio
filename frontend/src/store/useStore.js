@@ -77,7 +77,7 @@ export const useStore = create((set, get) => {
     localStorage.removeItem('gym_guest')
     localStorage.removeItem('gym_dirty')
     localStorage.removeItem(KEY)
-    persist(clone(DEF), false)
+    persist({ ...clone(DEF), lang: get().S.lang || DEF.lang }, false)
   }
 
   return {
