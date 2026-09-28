@@ -1614,3 +1614,18 @@ h4.sec{
 
 .trainer-metrics span{display:block;margin-top:0;min-height:2.7em}
 .trainer-metrics strong{display:block;margin-top:auto;padding-top:9px}
+
+
+/* Consistent two-second notification card, including sign-in and coaching alerts. */
+#toast{
+  display:flex;align-items:center;gap:12px;text-align:left;
+  width:min(350px,calc(100vw - 32px));max-width:calc(100vw - 32px);
+  padding:14px 17px;border:1px solid var(--acc-line);
+  border-radius:17px;background:color-mix(in srgb,var(--surface) 90%,transparent);
+  box-shadow:0 18px 45px rgba(0,0,0,.38),inset 0 1px color-mix(in srgb,var(--label) 17%,transparent);
+}
+#toast .toast-symbol{flex:none;display:grid;place-items:center;width:39px;height:39px;border-radius:12px;background:var(--acc);color:var(--on-acc);font-size:20px}
+#toast .toast-copy{display:flex;flex-direction:column;gap:2px;line-height:1.25;font-weight:600;overflow-wrap:anywhere}
+#toast .toast-copy small{text-transform:uppercase;letter-spacing:.12em;font-size:10px;font-weight:750;color:var(--acc-ink)}
+.home-trainer-names{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.home-trainer-name{display:inline-flex;align-items:center;min-height:31px;padding:5px 10px;border:1px solid var(--acc-line);border-radius:9px;background:var(--bg-el);color:var(--label);font-size:14px;font-weight:700;letter-spacing:-.01em;overflow-wrap:anywhere}
