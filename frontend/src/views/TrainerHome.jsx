@@ -51,9 +51,9 @@ export default function TrainerHome() {
       <h2>{t('Your clients, at a glance')}</h2>
       <p>{t('Follow their progress and prepare training or nutrition plans for each client.')}</p>
       <div className="trainer-metrics">
-        <div><strong>{overview ? clients.length : '—'}</strong><span>{t('Clients')}</span></div>
-        <div><strong>{overview ? shared : '—'}</strong><span>{t('Shared dashboards')}</span></div>
-        <div><strong>{overview ? pending : '—'}</strong><span>{t('Plans awaiting approval')}</span></div>
+        <div><span>{t('Clients')}</span><strong>{overview ? clients.length : '—'}</strong></div>
+        <div><span>{t('Shared dashboards')}</span><strong>{overview ? shared : '—'}</strong></div>
+        <div><span>{t('Plans awaiting approval')}</span><strong>{overview ? pending : '—'}</strong></div>
       </div>
     </div>
 
