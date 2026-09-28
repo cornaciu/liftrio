@@ -110,13 +110,13 @@ export default function Settings() {
           subtitle: INSTR_LANGS.includes(k) ? null : t("Exercise instructions aren't available in this language yet — they stay in English."),
         }))}
       />
-      <Row icon="scale" iconTint="var(--teal)" title={t('Weight unit')}>
+      <Row className="settings-choice-row" icon="scale" iconTint="var(--teal)" title={t('Weight unit')}>
         <Segmented className="seg-inline"
           options={[{ value: 'kg', label: 'kg' }, { value: 'lb', label: 'lb' }]}
           value={S.unit} onChange={v => update(s => { s.unit = v })} />
       </Row>
       <div className="settings-subhead">{t('Appearance')}</div>
-      <Row icon="moon" iconTint="var(--indigo)" title={t('Theme')}>
+      <Row className="settings-choice-row" icon="moon" iconTint="var(--indigo)" title={t('Theme')}>
         <Segmented
           className="seg-inline"
           options={[{ value: 'dark', icon: 'moon', label: t('Dark') }, { value: 'light', icon: 'sun', label: t('Light') }]}
@@ -125,7 +125,7 @@ export default function Settings() {
         />
       </Row>
       {/* The diagram setting changes only how the muscle map is drawn. */}
-      <Row icon="figureStrength" iconTint="var(--teal)" title={t('Body diagram')}>
+      <Row className="settings-choice-row" icon="figureStrength" iconTint="var(--teal)" title={t('Body diagram')}>
         <Segmented
           className="seg-inline"
           options={[{ value: 'male', label: t('Male') }, { value: 'female', label: t('Female') }]}
@@ -161,7 +161,7 @@ export default function Settings() {
       </Row>
       {/* Two names for the same judgement, so the column asks in the scale you already think in.
           The (i) sits before the control — you read it on the way to the choice, not after it. */}
-      <Row icon="target" iconTint="var(--purple)" title={t('Effort per set')}>
+      <Row className="settings-choice-row" icon="target" iconTint="var(--purple)" title={t('Effort per set')}>
         <button className="helpbtn" aria-label={t('What are RIR and RPE?')} onClick={effortHelpSheet}><Icon name="info" /></button>
         <Segmented className="seg-inline"
           options={[{ value: 'none', label: t('Off') }, { value: 'rir', label: t('RIR') }, { value: 'rpe', label: t('RPE') }]}
