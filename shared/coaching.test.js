@@ -33,6 +33,8 @@ test('dashboard data requires a separate client grant and only exposes training 
   const denied = await call(f, 'GET /api/coaching/client/client', f.db.users[0]);
   assert.equal(denied.status, 403);
 
+  assert.equal((await call(f, 'POST /api/coaching/data-consent', f.db.users[1], { trainerId: 'coach', allow: true })).status, 403);
+  await call(f, 'POST /api/coaching/consent', f.db.users[1], { trainerId: 'coach', allow: true });
   const consent = await call(f, 'POST /api/coaching/data-consent', f.db.users[1], { trainerId: 'coach', allow: true });
   assert.equal(consent.status, 200);
   const allowed = await call(f, 'GET /api/coaching/client/client', f.db.users[0]);
@@ -68,6 +70,7 @@ test('a client account cannot use the trainer dashboard endpoint', async () => {
 
 test('trainer overview only contains shared client metrics', async () => {
   const f = fixture();
+  await call(f, 'POST /api/coaching/consent', f.db.users[1], { trainerId: 'coach', allow: true });
   await call(f, 'POST /api/coaching/nutrition-consent', f.db.users[1], { trainerId: 'coach', allow: true });
   let result = await call(f, 'GET /api/coaching/overview', f.db.users[0]);
   assert.equal(result.payload.clients[0].overview, null);
@@ -100,4 +103,15 @@ test('revoking nutrition consent withdraws pending plans', async () => {
   await call(f, 'POST /api/coaching/nutrition/send', f.db.users[0], { clientId: 'client', plan });
   await call(f, 'POST /api/coaching/nutrition-consent', f.db.users[1], { trainerId: 'coach', allow: false });
   assert.equal(f.db.coachNutritionPlans[0].status, 'withdrawn');
+});
+
+test('revoking trainer access also revokes dashboard and nutrition permissions', async () => {
+  const f = fixture();
+  await call(f, 'POST /api/coaching/consent', f.db.users[1], { trainerId: 'coach', allow: true });
+  await call(f, 'POST /api/coaching/data-consent', f.db.users[1], { trainerId: 'coach', allow: true });
+  await call(f, 'POST /api/coaching/nutrition-consent', f.db.users[1], { trainerId: 'coach', allow: true });
+  await call(f, 'POST /api/coaching/consent', f.db.users[1], { trainerId: 'coach', allow: false });
+  assert.equal(f.db.coachDataGrants.length, 0);
+  assert.equal(f.db.coachNutritionGrants.length, 0);
+  assert.equal((await call(f, 'GET /api/coaching/client/client', f.db.users[0])).status, 403);
 });
