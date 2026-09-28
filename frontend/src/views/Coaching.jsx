@@ -168,8 +168,8 @@ export default function Coaching() {
       {!incomingNutrition.length && <div className="muted small">{t('No nutrition plans waiting.')}</div>}
     </div>}
 
-    {isTrainer && <div className="card coach-card">
-      <h2>{t('Send a training plan')}</h2>
+    {isTrainer && <div className="card coach-card coach-trainer-panel">
+      <div className="coach-panel-heading"><Icon name="dumbbell" /><h2>{t('Send a training plan')}</h2></div>
       <p className="muted small">{t('Only people who gave you access appear here. Build the routines in your Plan tab, then send a copy for them to approve.')}</p>
       <label className="small muted" htmlFor="coach-client">{t('Client')}</label>
       <select className="input" id="coach-client" value={clientId} onChange={e => setClientId(e.target.value)}>
@@ -186,20 +186,20 @@ export default function Coaching() {
       {data && !data.clients.length && <p className="muted small">{t('A client must allow you first.')}</p>}
       {sent.length > 0 && <><h4 className="sec">{t('Sent plans')}</h4>{sent.slice(0, 10).map(a => <div className="row between small" key={a.id} style={{ padding: '7px 0' }}><span>{a.clientName} · {a.plan?.name || a.summary?.name || t('Plan')}</span><span className="muted">{t(a.status)}</span></div>)}</>}
     </div>}
-    {isTrainer && <div className="card coach-card">
-      <h2>{t('Nutrition plans')}</h2>
+    {isTrainer && <div className="card coach-card coach-trainer-panel">
+      <div className="coach-panel-heading"><Icon name="flame" /><h2>{t('Nutrition plans')}</h2></div>
       <p className="muted small">{t('Create a meal plan and daily targets for clients who allowed nutrition plans.')}</p>
-      {(data?.clients || []).filter(c => c.canSendNutrition).map(c => <div className="row between" key={c.id} style={{ padding: '8px 0', borderBottom: '1px solid var(--sep)' }}>
-        <b>{c.name}</b><Button size="sm" variant="tinted" onClick={() => nav('/coaching/nutrition/' + encodeURIComponent(c.id))}>{t('Create plan')}</Button>
+      {(data?.clients || []).filter(c => c.canSendNutrition).map(c => <div className="coach-client-row" key={c.id}>
+        <span className="coach-client-initial">{(c.name || t('Client')).trim().charAt(0).toLocaleUpperCase()}</span><b>{c.name}</b><Button size="sm" variant="tinted" onClick={() => nav('/coaching/nutrition/' + encodeURIComponent(c.id))}>{t('Create plan')}</Button>
       </div>)}
       {data && !data.clients.some(c => c.canSendNutrition) && <div className="muted small">{t('No clients have allowed nutrition plans yet.')}</div>}
       {sentNutrition.length > 0 && <><h4 className="sec">{t('Sent nutrition plans')}</h4>{sentNutrition.slice(0, 10).map(a => <div className="row between small" key={a.id} style={{ padding: '7px 0' }}><span>{a.clientName} · {a.plan?.name || a.summary?.name}</span><span className="muted">{t(a.status)}</span></div>)}</>}
     </div>}
-    {isTrainer && <div className="card coach-card">
-      <h2>{t('Client dashboards')}</h2>
+    {isTrainer && <div className="card coach-card coach-trainer-panel">
+      <div className="coach-panel-heading"><Icon name="personCircle" /><h2>{t('Client dashboards')}</h2></div>
       <p className="muted small">{t('Only clients who explicitly shared their dashboard appear here. Access includes nutrition, training, body weight and history.')}</p>
-      {(data?.clients || []).filter(c => c.canViewDashboard).map(c => <div className="row between" key={c.id} style={{ padding: '8px 0', borderBottom: '1px solid var(--sep)' }}>
-        <div><b>{c.name}</b><div className="small muted">{t(c.canSendPlans ? 'Plan access and dashboard access' : 'Dashboard access only')}</div></div>
+      {(data?.clients || []).filter(c => c.canViewDashboard).map(c => <div className="coach-client-row" key={c.id}>
+        <span className="coach-client-initial">{(c.name || t('Client')).trim().charAt(0).toLocaleUpperCase()}</span><div className="coach-client-meta"><b>{c.name}</b><div className="small muted">{t(c.canSendPlans ? 'Plan access and dashboard access' : 'Dashboard access only')}</div></div>
         <Button size="sm" variant="tinted" trailingIcon="chevronRight" onClick={() => nav('/coaching/client/' + encodeURIComponent(c.id))}>{t('View')}</Button>
       </div>)}
       {data && !data.clients.some(c => c.canViewDashboard) && <div className="muted small">{t('No clients have shared their dashboard yet.')}</div>}
