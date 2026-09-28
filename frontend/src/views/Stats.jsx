@@ -5,7 +5,7 @@ import { EXIDX } from '../lib/exercises.js'
 import { lastBW, streakWeeks, setLabel, modeOf, effortOf } from '../lib/history.js'
 import { fmtNum, fmtDate, fmtVol, todayISO, weekKey } from '../lib/format.js'
 import { t } from '../lib/i18n.js'
-import { bwSheet, goalSheet, calendarSheet, workoutDetailSheet, WorkoutRow, bwDeltaColor } from '../sheets.jsx'
+import { bwSheet, goalSheet, calendarSheet, workoutDetailSheet, bwDeltaColor } from '../sheets.jsx'
 import LineChart from '../components/LineChart.jsx'
 import Heatmap from '../components/Heatmap.jsx'
 import Icon from '../components/Icon.jsx'
@@ -196,7 +196,7 @@ export default function Stats() {
 
   return <>
     <div className="hdr"><div><h1>{t('Stats')}</h1><div className="sub">{t('Progress & history')}</div></div>
-      <button className="iconbtn" onClick={() => nav('/history')} aria-label={t('History')}><Icon name="history" /></button></div>
+      <Button className="stats-history-top" icon="history" onClick={() => nav('/history')}>{t('Workout history')}</Button></div>
 
     <div className="tiles">
       <div className="tile"><div className="l"><Icon name="dumbbell" />{t('Workouts')}</div><div className="v">{S.workouts.length}</div></div>
@@ -256,12 +256,10 @@ export default function Stats() {
       </div>
     </div>
 
-    {S.workouts.length > 0 && <>
-      <div className="row between" style={{ marginBottom: 10 }}>
-        <h4 className="sec" style={{ margin: 0 }}>{t('Recent workouts')}</h4>
-        <Button size="sm" variant="ghost" trailingIcon="chevronRight" onClick={() => nav('/history')}>{t('All')} {S.workouts.length}</Button>
-      </div>
-      <div className="list">{[...S.workouts].reverse().slice(0, 6).map(w => <WorkoutRow key={w.id} w={w} onClick={() => workoutDetailSheet(w)} />)}</div>
-    </>}
+    <button className="stats-history-link" onClick={() => nav('/history')}>
+      <span className="stats-history-icon"><Icon name="history" /></span>
+      <span><strong>{t('Workout history')}</strong><small>{t('{0} workouts', S.workouts.length)}</small></span>
+      <Icon name="chevronRight" />
+    </button>
   </>
 }
