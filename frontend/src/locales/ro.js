@@ -776,6 +776,8 @@ export default {
   "View client dashboard": "Vezi panoul clientului",
   "Your trainer": "Antrenorul tău",
   "Review plans": "Verifică planurile",
+  "Restore rest day": "Restabilește zi de pauză",
+  "Today is now a rest day": "Astăzi este acum zi de pauză",
   "A new plan from your trainer is waiting for approval.": "Ai un plan nou de la antrenor care așteaptă aprobarea ta.",
   "{0} new plans from your trainer are waiting for approval.": "Ai {0} planuri noi de la antrenor care așteaptă aprobarea ta.",
   "Workout": "Antrenament",
