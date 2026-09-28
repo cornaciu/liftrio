@@ -1197,3 +1197,21 @@ h4.sec{
   .exmedia img{height:380px}
   .hm-wrap{display:flex;flex-direction:column;align-items:center}
 }
+
+
+/* Login and registration actions share one fixed footprint across languages. */
+.login-actions .btn{
+  height:68px;
+  min-height:68px;
+}
+.login-actions .btn>span{
+  flex:1 1 auto;
+  min-width:0;
+  font-size:clamp(14px,4vw,18px);
+  line-height:1.12;
+  text-wrap:balance;
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+  overflow:hidden;
+}
