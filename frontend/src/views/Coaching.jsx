@@ -30,7 +30,7 @@ export default function Coaching() {
   const act = async fn => {
     if (busy) return
     setBusy(true)
-    try { await fn(); await reload() } catch (e) { toast(e.message || t('Could not save changes')) }
+    try { await fn(); await reload(); window.dispatchEvent(new Event('liftrio:coaching-change')) } catch (e) { toast(e.message || t('Could not save changes')) }
     finally { setBusy(false) }
   }
   const grant = (trainerId, allow) => act(async () => {
