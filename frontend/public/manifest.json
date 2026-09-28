@@ -1,7 +1,7 @@
 {
-  "name": "openGym",
-  "short_name": "openGym",
-  "description": "Personal gym & body weight tracker",
+  "name": "Liftrio",
+  "short_name": "Liftrio",
+  "description": "Antrenamente, nutriție și progres într-o singură aplicație.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

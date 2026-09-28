@@ -21,7 +21,7 @@ environment variables for Production (and Preview if using preview deployments):
 
 - `RP_ID=open-gym-bay.vercel.app` (or the final custom hostname, without scheme)
 - `ORIGIN=https://open-gym-bay.vercel.app` (or the matching full custom origin)
-- `RP_NAME=openGym`
+- `RP_NAME=Liftrio` (optional; if omitted, the API uses Liftrio automatically)
 - `INVITE_ONLY=true` is optional; leave false for first registration.
 
 Passkeys are tied to the hostname. Changing domains later means registering new
@@ -41,12 +41,13 @@ cannot run frequently enough for this, so configure Supabase using
    value, run the SQL once in Supabase SQL Editor, and confirm the URL matches the
    production domain.
 4. On iPhone, install the site using Share → Add to Home Screen, open that home
-   screen app, sign in, then enable Push notifications in openGym Settings. iOS
+   screen app, sign in, then enable Push notifications in Liftrio Settings. iOS
    web push requires a Home Screen web app and notification permission.
 
-The one-minute Supabase job means a web push can arrive up to about a minute after
-the rest timer ends. The timer recalculates from its end timestamp when the app
-returns to the foreground. A live countdown displayed on the iPhone Lock Screen
+The Supabase job checks pending timers every 5 seconds. That limits the
+scheduler's polling delay to about 5 seconds, but the browser push service may
+still add delivery delay, especially on a locked iPhone. The timer recalculates
+from its end timestamp when the app returns to the foreground. A live countdown displayed on the iPhone Lock Screen
 requires an installed native iOS app with an ActivityKit Live Activity; a Vercel
 website/PWA cannot publish that lock-screen interface. The Capacitor native build
 can schedule a local rest alert with iOS when notification permission is granted.

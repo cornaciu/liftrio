@@ -22,7 +22,7 @@ const pool = new pg.Pool({
 });
 const RP_ID = process.env.RP_ID || 'open-gym-bay.vercel.app';
 const ORIGIN = process.env.ORIGIN || `https://${RP_ID}`;
-const RP_NAME = process.env.RP_NAME || 'openGym';
+const RP_NAME = process.env.RP_NAME && process.env.RP_NAME !== 'openGym' ? process.env.RP_NAME : 'Liftrio';
 const INVITE_ONLY = /^(1|true|yes|on)$/i.test(process.env.INVITE_ONLY || '');
 const ADMIN_UIDS = (process.env.ADMIN_UIDS || '').split(',').map(s => s.trim()).filter(Boolean);
 const SESSION_DAYS = Math.max(1, +(process.env.SESSION_DAYS || 90) || 90);
@@ -211,7 +211,7 @@ export default async function handler(req, res) {
       }
       case 'POST /api/push/test': {
         const user = requireUser(); if (!user) break;
-        await sendPush(user.id, { title: 'openGym', body: 'Test notification ✅', tag: 'test' });
+        await sendPush(user.id, { title: 'Liftrio', body: 'Test notification ✅', tag: 'test' });
         send(res, 200, { ok: true }); break;
       }
       case 'POST /api/push/rest-timer':
@@ -304,7 +304,7 @@ export default async function handler(req, res) {
     await client.query('commit');
   } catch (error) {
     await client.query('rollback').catch(() => {});
-    console.error('openGym API', error);
+    console.error('Liftrio API', error);
     if (!res.headersSent) send(res, 500, { error: 'server error' });
   } finally { client.release(); }
 }
