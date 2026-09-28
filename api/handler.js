@@ -101,10 +101,10 @@ export default async function handler(req, res) {
     let vapid = await get('vapid');
     if (!vapid) { vapid = webpush.generateVAPIDKeys(); await put('vapid', vapid); }
     webpush.setVapidDetails(process.env.VAPID_SUBJECT || ORIGIN, vapid.publicKey, vapid.privateKey);
-    const sendPush = async (uid, payload, pushOptions = {}) => {
+    const sendPush = async (uid, payload) => {
       const subs = db.subs.filter(s => s.userId === uid);
       await Promise.all(subs.map(async sub => {
-        try { await webpush.sendNotification({ endpoint: sub.endpoint, keys: sub.keys }, JSON.stringify(payload), pushOptions); }
+        try { await webpush.sendNotification({ endpoint: sub.endpoint, keys: sub.keys }, JSON.stringify(payload)); }
         catch (error) {
           if ([404, 410].includes(error.statusCode)) db.subs = db.subs.filter(s => s.endpoint !== sub.endpoint);
           else console.error('push failed', error.statusCode || error.message);
@@ -241,7 +241,7 @@ export default async function handler(req, res) {
         await saveDb();
         for (const timer of due) await sendPush(timer.userId, {
           title: 'Pauza s-a încheiat 💪', body: 'E timpul pentru următoarea serie.', tag: 'rest-timer'
-        }, { TTL: 30, urgency: 'high', topic: 'resttimer' });
+        });
         send(res, 200, { ok: true, delivered: due.length }); break;
       }
       case 'POST /api/activity': {
