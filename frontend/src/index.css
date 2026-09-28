@@ -1392,3 +1392,18 @@ h4.sec{
 @media(prefers-reduced-motion:reduce){
   #tabbar.liftrio-nav::before,#tabbar.liftrio-nav button{transition:none}
 }
+
+
+/* Each glass cell follows the same five-column geometry as its button. */
+#tabbar.liftrio-nav{--nav-pad:8px;padding-left:var(--nav-pad);padding-right:var(--nav-pad)}
+#tabbar.liftrio-nav button{flex:1 1 0}
+#tabbar.liftrio-nav::before{
+  box-sizing:border-box;
+  left:var(--nav-pad);
+  width:calc((100% - 2 * var(--nav-pad) - 16px)/5);
+  transform:translateX(0);
+}
+#tabbar.liftrio-nav.nav-pos-1::before{transform:translateX(calc(100% + 4px))}
+#tabbar.liftrio-nav.nav-pos-2::before{transform:translateX(calc(200% + 8px))}
+#tabbar.liftrio-nav.nav-pos-3::before{transform:translateX(calc(300% + 12px))}
+#tabbar.liftrio-nav.nav-pos-4::before{transform:translateX(calc(400% + 16px))}
