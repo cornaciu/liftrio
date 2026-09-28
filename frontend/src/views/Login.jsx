@@ -61,26 +61,28 @@ export default function Login() {
   const registerLabel = t('Create new profile')
   useLayoutEffect(() => {
     const fit = () => {
+      const mobile = window.matchMedia('(max-width:760px)').matches
       const headline = headlineRef.current
       if (headline) {
         headline.style.fontSize = ''
-        const base = parseFloat(getComputedStyle(headline).fontSize)
-        const longest = Math.max(...Array.from(headline.children, line => line.scrollWidth))
-        if (longest > headline.clientWidth) headline.style.fontSize = `${base * headline.clientWidth / longest}px`
+        if (mobile) {
+          const base = parseFloat(getComputedStyle(headline).fontSize)
+          const longest = Math.max(...Array.from(headline.children, line => line.scrollWidth))
+          if (longest > headline.clientWidth) headline.style.fontSize = `${base * (headline.clientWidth - 2) / longest}px`
+        }
       }
-      actionsRef.current?.querySelectorAll('.login-auth-action').forEach(button => {
-        const label = button.querySelector('span')
-        if (!label) return
+      actionsRef.current?.querySelectorAll('.login-auth-action > span').forEach(label => {
         label.style.fontSize = ''
-        const style = getComputedStyle(button)
-        const icon = button.querySelector('.icn')
-        const gap = icon ? parseFloat(style.columnGap) || 0 : 0
-        const available = button.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight) - (icon?.getBoundingClientRect().width || 0) - gap
-        const base = parseFloat(getComputedStyle(label).fontSize)
-        if (label.scrollWidth > available) label.style.fontSize = `${base * available / label.scrollWidth}px`
+        if (!mobile) return
+        let size = parseFloat(getComputedStyle(label).fontSize)
+        while (label.scrollHeight > size * 1.12 * 2 + 2 && size > 12) {
+          size -= .5
+          label.style.fontSize = `${size}px`
+        }
       })
     }
     fit()
+    document.fonts?.ready.then(fit)
     window.addEventListener('resize', fit)
     return () => window.removeEventListener('resize', fit)
   }, [headlineFirst, headlineSecond, signInLabel, registerLabel])
