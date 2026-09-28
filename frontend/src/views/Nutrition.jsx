@@ -190,7 +190,7 @@ export default function Nutrition() {
           <label className="nutrition-input">{t('Percentage')} (%)<NumberField value={macroPercent(k)} onChange={v => setMacroPercent(k, v)} disabled={!targets.kcal} /></label>
           <label className="nutrition-input">{t('Grams')} (g)<NumberField value={targets[k]} onChange={v => setTarget(k, v)} /></label>
         </div>)}</div>
-        <p className="nutrition-percent-total">{t('Macro percentages: {0}% total. Enter 100% to send the plan.', percentTotal).replace(t(' to send the plan.'), '')}</p>
+        <p className="nutrition-percent-total">{t('Macro percentages: {0}% total.', percentTotal)}</p>
         <div className="nutrition-target-micros">{['fiber', 'salt'].map(k => <label key={k} className="nutrition-input">{t(LABELS[k])} (g)<NumberField value={targets[k]} onChange={v => setTarget(k, v)} /></label>)}</div>
         <div className="nutrition-calculated"><div><span>{t('Calculated from macros')}</span><strong>{fmtNum(macroCalories)} kcal</strong></div><small>{t('Protein and carbs: 4 kcal/g · fat: 9 kcal/g')}</small></div>
         {Math.abs(targetDifference) >= 1 && <div className="nutrition-target-difference"><span>{t('Difference from calorie goal')}: {fmtNum(Math.abs(targetDifference))} kcal</span><button onClick={() => setTarget('kcal', macroCalories)}>{t('Use macro total')}</button></div>}
