@@ -93,7 +93,7 @@ export default function Coaching() {
   const sent = (data?.assignments || []).filter(a => a.trainerId === user.id).slice().reverse()
   const incomingNutrition = (data?.nutritionAssignments || []).filter(a => a.clientId === user.id && a.status === 'pending')
   const sentNutrition = (data?.nutritionAssignments || []).filter(a => a.trainerId === user.id).slice().reverse()
-  const isTrainer = data?.role === 'trainer' || data?.role === 'admin'
+  const isTrainer = (data?.role || user?.role) === 'trainer' || (data?.role || user?.role) === 'admin'
 
   return <div className="narrow coach-page">
     <div className="hdr">
