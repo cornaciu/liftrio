@@ -49,10 +49,11 @@ function MuscleBalance({ S }) {
     </div>
     <Segmented className="seg-range" value={win} onChange={v => { setWin(v); setSel(null) }}
       options={[{ value: 7, label: t('Week') }, { value: 30, label: '30d' }, { value: 90, label: '90d' }, { value: 0, label: t('All') }]} />
-    {inWin.length ? <>
+    <>
       <BodyMap className="tappable" load={load} body={S.body} selected={sel}
         onMuscle={m => setSel(s => (s === m ? null : m))} />
       <BodyMapLegend />
+      {!inWin.length && <div className="muted small" style={{ marginTop: 10 }}>{t('No workouts in this period yet.')}</div>}
       {sel && <div className="mrow" style={{ borderTop: 'var(--hair) solid var(--sep)', marginTop: 4, paddingTop: 10 }}>
         <span className="nm"><b>{t(MUSCLE_NAME[sel])}</b></span>
         <span className="v">{sets(sel) ? t('{0} sets', sets(sel)) : on ? t('no hard sets') : t('not trained')}</span>
@@ -62,7 +63,7 @@ function MuscleBalance({ S }) {
         <span className="bar"><i style={{ width: Math.round(load[m] / max * 100) + '%', background: on ? 'var(--yellow)' : undefined }} /></span>
         <span className="v">{t('{0} sets', sets(m))}</span>
       </div>)}
-      {missed.length > 0 && <>
+      {inWin.length > 0 && missed.length > 0 && <>
         <h4 className="sec" style={{ marginTop: 12 }}>{on ? t('No hard sets in this period') : t('Not trained in this period')}</h4>
         <div className="mchips">{missed.map(m => <span key={m} className="mchip miss">{t(MUSCLE_NAME[m])}</span>)}</div>
       </>}
@@ -70,7 +71,7 @@ function MuscleBalance({ S }) {
         <div className="muted small" style={{ marginTop: 10 }}>{on
           ? t('Every muscle group got at least one hard set in this period.')
           : t('Every muscle group got some work in this period.')}</div>}
-    </> : <div className="muted small">{t('No workouts in this period yet.')}</div>}
+    </>
   </div>
 }
 
@@ -209,7 +210,7 @@ export default function Stats() {
       <Heatmap S={S} onDay={iso => { const ws = S.workouts.filter(w => w.d === iso); if (ws.length === 1) workoutDetailSheet(ws[0]); else if (ws.length) calendarSheet(iso) }} />
     </div>
 
-    {S.workouts.length > 0 && <MuscleBalance S={S} />}
+    <MuscleBalance S={S} />
     {anyEffort && <EffortCard S={S} />}
 
     <div className="cols">
