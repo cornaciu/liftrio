@@ -54,6 +54,9 @@ function Shell() {
     document.body.classList.toggle('login-screen', !authed && ready)
     return () => document.body.classList.remove('login-screen')
   }, [authed, ready])
+  useEffect(() => {
+    if (ready && !authed && loc.pathname !== '/home') navigate('/home', { replace: true })
+  }, [ready, authed, loc.pathname, navigate])
   // every tab/route change starts at the top of the page
   useEffect(() => { window.scrollTo(0, 0) }, [loc.pathname])
   // bound to the workout, not to the route — checking Stats mid-session keeps the screen on
