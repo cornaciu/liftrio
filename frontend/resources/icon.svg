@@ -1,13 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 512 512">
-  <!-- App-icon source == the PWA icon (public/icon-512.png), geometry traced 1:1 so the
-       native app, the home-screen PWA and the website favicon all show the same icon.
-       Generate platform icons + splash via `npx @capacitor/assets generate` — docs/MOBILE.md. -->
   <rect width="512" height="512" fill="#0c0e12"/>
-  <g fill="#a3e635">
-    <rect x="80" y="242" width="352" height="28"/>
-    <rect x="80" y="199" width="36" height="114"/>
-    <rect x="131" y="169" width="47" height="174"/>
-    <rect x="334" y="169" width="47" height="174"/>
-    <rect x="396" y="199" width="36" height="114"/>
+  <!-- The fork stem grows directly out of the dumbbell bar to form one mark. -->
+  <g fill="#ccff00">
+    <!-- continuous dumbbell bar -->
+    <rect x="91" y="278" width="330" height="28" rx="14"/>
+    <!-- inner weight plates -->
+    <rect x="130" y="213" width="46" height="158" rx="17"/>
+    <rect x="336" y="213" width="46" height="158" rx="17"/>
+    <!-- outer collars -->
+    <rect x="79" y="239" width="28" height="96" rx="13"/>
+    <rect x="405" y="239" width="28" height="96" rx="13"/>
   </g>
+  <!-- the fork head rises from the bar; its handle continues through the dumbbell shaft -->
+  <g fill="none" stroke="#f5f7fa" stroke-linecap="round" stroke-width="13">
+    <path d="M214 202v-62"/>
+    <path d="M242 202v-77"/>
+    <path d="M270 202v-77"/>
+    <path d="M298 202v-62"/>
+  </g>
+  <path d="M208 198c7 28 24 41 48 41s41-13 48-41" fill="none" stroke="#f5f7fa" stroke-linecap="round" stroke-width="13"/>
+  <path d="M246 229h20v70h-20z" fill="#ccff00"/>
 </svg>
