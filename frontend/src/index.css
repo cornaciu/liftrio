@@ -1637,3 +1637,17 @@ h4.sec{
 }
 .settings-page .settings-accent .swatch{width:38px;height:38px}
 @media(max-width:360px){.settings-page .settings-accent .swatch{width:34px;height:34px}}
+
+
+.nutrition-target-macro{min-width:0;padding:11px 9px;border:1px solid var(--sep-op);border-radius:12px;background:var(--bg-el)}
+.nutrition-target-macro>strong{display:block;margin-bottom:8px;font-size:13px;line-height:1.2;color:var(--label)}
+.nutrition-target-macro .nutrition-input{font-size:11px;line-height:1.25;margin-top:9px}
+.nutrition-target-macro .num{min-width:0;font-size:15px}
+.nutrition-target-macro .num:disabled{opacity:.5;cursor:not-allowed}
+.nutrition-percent-total{margin:10px 0 0;font-size:12px;color:var(--label-2)}
+@media(max-width:390px){
+  .nutrition-target-macros{gap:5px}
+  .nutrition-target-macro{padding:9px 6px}
+  .nutrition-target-macro>strong{font-size:12px}
+  .nutrition-target-macro .num{padding:0 7px;font-size:14px}
+}
