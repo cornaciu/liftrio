@@ -1470,3 +1470,36 @@ h4.sec{
 #toast.welcome-toast .toast-symbol{flex:none;display:grid;place-items:center;width:39px;height:39px;border-radius:12px;background:var(--acc);color:var(--on-acc);font-size:20px}
 #toast.welcome-toast .toast-copy{display:flex;flex-direction:column;gap:2px;line-height:1.25;font-weight:600}
 #toast.welcome-toast .toast-copy small{text-transform:uppercase;letter-spacing:.12em;font-size:10px;font-weight:750;color:var(--acc)}
+
+
+/* Clear plan, history and settings actions. */
+.plan-import-export,.home-settings-action{flex:none;min-height:45px;padding:9px 13px;border:1px solid var(--acc-line);border-radius:13px;background:var(--acc-soft);color:var(--label);font-size:13px;font-weight:700;gap:7px}
+.home-settings-action .icn,.plan-import-export .icn{font-size:20px;color:var(--acc)}
+.hdr:has(.home-settings-action)>div:first-child,.hdr:has(.plan-import-export)>div:first-child{min-width:0}
+@media(max-width:390px){.plan-import-export,.home-settings-action{font-size:12px;padding:8px 9px}.hdr:has(.home-settings-action) h1{font-size:29px}}
+.workout-history-day{margin:0 0 19px}
+.workout-history-day h2{margin:0 0 9px;padding:0 4px;font-size:15px;font-weight:700;color:var(--label);text-transform:capitalize}
+.workout-history-day .list{border:1px solid var(--sep-op);border-radius:14px;overflow:hidden;background:var(--surface)}
+.stats-history-link{display:flex;align-items:center;gap:12px;width:100%;min-height:73px;margin:18px 0 12px;padding:12px 15px;border:1px solid var(--acc-line);border-radius:16px;background:linear-gradient(110deg,var(--acc-soft),var(--surface) 75%);color:var(--label);text-align:left}
+.stats-history-icon{flex:none;display:grid;place-items:center;width:42px;height:42px;border-radius:12px;background:var(--acc);color:var(--on-acc);font-size:21px}
+.stats-history-link>span:nth-child(2){flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.stats-history-link strong{font-size:16px}
+.stats-history-link small{font-size:12px;color:var(--label-2)}
+.stats-history-link>.icn{color:var(--acc)}
+.settings-page .settings-choice-row{display:grid!important;grid-template-columns:34px minmax(0,1fr)!important;gap:10px 12px!important;align-items:center}
+.settings-page .settings-choice-row>.lrow-m{min-width:0;grid-column:2;grid-row:1}
+.settings-page .settings-choice-row:has(.helpbtn)>.lrow-m{padding-right:44px}
+.settings-page .settings-choice-row>.lrow-i{grid-column:1;grid-row:1}
+.settings-page .settings-choice-row>.helpbtn{grid-column:2!important;grid-row:1!important;justify-self:end}
+.settings-page .settings-choice-row>.seg-inline{
+  grid-column:1/-1!important;grid-row:2!important;
+  justify-self:stretch!important;width:100%!important;max-width:none!important;min-width:0!important;
+  margin:0!important;
+}
+.settings-page .settings-choice-row>.seg-inline>button{min-width:0;white-space:nowrap}
+:root[data-theme="light"] .settings-page .lrow-i,
+:root[data-theme="light"] .stats-history-icon{background:#e4f4ad!important;color:#314800!important;border-color:#a9c849}
+:root[data-theme="light"] .home-settings-action .icn,
+:root[data-theme="light"] .plan-import-export .icn,
+:root[data-theme="light"] .stats-history-link>.icn,
+:root[data-theme="light"] #tabbar.liftrio-nav button.on .icn{color:#405a00}
