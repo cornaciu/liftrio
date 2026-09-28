@@ -86,9 +86,15 @@ export default function CoachingClient() {
 
       <div className="card">
         <h2>{t('Food diary history')}</h2>
-        {diaryDays.length ? diaryDays.map(([date, entries]) => <section className="coach-diary-day" key={date}>
-          <div className="coach-diary-date"><strong>{date ? fmtDate(date, true) : t('Unknown date')}</strong><span>{t('{0} foods', entries.length)}</span></div>
-          {entries.map((entry, i) => <MacroLine key={entry.id || `${date}-${i}`} entry={entry} />)}
+        {diaryDays.length ? diaryDays.map(([date, meals]) => <section className="coach-diary-day" key={date}>
+          <div className="coach-diary-date"><strong>{date ? fmtDate(date, true) : t('Unknown date')}</strong><span>{t('{0} foods', Object.values(meals).reduce((sum, entries) => sum + entries.length, 0))}</span></div>
+          {Object.entries(meals).sort(([a], [b]) => {
+            const ai = MEAL_ORDER.indexOf(a), bi = MEAL_ORDER.indexOf(b)
+            return (ai < 0 ? MEAL_ORDER.length : ai) - (bi < 0 ? MEAL_ORDER.length : bi)
+          }).map(([meal, entries]) => <div className="coach-diary-meal" key={meal}>
+            <div className="coach-diary-meal-title"><strong>{t(meal)}</strong><span>{fmtNum(entries.reduce((sum, entry) => sum + (Number(entry.per100?.kcal ?? entry.kcal) || 0) * (Number(entry.grams) || 0) / 100, 0))} kcal</span></div>
+            {entries.map((entry, i) => <MacroLine key={entry.id || `${date}-${meal}-${i}`} entry={entry} />)}
+          </div>)}
         </section>)
           : <div className="muted small">{t('No foods logged yet.')}</div>}
         {todayEntries.length > 0 && <div className="dim small" style={{ marginTop: 10 }}>{t('{0} foods logged today', todayEntries.length)}</div>}
