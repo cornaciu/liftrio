@@ -15,6 +15,8 @@ import Toast from './components/Toast.jsx'
 import RestTimer from './components/RestTimer.jsx'
 import Login from './views/Login.jsx'
 import Home from './views/Home.jsx'
+import TrainerHome from './views/TrainerHome.jsx'
+import TrainerNutritionPlan from './views/TrainerNutritionPlan.jsx'
 import Plan from './views/Plan.jsx'
 import RoutineEdit from './views/RoutineEdit.jsx'
 import Workout from './views/Workout.jsx'
@@ -73,7 +75,7 @@ function Shell() {
         <ErrorBoundary>
           {!authed ? <Login /> : (
             <Routes>
-              <Route path="/home" element={<Home />} />
+              <Route path="/home" element={user?.role === 'trainer' ? <TrainerHome /> : <Home />} />
               <Route path="/plan" element={<Plan />} />
               <Route path="/plan/r/:id" element={<RoutineEdit />} />
               <Route path="/workout" element={<Workout />} />
@@ -84,6 +86,7 @@ function Shell() {
               <Route path="/settings" element={<Settings />} />
               <Route path="/coaching" element={user ? <Coaching /> : <Navigate to="/settings" replace />} />
               <Route path="/coaching/client/:clientId" element={user ? <CoachingClient /> : <Navigate to="/settings" replace />} />
+              <Route path="/coaching/nutrition/:clientId" element={user?.role === 'trainer' || user?.role === 'admin' ? <TrainerNutritionPlan /> : <Navigate to="/home" replace />} />
               <Route path="/admin" element={user?.admin ? <Admin /> : <Navigate to="/home" replace />} />
               <Route path="*" element={<Navigate to="/home" replace />} />
             </Routes>
