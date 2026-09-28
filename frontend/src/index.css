@@ -119,7 +119,7 @@ body{
 button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;letter-spacing:inherit}
 input,select,textarea{font:inherit;color:var(--label);letter-spacing:inherit}
 img{max-width:100%}
-a{color:var(--acc);text-decoration:none}
+a{color:var(--acc-ink);text-decoration:none}
 :focus{outline:none}
 :focus-visible{outline:2.5px solid var(--acc);outline-offset:2px;border-radius:6px}
 button,.chip,.tile,.item,.wday,.cal-d,.swatch,.hm-c,.lrow,.seg button,.stp button,.sld
@@ -147,7 +147,7 @@ button,.chip,.tile,.item,.wday,.cal-d,.swatch,.hm-c,.lrow,.seg button,.stp butto
 
 .muted{color:var(--label-2)} .dim{color:var(--label-3)}
 .small{font-size:13px;line-height:1.38}
-.accent{color:var(--acc)}
+.accent{color:var(--acc-ink)}
 .capitalize{text-transform:capitalize}
 /* exercise names and body-part/equipment terms arrive lowercase from the dataset,
    so tags and chips capitalise by default. Anything that is a unit or a sentence opts
@@ -285,7 +285,7 @@ body.login-screen{height:100dvh;overflow:hidden;background:#0a0a0a}
   transition:background var(--fast),transform var(--fast);
 }
 .iconbtn:active{background:var(--surface-2);transform:scale(.92)}
-.iconbtn.on-ss{background:var(--acc-soft);color:var(--acc)}
+.iconbtn.on-ss{background:var(--acc-soft);color:var(--acc-ink)}
 
 h4.sec{
   font-size:13px;font-weight:400;letter-spacing:-.004em;color:var(--label-2);
@@ -341,7 +341,7 @@ h4.sec{
 .lrow-v{color:var(--label-2);font-size:17px;letter-spacing:-.012em;flex:0 1 auto;min-width:0;
   max-width:52%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right}
 .lrow-c{color:var(--label);font-size:15px;flex:none;--icon-stroke:2.4}
-.lrow-k{color:var(--acc);font-size:17px;flex:none;--icon-stroke:2.4}
+.lrow-k{color:var(--acc-ink);font-size:17px;flex:none;--icon-stroke:2.4}
 .lrow.danger,.lrow.danger .lrow-t{color:var(--red)}
 /* an (i) before a row's control: painted small and dim so the control stays the loud thing,
    but with a finger-sized target like everything else — the padding is the hit area and the
@@ -364,9 +364,9 @@ h4.sec{
 .btn:active{transform:scale(.975)}
 .btn.primary{background:var(--acc);color:var(--on-acc)}
 .btn.primary:active{background:var(--acc-2)}
-.btn.tinted{background:var(--acc-soft);color:var(--acc)}
+.btn.tinted{background:var(--acc-soft);color:var(--acc-ink)}
 .btn.danger{background:color-mix(in srgb,var(--red) 15%,transparent);color:var(--red)}
-.btn.ghost,.btn.plain{background:none;color:var(--acc);font-weight:400}
+.btn.ghost,.btn.plain{background:none;color:var(--acc-ink);font-weight:400}
 .btn.ghost:active,.btn.plain:active{background:var(--surface-2)}
 .btn.sm{padding:8px 14px;width:auto;font-size:15px;border-radius:var(--r-sm);gap:5px}
 .btn.sm .icn{font-size:16px}
@@ -394,7 +394,7 @@ h4.sec{
    fade on the <svg> instead of in the stroke colour flattens the icon first and
    fades it as one shape — and it does that for every icon, not just this one. */
 #tabbar button .icn{font-size:25px;--icon-stroke:1.65;color:var(--label)}
-#tabbar button.on{color:var(--acc)}
+#tabbar button.on{color:var(--acc-ink)}
 #tabbar button.on .icn{--icon-stroke:2;color:inherit;opacity:1}
 #tabbar button.start{margin-top:-24px}
 #tabbar button.start .cir{
@@ -405,7 +405,7 @@ h4.sec{
 }
 #tabbar button.start:active .cir{transform:scale(.93)}
 #tabbar button.start .cir .icn{font-size:26px;--icon-stroke:2;color:inherit;opacity:1}
-#tabbar button.start span{color:var(--acc);font-weight:600}
+#tabbar button.start span{color:var(--acc-ink);font-weight:600}
 /* `.cir` is itself a <span>, so the label rules above and below reach it too and
    outrank the `.cir` block — which is how the running state ended up painting an
    orange play glyph onto an orange disc. Both states restate their own colour.
@@ -463,7 +463,7 @@ h4.sec{
   color:var(--label-2);border-radius:6px;padding:3px 7px;font-size:12px;
   font-weight:500;text-transform:capitalize;
 }
-.tag.acc{background:var(--acc-soft);color:var(--acc)}
+.tag.acc{background:var(--acc-soft);color:var(--acc-ink)}
 
 /* ---------------------------------------------------------------- chips -- */
 .chips{
@@ -636,7 +636,7 @@ h4.sec{
 .wprog{height:4px;background:var(--surface-2);border-radius:99px;overflow:hidden;margin-bottom:16px}
 .wprog i{display:block;height:100%;background:var(--acc);border-radius:99px;transition:width var(--med) var(--ease)}
 .workout-energy{display:flex;align-items:center;gap:12px;margin:12px 0 16px;padding:13px 15px;border-radius:var(--r-card);background:color-mix(in srgb,var(--acc) 10%,var(--surface));text-align:left}
-.workout-energy>.icn{font-size:23px;color:var(--acc)}
+.workout-energy>.icn{font-size:23px;color:var(--acc-ink)}
 .workout-energy>div{display:flex;flex-direction:column;min-width:0;gap:3px}
 .workout-energy strong{font-size:21px;line-height:1.1;letter-spacing:-.025em}
 .workout-energy small{color:var(--label-2);font-size:12px;line-height:1.35}
@@ -696,7 +696,7 @@ h4.sec{
 /* why the next target is what it is (issue #17) */
 .progline{
   display:flex;align-items:flex-start;gap:7px;margin:6px 0 2px;min-width:0;max-width:100%;
-  font-size:13px;line-height:1.38;color:var(--acc);
+  font-size:13px;line-height:1.38;color:var(--acc-ink);
 }
 .progline span{flex:1;min-width:0;overflow-wrap:anywhere}
 .progline.warn{color:var(--yellow)}
@@ -706,10 +706,10 @@ h4.sec{
 /* Coach permissions: make the two independent grants easy to scan and tap. */
 .coach-page{--coach-gap:12px}
 .coach-hero{display:flex;gap:14px;align-items:flex-start;margin:4px 0 14px;padding:18px;border:1px solid var(--acc-line);border-radius:var(--r-xl);background:linear-gradient(135deg,var(--acc-soft),var(--surface) 72%)}
-.coach-hero-icon,.coach-section-icon{display:grid;place-items:center;flex:none;color:var(--acc);background:var(--acc-soft);border:1px solid var(--acc-line)}
+.coach-hero-icon,.coach-section-icon{display:grid;place-items:center;flex:none;color:var(--acc-ink);background:var(--acc-soft);border:1px solid var(--acc-line)}
 .coach-hero-icon{width:44px;height:44px;border-radius:14px;font-size:22px}
 .coach-hero-copy{min-width:0}
-.coach-eyebrow{font-size:11px;line-height:1.3;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--acc);margin-bottom:5px}
+.coach-eyebrow{font-size:11px;line-height:1.3;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--acc-ink);margin-bottom:5px}
 .coach-hero h2{font-size:18px;line-height:1.2;margin:0 0 5px}
 .coach-hero p,.coach-section-head p{color:var(--label-2);font-size:13px;line-height:1.4;margin:0}
 .coach-card{padding:16px}
@@ -726,13 +726,13 @@ h4.sec{
 .coach-permission-copy span{font-size:11px;line-height:1.35;color:var(--label-2)}
 .coach-empty{display:flex;align-items:center;gap:9px;padding:14px;border-radius:12px;background:var(--bg-el);color:var(--label-2);font-size:13px}
 .weight-help{display:flex;align-items:flex-start;gap:8px;margin:-9px 0 16px;padding:10px 12px;border-radius:12px;background:var(--acc-soft);color:var(--label-2);font-size:12px;line-height:1.4}
-.weight-help svg{width:16px;height:16px;flex:none;color:var(--acc);margin-top:1px}
+.weight-help svg{width:16px;height:16px;flex:none;color:var(--acc-ink);margin-top:1px}
 
 /* start a timed set (issue #16) — sits where you'd otherwise reach for the checkbox */
 .setrow .setgo{
   width:30px;height:30px;border-radius:50%;flex:none;
   display:flex;align-items:center;justify-content:center;
-  background:var(--surface-2);color:var(--acc);font-size:14px;
+  background:var(--surface-2);color:var(--acc-ink);font-size:14px;
   transition:background var(--fast),opacity var(--fast);
 }
 .setrow .setgo:disabled{opacity:.3;cursor:default}
@@ -770,7 +770,7 @@ h4.sec{
 /* work timer (issue #16): the same bar doing the opposite job — outlined and tinted so a
    glance tells "you are holding this" apart from "you are recovering". */
 #timer.working{border:var(--hair) solid var(--acc)}
-#timer.working .t{color:var(--acc)}
+#timer.working .t{color:var(--acc-ink)}
 #timer.working .grow{flex:1;min-width:0}
 #timer.working .lbl{
   font-size:12px;color:var(--label-2);margin-bottom:5px;text-transform:capitalize;
@@ -829,7 +829,7 @@ h4.sec{
 }
 /* the row a working set usually lands on — the anchor the others are read against */
 .efftbl .r.on{background:var(--acc-soft)}
-.efftbl .r.on .n{color:var(--acc)}
+.efftbl .r.on .n{color:var(--acc-ink)}
 .efftbl .r.on .f{color:var(--label)}
 
 /* --- glyph picker (replaces the emoji grid) --- */
@@ -982,12 +982,12 @@ h4.sec{
 .nutrition-ring-label{display:block;width:100%;font-size:clamp(7px,2vw,9px);line-height:1.1;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--label-3);white-space:nowrap;text-align:center}
 .nutrition-ring-unit{display:block;width:100%;font-size:11px;line-height:1.1;color:var(--label-2);white-space:nowrap;text-align:center}
 .nutrition-energy-text{display:flex;flex-direction:column;align-items:flex-start;gap:6px;width:100%;min-width:0;text-align:left}
-.nutrition-kicker{display:inline-flex;align-items:center;gap:5px;color:var(--acc);font-size:13px;font-weight:600}
+.nutrition-kicker{display:inline-flex;align-items:center;gap:5px;color:var(--acc-ink);font-size:13px;font-weight:600}
 .nutrition-energy-text>strong{font-size:clamp(22px,7vw,30px);line-height:1.05;letter-spacing:-.04em;font-variant-numeric:tabular-nums;white-space:nowrap}
 .nutrition-energy-text small{font-size:14px;font-weight:400;color:var(--label-2);letter-spacing:0}
 .nutrition-workout-credit{display:flex;align-items:center;gap:8px;margin:-3px 0 15px;padding:10px 12px;border-radius:11px;background:color-mix(in srgb,var(--acc) 9%,var(--surface-2));color:var(--label);font-size:13px}
-.nutrition-workout-credit .icn{color:var(--acc);font-size:17px}
-.nutrition-workout-credit strong{margin-left:auto;color:var(--acc);font-size:15px;white-space:nowrap}
+.nutrition-workout-credit .icn{color:var(--acc-ink);font-size:17px}
+.nutrition-workout-credit strong{margin-left:auto;color:var(--acc-ink);font-size:15px;white-space:nowrap}
 .nutrition-macro-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
 .nutrition-macro{font-size:12px;min-width:0;padding:11px 10px;border-radius:11px;background:var(--surface-2)}
 .nutrition-macro .row{margin-bottom:5px}
@@ -1019,8 +1019,8 @@ h4.sec{
 .nutrition-summary.compact .nutrition-micro-head strong{font-size:13px}
 .nutrition-home-head{gap:12px}
 .nutrition-home-head h2{display:flex;align-items:center;gap:8px;font-size:19px}
-.nutrition-home-head h2 .icn{color:var(--acc)}
-.nutrition-home-action{display:inline-flex;align-items:center;gap:4px;flex:none;padding:8px 9px;border-radius:9px;background:var(--acc-soft);color:var(--acc);font-size:13px;font-weight:600}
+.nutrition-home-head h2 .icn{color:var(--acc-ink)}
+.nutrition-home-action{display:inline-flex;align-items:center;gap:4px;flex:none;padding:8px 9px;border-radius:9px;background:var(--acc-soft);color:var(--acc-ink);font-size:13px;font-weight:600}
 .nutrition-day-card{padding-bottom:16px}
 .nutrition-day-card>.row strong{text-align:center;font-size:15px}
 .nutrition-section-head{display:flex;flex-direction:column;align-items:stretch;gap:9px;margin:22px 3px 10px}
@@ -1036,7 +1036,7 @@ h4.sec{
 .nutrition-meal-card{padding:0 16px!important}
 .nutrition-meal-head{display:flex;align-items:center;justify-content:space-between;min-height:77px}
 .nutrition-meal-head h3{font-size:17px;margin:0 0 4px}
-.nutrition-add{display:flex;align-items:center;justify-content:center;gap:5px;min-height:40px;padding:0 11px;border-radius:11px;background:var(--acc-soft);color:var(--acc);font-size:13px;font-weight:600;white-space:nowrap}
+.nutrition-add{display:flex;align-items:center;justify-content:center;gap:5px;min-height:40px;padding:0 11px;border-radius:11px;background:var(--acc-soft);color:var(--acc-ink);font-size:13px;font-weight:600;white-space:nowrap}
 .nutrition-add .icn{font-size:16px}
 .nutrition-add-panel{scroll-margin-top:14px;padding:18px!important}
 .nutrition-add-panel>.row h2{margin:0}
@@ -1050,8 +1050,8 @@ h4.sec{
 .nutrition-metric strong .muted{font-weight:400}
 .nutrition-track{height:5px;background:var(--surface-3);border-radius:5px;overflow:hidden}
 .nutrition-track i{display:block;height:100%;background:var(--acc);border-radius:5px}
-.nutrition-link{color:var(--acc);margin-top:15px;font-size:14px}
-.nutrition-target-toggle{display:flex;align-items:center;gap:9px;width:100%;min-height:46px;margin-top:16px;padding:0 13px;border-radius:11px;background:var(--acc-soft);color:var(--acc);font-size:14px;font-weight:600;text-align:left}
+.nutrition-link{color:var(--acc-ink);margin-top:15px;font-size:14px}
+.nutrition-target-toggle{display:flex;align-items:center;gap:9px;width:100%;min-height:46px;margin-top:16px;padding:0 13px;border-radius:11px;background:var(--acc-soft);color:var(--acc-ink);font-size:14px;font-weight:600;text-align:left}
 .nutrition-target-toggle .nutrition-chevron{margin-left:auto;transition:transform .2s}
 .nutrition-target-toggle .nutrition-chevron.open{transform:rotate(90deg)}
 .nutrition-target-panel{display:grid;gap:14px;margin-top:15px;padding:15px;border-radius:12px;background:var(--surface-2)}
@@ -1061,15 +1061,15 @@ h4.sec{
 .nutrition-target-panel .nutrition-input .num{background:var(--surface);min-width:0}
 .nutrition-calculated{padding:12px;border-radius:10px;background:var(--surface);font-size:13px}
 .nutrition-calculated>div{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
-.nutrition-calculated strong{font-size:20px;color:var(--acc);white-space:nowrap}
+.nutrition-calculated strong{font-size:20px;color:var(--acc-ink);white-space:nowrap}
 .nutrition-calculated small{display:block;margin-top:5px;color:var(--label-2);line-height:1.4}
 .nutrition-target-difference{display:flex;align-items:center;justify-content:space-between;gap:9px;flex-wrap:wrap;font-size:12px;color:var(--label-2)}
-.nutrition-target-difference button{min-height:38px;padding:0 10px;border-radius:8px;background:var(--acc-soft);color:var(--acc);font-size:12px;font-weight:600}
+.nutrition-target-difference button{min-height:38px;padding:0 10px;border-radius:8px;background:var(--acc-soft);color:var(--acc-ink);font-size:12px;font-weight:600}
 .nutrition-input{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--label-2)}
 .nutrition-input .num{width:100%;min-height:42px;border-radius:9px;background:var(--surface-2);padding:0 10px;color:var(--label)}
 .nutrition-meals{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;padding:4px;margin:0 0 18px;border-radius:12px;background:var(--surface-2)}
 .nutrition-meals button{min-width:0;min-height:40px;padding:7px 4px;border-radius:9px;color:var(--label-2);font-size:13px;white-space:nowrap}
-.nutrition-meals button.on{background:var(--surface);color:var(--acc);font-weight:600;box-shadow:0 1px 4px #0002}
+.nutrition-meals button.on{background:var(--surface);color:var(--acc-ink);font-weight:600;box-shadow:0 1px 4px #0002}
 .nutrition-search-label{display:block;margin:0 0 6px 2px;color:var(--label-2);font-size:12px;font-weight:600}
 .nutrition-search{display:flex;align-items:center;gap:8px;margin:0 0 12px}
 .nutrition-search .field{min-width:0;width:0;flex:1 1 0;background:var(--surface-2);border-radius:11px;padding:10px 12px;min-height:46px;font-size:15px}
@@ -1119,7 +1119,7 @@ h4.sec{
   font-weight:400;font-size:15px;color:var(--label);transition:background var(--fast);
 }
 .cal-d:active{background:var(--surface-2)}
-.cal-d.has{background:var(--acc-soft);color:var(--acc)}
+.cal-d.has{background:var(--acc-soft);color:var(--acc-ink)}
 .cal-d.today{box-shadow:inset 0 0 0 1.8px var(--acc)}
 .cal-d i{width:5px;height:5px;border-radius:50%;background:transparent}
 .cal-d i.done{background:var(--acc)}
@@ -1152,7 +1152,7 @@ h4.sec{
 /* --- supersets --- */
 .ss-label{
   font-size:12px;font-weight:600;letter-spacing:-.004em;text-transform:none;
-  color:var(--acc);margin:8px 0 5px 4px;display:flex;align-items:center;gap:5px;
+  color:var(--acc-ink);margin:8px 0 5px 4px;display:flex;align-items:center;gap:5px;
 }
 .ss-label .icn{font-size:13px}
 .item.in-ss{box-shadow:inset 3px 0 0 var(--acc)}
@@ -1161,11 +1161,11 @@ h4.sec{
   background:var(--surface);box-shadow:inset 0 0 0 1.5px var(--acc-line);
 }
 .ss-hd{
-  font-size:12px;font-weight:600;color:var(--acc);margin-bottom:12px;
+  font-size:12px;font-weight:600;color:var(--acc-ink);margin-bottom:12px;
   text-align:center;display:flex;align-items:center;justify-content:center;gap:5px;
 }
 .ss-ex{position:relative}
-.ss-amp{text-align:center;font-size:15px;font-weight:600;color:var(--acc);margin:14px 0 8px}
+.ss-amp{text-align:center;font-size:15px;font-weight:600;color:var(--acc-ink);margin:14px 0 8px}
 
 /* --- home: today's session row --- */
 .today-row{
@@ -1210,7 +1210,7 @@ h4.sec{
 
 /* Trainer dashboard and client plan forms */
 .trainer-hero{padding:24px;margin-bottom:18px;border:1px solid var(--acc-line);border-radius:var(--r-xl);background:linear-gradient(140deg,var(--acc-soft),var(--surface) 65%)}
-.trainer-kicker{font-size:11px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--acc)}
+.trainer-kicker{font-size:11px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--acc-ink)}
 .trainer-hero h2{font-size:28px;line-height:1.08;letter-spacing:-.03em;margin:10px 0 7px}
 .trainer-hero p{color:var(--label-2);font-size:14px;line-height:1.4}
 .trainer-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:22px}
@@ -1220,7 +1220,7 @@ h4.sec{
 .trainer-section-head{margin:0 0 10px}.trainer-section-head h2{font-size:18px}
 .trainer-client{padding:16px}.trainer-client-head{display:flex;align-items:center;gap:11px}
 .trainer-client-head>div{flex:1;min-width:0}.trainer-client-head h3{font-size:17px;line-height:1.2}
-.trainer-avatar{width:38px;height:38px;flex:none;display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--acc-soft);color:var(--acc)}
+.trainer-avatar{width:38px;height:38px;flex:none;display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--acc-soft);color:var(--acc-ink)}
 .trainer-client-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:16px 0}
 .trainer-client-stats>div{min-width:0;padding:10px;background:var(--surface-2);border-radius:9px}
 .trainer-client-stats span{display:block;font-size:11px;color:var(--label-2)}
@@ -1229,7 +1229,7 @@ h4.sec{
 .trainer-client-actions .btn{width:100%;min-width:0;font-size:13px;padding:10px 5px;gap:5px}
 .trainer-client-actions .btn span{min-width:0;overflow-wrap:anywhere}
 .trainer-empty{display:flex;flex-direction:column;align-items:center;text-align:center;gap:9px;padding:30px 18px}
-.trainer-empty .icn{font-size:34px;color:var(--acc)}.trainer-empty p{max-width:360px;color:var(--label-2);font-size:14px}
+.trainer-empty .icn{font-size:34px;color:var(--acc-ink)}.trainer-empty p{max-width:360px;color:var(--label-2);font-size:14px}
 .coach-field{display:block;font-size:13px;color:var(--label-2);margin:14px 0 0}
 .coach-field .input,.coach-field .field{display:block;margin-top:6px;color:var(--label)}
 .coach-target-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 12px}
@@ -1290,7 +1290,7 @@ h4.sec{
 }
 .coach-nutrition .coach-field .input::placeholder{color:var(--label-2);opacity:1}
 .coach-nutrition .coach-field .input:focus,
-.coach-nutrition .coach-number:focus{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc-soft)}
+.coach-nutrition .coach-number:focus{border-color:var(--acc-ink);box-shadow:0 0 0 2px var(--acc-soft)}
 .coach-nutrition .coach-target-grid{gap:2px 12px}
 .coach-meals-head{gap:10px;flex-wrap:wrap}
 .coach-meals-head h2{margin:0}
@@ -1322,7 +1322,7 @@ h4.sec{
 .trainer-client>.dim{display:block;margin-bottom:16px}
 .coach-trainer-panel{padding:18px;border:1px solid var(--sep-op)}
 .coach-panel-heading{display:flex;align-items:center;gap:10px;margin-bottom:10px}
-.coach-panel-heading>.icn{font-size:21px;color:var(--acc)}
+.coach-panel-heading>.icn{font-size:21px;color:var(--acc-ink)}
 .coach-panel-heading h2{margin:0;color:var(--label);font-size:19px}
 .coach-client-row{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--sep-op);min-width:0}
 .coach-client-row:last-of-type{border-bottom:0}
@@ -1346,7 +1346,7 @@ h4.sec{
   background:var(--bg-el);color:var(--label);
   font-size:15px;appearance:auto;
 }
-.coach-trainer-panel>select.input:focus{border-color:var(--acc);outline:2px solid var(--acc-soft)}
+.coach-trainer-panel>select.input:focus{border-color:var(--acc-ink);outline:2px solid var(--acc-soft)}
 .coach-trainer-panel>.btn.primary{width:100%;min-height:48px}
 .coach-trainer-panel .sec{margin-top:21px}
 .coach-trainer-panel .row.between.small{gap:10px;align-items:flex-start}
@@ -1379,8 +1379,8 @@ h4.sec{
 }
 #tabbar.liftrio-nav button{position:relative;z-index:1;transition:color 220ms ease,transform 220ms ease}
 #tabbar.liftrio-nav button.on{background:transparent;color:var(--label);transform:translateY(-1px)}
-#tabbar.liftrio-nav button.on .icn{color:var(--acc);filter:drop-shadow(0 0 6px var(--acc-soft))}
-#tabbar.liftrio-nav button.start.on .cir .icn{color:var(--acc)}
+#tabbar.liftrio-nav button.on .icn{color:var(--acc-ink);filter:drop-shadow(0 0 6px var(--acc-soft))}
+#tabbar.liftrio-nav button.start.on .cir .icn{color:var(--acc-ink)}
 #tabbar.liftrio-nav button.start.on span:last-child{color:var(--label)}
 #tabbar.liftrio-nav button.start.rec.on{color:var(--label)}
 #tabbar.liftrio-nav button.start.rec.on .cir{background:transparent;box-shadow:none}
@@ -1422,7 +1422,7 @@ h4.sec{
 .coach-overview-count{flex:none;padding:7px 10px;border-radius:99px;background:var(--bg-el);font-size:11px;color:var(--label-2)}
 .coach-overview-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:18px}
 .coach-overview-grid>div{min-width:0;display:flex;flex-direction:column;align-items:flex-start;padding:13px 11px;border:1px solid var(--sep-op);border-radius:13px;background:var(--bg-el)}
-.coach-overview-grid .icn{font-size:17px;color:var(--acc);margin-bottom:12px}
+.coach-overview-grid .icn{font-size:17px;color:var(--acc-ink);margin-bottom:12px}
 .coach-overview-grid span{font-size:11px;line-height:1.25;color:var(--label-2);min-height:28px}
 .coach-overview-grid strong{margin-top:5px;font-size:20px;line-height:1.1;color:var(--label);overflow-wrap:anywhere}
 .coach-overview-grid small{font-size:11px;font-weight:500;color:var(--label-2)}
@@ -1430,7 +1430,7 @@ h4.sec{
 .coach-diary-meal+.coach-diary-meal{border-top:1px solid var(--sep-op);margin-top:8px}
 .coach-diary-meal-title{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:2px;color:var(--label)}
 .coach-diary-meal-title strong{font-size:14px}
-.coach-diary-meal-title span{font-size:12px;font-weight:600;color:var(--acc)}
+.coach-diary-meal-title span{font-size:12px;font-weight:600;color:var(--acc-ink)}
 .coach-diary-meal .row{padding:7px 0!important}
 .coach-diary-meal .row:last-child{border-bottom:0!important}
 @media(max-width:390px){
@@ -1444,10 +1444,10 @@ h4.sec{
 
 /* Settings in the Liftrio palette, with controls that use the full row width. */
 .settings-page .sect-b{border:1px solid var(--sep-op);border-radius:18px;overflow:hidden;background:var(--surface)}
-.settings-page .sect-t{color:var(--acc);font-size:12px;letter-spacing:.12em;font-weight:750;padding:0 7px 9px}
+.settings-page .sect-t{color:var(--acc-ink);font-size:12px;letter-spacing:.12em;font-weight:750;padding:0 7px 9px}
 .settings-page .settings-subhead{color:var(--label-2);background:var(--bg-el);padding:14px 16px 8px}
 .settings-page .lrow{padding:14px 16px;min-height:54px}
-.settings-page .lrow-i{background:var(--acc-soft)!important;color:var(--acc);border:1px solid var(--acc-line);border-radius:10px;width:34px;height:34px}
+.settings-page .lrow-i{background:var(--acc-soft)!important;color:var(--acc-ink);border:1px solid var(--acc-line);border-radius:10px;width:34px;height:34px}
 .settings-page .lrow-t{font-weight:600;color:var(--label)}
 .settings-page .lrow:has(.seg-inline){display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px 12px;align-items:center}
 .settings-page .lrow:has(.seg-inline)>.seg-inline{
@@ -1469,12 +1469,12 @@ h4.sec{
 }
 #toast.welcome-toast .toast-symbol{flex:none;display:grid;place-items:center;width:39px;height:39px;border-radius:12px;background:var(--acc);color:var(--on-acc);font-size:20px}
 #toast.welcome-toast .toast-copy{display:flex;flex-direction:column;gap:2px;line-height:1.25;font-weight:600}
-#toast.welcome-toast .toast-copy small{text-transform:uppercase;letter-spacing:.12em;font-size:10px;font-weight:750;color:var(--acc)}
+#toast.welcome-toast .toast-copy small{text-transform:uppercase;letter-spacing:.12em;font-size:10px;font-weight:750;color:var(--acc-ink)}
 
 
 /* Clear plan, history and settings actions. */
 .plan-import-export,.home-settings-action{flex:none;min-height:45px;padding:9px 13px;border:1px solid var(--acc-line);border-radius:13px;background:var(--acc-soft);color:var(--label);font-size:13px;font-weight:700;gap:7px}
-.home-settings-action .icn,.plan-import-export .icn{font-size:20px;color:var(--acc)}
+.home-settings-action .icn,.plan-import-export .icn{font-size:20px;color:var(--acc-ink)}
 .hdr:has(.home-settings-action)>div:first-child,.hdr:has(.plan-import-export)>div:first-child{min-width:0}
 @media(max-width:390px){.plan-import-export,.home-settings-action{font-size:12px;padding:8px 9px}.hdr:has(.home-settings-action) h1{font-size:29px}}
 .workout-history-day{margin:0 0 19px}
@@ -1485,7 +1485,7 @@ h4.sec{
 .stats-history-link>span:nth-child(2){flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
 .stats-history-link strong{font-size:16px}
 .stats-history-link small{font-size:12px;color:var(--label-2)}
-.stats-history-link>.icn{color:var(--acc)}
+.stats-history-link>.icn{color:var(--acc-ink)}
 .settings-page .settings-choice-row{display:grid!important;grid-template-columns:34px minmax(0,1fr)!important;gap:10px 12px!important;align-items:center}
 .settings-page .settings-choice-row>.lrow-m{min-width:0;grid-column:2;grid-row:1}
 .settings-page .settings-choice-row:has(.helpbtn)>.lrow-m{padding-right:44px}
@@ -1503,3 +1503,15 @@ h4.sec{
 :root[data-theme="light"] .plan-import-export .icn,
 :root[data-theme="light"] .stats-history-link>.icn,
 :root[data-theme="light"] #tabbar.liftrio-nav button.on .icn{color:#405a00}
+
+/* The lime remains the action fill; text and line icons need darker ink on light surfaces. */
+:root{--acc-ink:var(--acc)}
+:root[data-theme="light"][data-accent="lime"]{--acc-ink:#405800}
+.hdr>.home-settings-action.btn{
+  width:clamp(92px,25vw,120px);max-width:25%;min-height:44px;
+  flex:0 0 auto;padding:8px 9px;white-space:nowrap;
+}
+.hdr:has(.home-settings-action)>div:first-child{flex:1;min-width:0}
+.hdr:has(.home-settings-action) .sub{overflow-wrap:anywhere}
+.plan-tools-row{display:flex;justify-content:flex-start;margin:-5px 0 16px}
+.plan-tools-row>.plan-import-export.btn{width:auto;max-width:100%;min-height:43px}
