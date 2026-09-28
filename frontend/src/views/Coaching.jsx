@@ -108,7 +108,7 @@ export default function Coaching() {
         <h2>{t('Build a better coaching connection')}</h2>
         <p>{t('Choose separately whether a trainer can send plans or view your progress.')}</p>
       </div>
-    </div>
+    </div>}
 
     {data && !isTrainer && <div className="card coach-card">
       <div className="coach-section-head"><span className="coach-section-icon"><Icon name="personCircle" /></span><div><h2>{t('Your trainers')}</h2><p>{t('Plan permission and dashboard sharing are separate. You can change either at any time.')}</p></div></div>
