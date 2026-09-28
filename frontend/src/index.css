@@ -1239,3 +1239,100 @@ h4.sec{
 .nutrition-coach-meal{padding:11px 0;border-bottom:1px solid var(--sep)}
 .nutrition-coach-meal p{margin-top:4px}
 @media(max-width:390px){.trainer-client-actions{grid-template-columns:1fr}.trainer-metrics>div{padding:9px}.trainer-metrics strong{font-size:21px}}
+
+
+/* Coaching workspace: distinct navigation and readable forms. */
+#tabbar.liftrio-nav{
+  gap:4px;
+  background:color-mix(in srgb,var(--surface) 96%,var(--bg));
+  border-top:1px solid var(--acc-line);
+  box-shadow:0 -10px 30px rgba(0,0,0,.22);
+  padding:9px max(8px,env(safe-area-inset-right)) calc(9px + var(--sab)) max(8px,env(safe-area-inset-left));
+}
+#tabbar.liftrio-nav button{
+  min-width:0;min-height:53px;justify-content:center;gap:3px;
+  border-radius:13px;color:var(--label-2);font-size:clamp(9px,2.5vw,11px);font-weight:600;
+  padding:5px 2px;line-height:1.1;
+}
+#tabbar.liftrio-nav button .icn{font-size:21px;color:inherit}
+#tabbar.liftrio-nav button.on{
+  color:var(--on-acc);background:var(--acc);
+}
+#tabbar.liftrio-nav button.start{margin-top:0}
+#tabbar.liftrio-nav button.start .cir{
+  width:auto;height:auto;background:none;box-shadow:none;color:inherit;
+}
+#tabbar.liftrio-nav button.start .cir .icn{font-size:21px}
+#tabbar.liftrio-nav button.start span{color:inherit}
+#tabbar.liftrio-nav button.start.rec:not(.on){color:var(--orange)}
+#tabbar.liftrio-nav button.start.rec .cir::after{display:none}
+@media(min-width:1000px){
+  #tabbar.liftrio-nav{
+    width:min(600px,calc(100vw - 32px));padding:8px;
+    border:1px solid var(--acc-line);border-radius:20px;
+    box-shadow:0 14px 38px rgba(0,0,0,.42);
+  }
+  #tabbar.liftrio-nav button.start{margin-top:0}
+}
+.coach-nutrition,.coach-page,.trainer-home{min-width:0}
+.coach-form-card{padding:20px;margin-bottom:14px;border:1px solid var(--sep-op)}
+.coach-form-card h2{font-size:19px;line-height:1.2;margin:0 0 8px;color:var(--label)}
+.coach-form-card p{line-height:1.45}
+.coach-nutrition .coach-field{display:block;font-size:13px;font-weight:600;color:var(--label);line-height:1.4}
+.coach-nutrition .coach-field .input,
+.coach-nutrition .coach-number{
+  box-sizing:border-box;display:block;width:100%;min-width:0;
+  margin-top:7px;padding:12px 13px;min-height:48px;
+  border:1px solid var(--sep);border-radius:11px;
+  background:var(--bg-el);color:var(--label);
+  font:inherit;font-size:16px;font-weight:500;outline:none;
+  -webkit-text-fill-color:var(--label);
+}
+.coach-nutrition .coach-field .input::placeholder{color:var(--label-2);opacity:1}
+.coach-nutrition .coach-field .input:focus,
+.coach-nutrition .coach-number:focus{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc-soft)}
+.coach-nutrition .coach-target-grid{gap:2px 12px}
+.coach-meals-head{gap:10px;flex-wrap:wrap}
+.coach-meals-head h2{margin:0}
+.coach-meal{padding:15px;margin:12px 0 0;border:1px solid var(--sep-op);border-radius:14px;background:var(--bg-el)}
+.coach-meal:first-of-type{margin-top:14px}
+.coach-meal>.row{color:var(--label);padding:0 1px}
+.coach-nutrition .coach-send{width:100%;min-height:50px;margin:3px 0 20px}
+.coach-plan-banner{padding:18px;margin-bottom:18px;border:1px solid var(--acc-line);background:linear-gradient(135deg,var(--acc-soft),var(--surface) 75%)}
+.coach-plan-intro{display:grid;grid-template-columns:42px minmax(0,1fr);gap:12px;align-items:start}
+.coach-plan-mark{display:grid;place-items:center;width:42px;height:42px;border-radius:12px;background:var(--acc);color:var(--on-acc);font-size:22px}
+.coach-plan-kicker{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--label-2);margin:2px 0 4px}
+.coach-plan-banner h2{font-size:20px;line-height:1.2;margin:0;color:var(--label);overflow-wrap:anywhere}
+.coach-plan-banner p{margin:8px 0 0;line-height:1.45}
+.coach-plan-send{width:100%;min-height:48px;margin-top:16px}
+.coach-diary-day{margin:14px 0 18px;padding:12px;border:1px solid var(--sep-op);border-radius:13px;background:var(--bg-el)}
+.coach-diary-date{display:flex;justify-content:space-between;align-items:center;gap:10px;border-bottom:1px solid var(--sep);padding:0 0 9px;color:var(--label)}
+.coach-diary-date strong{font-size:15px}
+.coach-diary-date span{font-size:12px;color:var(--label-2)}
+.coach-diary-day .row:last-child{border-bottom:0!important}
+.trainer-client{padding:0;overflow:hidden;border:1px solid var(--sep-op)}
+.trainer-client-head{padding:16px;background:linear-gradient(100deg,var(--acc-soft),var(--surface) 65%);border-bottom:1px solid var(--sep-op)}
+.trainer-client-identity{flex:1;min-width:0}
+.trainer-client-label{display:block;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--label-2)}
+.trainer-client-head h3{margin:2px 0 4px;font-size:21px;font-weight:700;line-height:1.15;color:var(--label);overflow-wrap:anywhere}
+.trainer-share-status{font-size:12px;color:var(--label-2)}
+.trainer-avatar{width:44px;height:44px;background:var(--acc);color:var(--on-acc);font-size:20px;font-weight:800}
+.trainer-client-stats,.trainer-client-actions,.trainer-private,.trainer-pending,.trainer-client>.dim{margin-left:16px;margin-right:16px}
+.trainer-client-actions{margin-bottom:14px}
+.trainer-client>.dim{display:block;margin-bottom:16px}
+.coach-trainer-panel{padding:18px;border:1px solid var(--sep-op)}
+.coach-panel-heading{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.coach-panel-heading>.icn{font-size:21px;color:var(--acc)}
+.coach-panel-heading h2{margin:0;color:var(--label);font-size:19px}
+.coach-client-row{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--sep-op);min-width:0}
+.coach-client-row:last-of-type{border-bottom:0}
+.coach-client-initial{flex:none;display:grid;place-items:center;width:36px;height:36px;border-radius:11px;background:var(--acc);color:var(--on-acc);font-weight:750}
+.coach-client-row>b,.coach-client-meta{min-width:0;flex:1;color:var(--label);overflow-wrap:anywhere}
+.coach-client-row>b,.coach-client-meta>b{font-size:15px}
+.coach-client-row>.btn{flex:none}
+@media(max-width:390px){
+  .coach-nutrition .coach-target-grid{gap:0 8px}
+  .coach-form-card{padding:15px}
+  .coach-client-row{flex-wrap:wrap}
+  .coach-client-row>.btn{margin-left:46px}
+}
