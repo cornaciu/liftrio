@@ -117,7 +117,7 @@ function BwSheet({ required, onDone, close }) {
         update(s => { s.dayPlan[todayISO()] = 'rest' })
         close()
         nav('/home')
-        toast(t('Today is now a rest day'))
+        toast(t('Today is set as a rest day.'))
       }}>{t('Restore rest day')}</Button>
     </>}
     {!required && recent.length > 0 && <>
