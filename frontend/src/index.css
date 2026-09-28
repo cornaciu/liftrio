@@ -178,6 +178,12 @@ body.login-screen{height:100dvh;overflow:hidden;background:#0a0a0a}
   display:grid;grid-template-rows:auto minmax(0,1fr) auto;
   color:#f4f4f1;position:relative;isolation:isolate;
 }
+.login-page{width:100%;grid-template-columns:minmax(0,1fr)}
+.login-main,.login-story,.login-entry,.login-top,.login-footer{min-width:0}
+.login-story h1{width:100%;min-width:0}
+.login-language{min-width:0}
+.login-language-trigger span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.login-footer span:last-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .login-page::before{
   content:"";position:absolute;z-index:-1;inset:0 0 0 45%;pointer-events:none;
   background:radial-gradient(ellipse at 65% 48%,rgba(204,255,0,.115),transparent 45%);
@@ -207,7 +213,7 @@ body.login-screen{height:100dvh;overflow:hidden;background:#0a0a0a}
 .login-eyebrow{display:flex;align-items:center;gap:10px;font-size:11px;font-weight:800;letter-spacing:.22em;color:#a4a4a0;margin-bottom:clamp(16px,3vh,34px)}
 .login-live-dot{width:8px;height:8px;border-radius:50%;background:#CCFF00;box-shadow:0 0 18px #CCFF00}
 .login-story h1{font-size:clamp(49px,6.4vw,104px);font-weight:800;line-height:.96;letter-spacing:-.075em;max-width:850px}
-.login-story h1 span,.login-story h1 em{display:block;white-space:nowrap}
+.login-story h1 span,.login-story h1 em{display:block}
 .login-story h1 em{font-style:normal;color:#CCFF00}
 .login-intro{max-width:460px;font-size:clamp(15px,1.5vw,19px);line-height:1.5;color:#a9a9a6;margin-top:clamp(18px,3vh,34px)}
 .login-steps{display:flex;gap:clamp(18px,3vw,48px);margin-top:clamp(24px,6vh,76px);padding-top:18px;border-top:1px solid #363636}
@@ -224,7 +230,7 @@ body.login-screen{height:100dvh;overflow:hidden;background:#0a0a0a}
 .login-entry p{font-size:14px;color:#a5a5a1;line-height:1.45;margin-top:11px;min-height:40px}
 .login-actions{display:flex;flex-direction:column;gap:10px;margin-top:33px}
 .login-actions .btn{width:100%;height:54px;min-height:54px;padding:0 12px}
-.login-actions .login-auth-action>span{white-space:nowrap;min-width:0;line-height:1.1}
+.login-actions .login-auth-action>span{min-width:0;max-width:100%;line-height:1.12;white-space:normal;overflow-wrap:anywhere}
 .login-actions .btn.primary{background:#CCFF00;color:#000}
 .login-actions .btn.login-create{border:1px solid #5a5a5a;color:#f4f4f1;border-radius:12px;font-weight:600;background:transparent}
 .login-guest{min-height:45px;font-size:13px;color:#aaa;text-align:center}
@@ -236,9 +242,10 @@ body.login-screen{height:100dvh;overflow:hidden;background:#0a0a0a}
   .login-page{padding:calc(env(safe-area-inset-top,0px) + 16px) 22px calc(env(safe-area-inset-bottom,0px) + 15px)}
   .login-page::before{inset:25% 0 0 0;background:radial-gradient(ellipse at 50% 60%,rgba(204,255,0,.09),transparent 65%)}
   .login-main{display:flex;flex-direction:column;justify-content:center;gap:clamp(18px,4vh,36px)}
-  .login-story,.login-entry{width:100%;max-width:520px}
+  .login-story,.login-entry{width:100%;max-width:min(520px,100%)}
   .login-eyebrow{margin-bottom:14px;font-size:10px}
   .login-story h1{font-size:clamp(43px,10vw,73px)}
+  .login-story h1 span,.login-story h1 em{white-space:nowrap}
   .login-intro{margin-top:14px;font-size:14px}
   .login-steps{margin-top:19px;padding-top:12px;gap:25px}
   .login-steps span{font-size:10px;gap:4px}
