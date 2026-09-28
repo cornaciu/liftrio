@@ -1407,3 +1407,36 @@ h4.sec{
 #tabbar.liftrio-nav.nav-pos-2::before{transform:translateX(calc(200% + 8px))}
 #tabbar.liftrio-nav.nav-pos-3::before{transform:translateX(calc(300% + 12px))}
 #tabbar.liftrio-nav.nav-pos-4::before{transform:translateX(calc(400% + 16px))}
+
+
+/* Shared client overview and diary hierarchy. */
+.coach-overview{
+  padding:20px;border:1px solid var(--acc-line);
+  background:linear-gradient(145deg,var(--acc-soft),var(--surface) 55%);
+}
+.coach-overview-top{display:flex;align-items:center;gap:12px;min-width:0}
+.coach-overview-symbol{flex:none;display:grid;place-items:center;width:42px;height:42px;border-radius:13px;background:var(--acc);color:var(--on-acc);font-size:22px}
+.coach-overview-top>div{min-width:0;flex:1}
+.coach-overview-kicker{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--label-2)}
+.coach-overview h2{margin:2px 0 0;font-size:21px;color:var(--label);line-height:1.1}
+.coach-overview-count{flex:none;padding:7px 10px;border-radius:99px;background:var(--bg-el);font-size:11px;color:var(--label-2)}
+.coach-overview-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:18px}
+.coach-overview-grid>div{min-width:0;display:flex;flex-direction:column;align-items:flex-start;padding:13px 11px;border:1px solid var(--sep-op);border-radius:13px;background:var(--bg-el)}
+.coach-overview-grid .icn{font-size:17px;color:var(--acc);margin-bottom:12px}
+.coach-overview-grid span{font-size:11px;line-height:1.25;color:var(--label-2);min-height:28px}
+.coach-overview-grid strong{margin-top:5px;font-size:20px;line-height:1.1;color:var(--label);overflow-wrap:anywhere}
+.coach-overview-grid small{font-size:11px;font-weight:500;color:var(--label-2)}
+.coach-diary-meal{padding:10px 0 3px}
+.coach-diary-meal+.coach-diary-meal{border-top:1px solid var(--sep-op);margin-top:8px}
+.coach-diary-meal-title{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:2px;color:var(--label)}
+.coach-diary-meal-title strong{font-size:14px}
+.coach-diary-meal-title span{font-size:12px;font-weight:600;color:var(--acc)}
+.coach-diary-meal .row{padding:7px 0!important}
+.coach-diary-meal .row:last-child{border-bottom:0!important}
+@media(max-width:390px){
+  .coach-overview{padding:15px}
+  .coach-overview-grid{gap:5px}
+  .coach-overview-grid>div{padding:10px 7px}
+  .coach-overview-grid strong{font-size:17px}
+  .coach-overview-count{font-size:10px;padding:6px}
+}
