@@ -137,6 +137,7 @@ export async function coachingRoute({ key, db, user, body = {}, saveDb, readStat
       reply(400, { error: 'invalid trainer' }); return true;
     }
     if (body.allow === true) {
+      if (!linkFor(trainer.id, user.id)) { reply(403, { error: 'trainer access required' }); return true; }
       if (!nutritionGrantFor(trainer.id, user.id)) db.coachNutritionGrants.push({ trainerId: trainer.id, clientId: user.id, since: new Date().toISOString() });
     } else if (body.allow === false) {
       db.coachNutritionGrants = db.coachNutritionGrants.filter(g => !(g.trainerId === trainer.id && g.clientId === user.id));
@@ -155,6 +156,7 @@ export async function coachingRoute({ key, db, user, body = {}, saveDb, readStat
       reply(400, { error: 'invalid trainer' }); return true;
     }
     if (body.allow === true) {
+      if (!linkFor(trainer.id, user.id)) { reply(403, { error: 'trainer access required' }); return true; }
       if (!dataGrantFor(trainer.id, user.id)) db.coachDataGrants.push({ trainerId: trainer.id, clientId: user.id, since: new Date().toISOString() });
     } else if (body.allow === false) {
       db.coachDataGrants = db.coachDataGrants.filter(g => !(g.trainerId === trainer.id && g.clientId === user.id));
@@ -171,7 +173,7 @@ export async function coachingRoute({ key, db, user, body = {}, saveDb, readStat
     try { clientId = decodeURIComponent(clientView[1]); } catch { reply(400, { error: 'invalid client id' }); return true; }
     const client = db.users.find(u => u.id === clientId && !u.disabled);
     if (!client || clientId === user.id) { reply(404, { error: 'client not found' }); return true; }
-    if (!dataGrantFor(user.id, clientId)) { reply(403, { error: 'client dashboard access required' }); return true; }
+    if (!linkFor(user.id, clientId) || !dataGrantFor(user.id, clientId)) { reply(403, { error: 'client dashboard access required' }); return true; }
     if (typeof readState !== 'function') { reply(503, { error: 'client data unavailable' }); return true; }
     const state = await readState(clientId);
     const keys = ['unit', 'targetW', 'body', 'bodyweight', 'routines', 'week', 'dayPlan', 'workouts', 'nutrition', 'exWeights', 'customEx'];
@@ -191,6 +193,9 @@ export async function coachingRoute({ key, db, user, body = {}, saveDb, readStat
       if (!linkFor(trainer.id, user.id)) db.coachLinks.push({ trainerId: trainer.id, clientId: user.id, since: new Date().toISOString() });
     } else if (body.allow === false) {
       db.coachLinks = db.coachLinks.filter(l => !(l.trainerId === trainer.id && l.clientId === user.id));
+      db.coachDataGrants = db.coachDataGrants.filter(g => !(g.trainerId === trainer.id && g.clientId === user.id));
+      db.coachNutritionGrants = db.coachNutritionGrants.filter(g => !(g.trainerId === trainer.id && g.clientId === user.id));
+      db.coachNutritionPlans.forEach(p => { if (p.trainerId === trainer.id && p.clientId === user.id && p.status === 'pending') p.status = 'withdrawn'; });
       db.coachPlans.forEach(p => { if (p.trainerId === trainer.id && p.clientId === user.id && p.status === 'pending') p.status = 'withdrawn'; });
     } else { reply(400, { error: 'allow must be boolean' }); return true; }
     await saveDb();
