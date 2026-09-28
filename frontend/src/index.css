@@ -1440,3 +1440,33 @@ h4.sec{
   .coach-overview-grid strong{font-size:17px}
   .coach-overview-count{font-size:10px;padding:6px}
 }
+
+
+/* Settings in the Liftrio palette, with controls that use the full row width. */
+.settings-page .sect-b{border:1px solid var(--sep-op);border-radius:18px;overflow:hidden;background:var(--surface)}
+.settings-page .sect-t{color:var(--acc);font-size:12px;letter-spacing:.12em;font-weight:750;padding:0 7px 9px}
+.settings-page .settings-subhead{color:var(--label-2);background:var(--bg-el);padding:14px 16px 8px}
+.settings-page .lrow{padding:14px 16px;min-height:54px}
+.settings-page .lrow-i{background:var(--acc-soft)!important;color:var(--acc);border:1px solid var(--acc-line);border-radius:10px;width:34px;height:34px}
+.settings-page .lrow-t{font-weight:600;color:var(--label)}
+.settings-page .lrow:has(.seg-inline){display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px 12px;align-items:center}
+.settings-page .lrow:has(.seg-inline)>.seg-inline{
+  grid-column:1/-1;width:100%;max-width:none;min-width:0;margin:2px 0 0;
+  padding:4px;background:var(--bg-el);border:1px solid var(--sep-op);border-radius:13px;
+}
+.settings-page .lrow:has(.seg-inline)>.seg-inline button{min-height:41px;font-size:14px;font-weight:600}
+.settings-page .lrow:has(.seg-inline)>.seg-inline .seg-sel{top:4px;bottom:4px;left:4px;width:calc((100% - 8px)/var(--n));background:var(--acc-soft);border:1px solid var(--acc-line);border-radius:10px}
+.settings-page .lrow:has(.helpbtn)>.helpbtn{justify-self:end;grid-column:2;grid-row:1}
+.settings-page .settings-accent{background:var(--bg-el)}
+.settings-page .settings-accent .swatches{max-width:none;width:100%;justify-content:space-around;margin:0}
+.settings-page .swatch.on{outline:2px solid var(--label);outline-offset:3px}
+#toast.welcome-toast{
+  display:flex;align-items:center;gap:12px;text-align:left;
+  width:min(350px,calc(100vw - 32px));max-width:calc(100vw - 32px);
+  padding:14px 17px;border:1px solid var(--acc-line);
+  border-radius:17px;background:color-mix(in srgb,var(--surface) 90%,transparent);
+  box-shadow:0 18px 45px rgba(0,0,0,.38),inset 0 1px color-mix(in srgb,var(--label) 17%,transparent);
+}
+#toast.welcome-toast .toast-symbol{flex:none;display:grid;place-items:center;width:39px;height:39px;border-radius:12px;background:var(--acc);color:var(--on-acc);font-size:20px}
+#toast.welcome-toast .toast-copy{display:flex;flex-direction:column;gap:2px;line-height:1.25;font-weight:600}
+#toast.welcome-toast .toast-copy small{text-transform:uppercase;letter-spacing:.12em;font-size:10px;font-weight:750;color:var(--acc)}
