@@ -7,25 +7,37 @@ import { fmtDate, fmtNum } from '../lib/format.js'
 import Icon from '../components/Icon.jsx'
 import { Button } from '../components/ui.jsx'
 
+const overviewCache = new Map()
+
 export default function TrainerHome() {
   const nav = useNavigate()
   const user = useStore(s => s.user)
-  const [clients, setClients] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [overview, setOverview] = useState(() => overviewCache.get(user?.id) || null)
+  const [loading, setLoading] = useState(() => !overviewCache.has(user?.id))
   const [error, setError] = useState('')
 
   useEffect(() => {
     let alive = true
+    const cached = overviewCache.get(user?.id)
+    setOverview(cached || null)
+    setLoading(!cached)
     const load = () => api('/api/coaching/overview').then(data => {
-      if (alive) { setClients(data.clients || []); setError('') }
+      if (alive) {
+        const next = data.clients || []
+        overviewCache.set(user?.id, next)
+        setOverview(next)
+        setError('')
+      }
     }).catch(e => { if (alive) setError(e.message || t('Could not load clients.')) })
       .finally(() => { if (alive) setLoading(false) })
     load()
     const onVisible = () => { if (document.visibilityState === 'visible') load() }
     document.addEventListener('visibilitychange', onVisible)
-    return () => { alive = false; document.removeEventListener('visibilitychange', onVisible) }
+    window.addEventListener('liftrio:coaching-change', load)
+    return () => { alive = false; document.removeEventListener('visibilitychange', onVisible); window.removeEventListener('liftrio:coaching-change', load) }
   }, [user?.id])
 
+  const clients = overview || []
   const shared = clients.filter(c => c.canViewDashboard).length
   const pending = clients.reduce((sum, c) => sum + (c.pendingTraining || 0) + (c.pendingNutrition || 0), 0)
   return <div className="narrow trainer-home">
@@ -39,9 +51,9 @@ export default function TrainerHome() {
       <h2>{t('Your clients, at a glance')}</h2>
       <p>{t('Follow their progress and prepare training or nutrition plans for each client.')}</p>
       <div className="trainer-metrics">
-        <div><strong>{clients.length}</strong><span>{t('Clients')}</span></div>
-        <div><strong>{shared}</strong><span>{t('Shared dashboards')}</span></div>
-        <div><strong>{pending}</strong><span>{t('Plans awaiting approval')}</span></div>
+        <div><strong>{overview ? clients.length : '—'}</strong><span>{t('Clients')}</span></div>
+        <div><strong>{overview ? shared : '—'}</strong><span>{t('Shared dashboards')}</span></div>
+        <div><strong>{overview ? pending : '—'}</strong><span>{t('Plans awaiting approval')}</span></div>
       </div>
     </div>
 
@@ -49,9 +61,9 @@ export default function TrainerHome() {
       <h2>{t('Clients')}</h2>
       <Button size="sm" variant="tinted" onClick={() => nav('/coaching')}>{t('Manage')}</Button>
     </div>
-    {loading && <div className="card muted small">{t('Loading clients…')}</div>}
+    {loading && !overview && <div className="card muted small">{t('Loading clients…')}</div>}
     {error && <div className="card small" role="alert">{error}</div>}
-    {!loading && !clients.length && <div className="card trainer-empty">
+    {!loading && overview && !clients.length && <div className="card trainer-empty">
       <Icon name="personCircle" />
       <strong>{t('No connected clients yet')}</strong>
       <p>{t('Clients choose which trainers can send plans and view their dashboard. Ask them to grant access in Trainer access.')}</p>
