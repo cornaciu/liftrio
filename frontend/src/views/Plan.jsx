@@ -48,7 +48,7 @@ export default function Plan() {
   return <>
     <div className="hdr">
       <div><h1>{user?.role === 'trainer' ? t('Training plans') : t('Plan')}</h1><div className="sub">{clientId ? t('For {0}', client?.name || t('Client')) : user?.role === 'trainer' ? t('Build reusable routines for your clients') : t('Your weekly routine')}</div></div>
-      <button className="iconbtn" onClick={planToolsSheet} aria-label={t('Share your plan')} title={t('Share your plan')}><Icon name="upload" /></button>
+      <Button className="plan-import-export" icon="upload" onClick={planToolsSheet}>{t('Import / Export')}</Button>
     </div>
     {clientId && <div className="card coach-card coach-plan-banner">
       <div className="coach-plan-intro"><span className="coach-plan-mark"><Icon name="clipboard" /></span><div><div className="coach-plan-kicker">{t('Training plans')}</div><h2>{t('Training plan for {0}', client?.name || t('Client'))}</h2><p className="small muted">{t('Build routines below, assign the week, then send this plan for the client to approve.')}</p></div></div>
