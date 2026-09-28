@@ -24,12 +24,12 @@ Urmărește-ți antrenamentele, mesele și evoluția într-o singură aplicație
 
 ## Ce poți face
 
-- **Planifica și înregistra antrenamentele**: rutine, exerciții, serii, repetări, greutăți și pauze.
-- **Urmări progresul**: istoric, statistici, grupe musculare, recorduri și greutate corporală.
+- **Planifică și înregistrează antrenamentele**: rutine, exerciții, serii, repetări, greutăți și pauze.
+- **Urmărește progresul**: istoric, statistici, grupe musculare, recorduri și greutate corporală.
 - **Ține evidența nutriției**: calorii, macronutrienți, fibre și sare, cu jurnal alimentar și obiective zilnice.
-- **Importa mesele din Eat & Track** și păstra alimentele importate în biblioteca personală.
-- **Lucra cu un antrenor**: partajarea datelor și programarea antrenamentelor cu acordul clientului.
-- **Continua de pe telefon**: instalează aplicația pe ecranul principal și sincronizează profilul între dispozitive.
+- **Importă mesele din Eat & Track** și păstrează alimentele importate în biblioteca personală.
+- **Lucrează cu un antrenor**: partajarea datelor și programarea antrenamentelor cu acordul clientului.
+- **Continuă de pe telefon**: instalează aplicația pe ecranul principal și sincronizează profilul între dispozitive.
 
 Estimările calorice pentru antrenament sunt orientative, nu măsurători medicale.
 
