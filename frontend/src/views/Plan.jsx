@@ -48,8 +48,8 @@ export default function Plan() {
   return <>
     <div className="hdr">
       <div><h1>{user?.role === 'trainer' ? t('Training plans') : t('Plan')}</h1><div className="sub">{clientId ? t('For {0}', client?.name || t('Client')) : user?.role === 'trainer' ? t('Build reusable routines for your clients') : t('Your weekly routine')}</div></div>
-      <Button className="plan-import-export" icon="upload" onClick={planToolsSheet}>{t('Import / Export')}</Button>
     </div>
+    <div className="plan-tools-row"><Button className="plan-import-export" icon="upload" onClick={planToolsSheet}>{t('Import / Export')}</Button></div>
     {clientId && <div className="card coach-card coach-plan-banner">
       <div className="coach-plan-intro"><span className="coach-plan-mark"><Icon name="clipboard" /></span><div><div className="coach-plan-kicker">{t('Training plans')}</div><h2>{t('Training plan for {0}', client?.name || t('Client'))}</h2><p className="small muted">{t('Build routines below, assign the week, then send this plan for the client to approve.')}</p></div></div>
       {client && !client.canSendPlans && <p className="small" style={{ color: 'var(--orange)' }}>{t('This client has not allowed training plans yet.')}</p>}
