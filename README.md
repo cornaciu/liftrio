@@ -1,47 +1,51 @@
 <div align="center">
 
-<img src="assets/banner.svg" alt="Liftrio — antrenamente, nutriție și progres" width="720">
+<img src="assets/banner.svg" alt="Liftrio — training, nutrition, and progress" width="720">
 
 # Liftrio
 
-### Antrenamente. Nutriție. Progres.
+### Train well. Fuel well. Keep progressing.
 
-Urmărește-ți antrenamentele, mesele și evoluția într-o singură aplicație, optimizată pentru telefon.
+Liftrio brings strength training, nutrition tracking, and progress insights together in one mobile-friendly app.
 
-[**Deschide Liftrio**](https://open-gym-bay.vercel.app) · [**Vezi codul sursă**](https://github.com/cornaciu/openGym)
+[**Open Liftrio**](https://open-gym-bay.vercel.app) · [**Explore the source**](https://github.com/cornaciu/openGym)
 
 <br>
 
-![PWA](https://img.shields.io/badge/PWA-instalabilă-a3e635?style=flat-square)
+![PWA](https://img.shields.io/badge/PWA-installable-a3e635?style=flat-square)
 ![React](https://img.shields.io/badge/React-19-38bdf8?style=flat-square&logo=react&logoColor=white)
 ![Vercel](https://img.shields.io/badge/hosting-Vercel-black?style=flat-square&logo=vercel)
-![Supabase](https://img.shields.io/badge/date-Supabase-3ecf8e?style=flat-square&logo=supabase)
-![License](https://img.shields.io/badge/licență-AGPL--3.0-blue?style=flat-square)
+![Supabase](https://img.shields.io/badge/data-Supabase-3ecf8e?style=flat-square&logo=supabase)
+![License](https://img.shields.io/badge/license-AGPL--3.0-blue?style=flat-square)
 
 </div>
 
 ---
 
-## Ce poți face
+## One place for training and nutrition
 
-- **Planifică și înregistrează antrenamentele**: rutine, exerciții, serii, repetări, greutăți și pauze.
-- **Urmărește progresul**: istoric, statistici, grupe musculare, recorduri și greutate corporală.
-- **Ține evidența nutriției**: calorii, macronutrienți, fibre și sare, cu jurnal alimentar și obiective zilnice.
-- **Importă mesele din Eat & Track** și păstrează alimentele importate în biblioteca personală.
-- **Lucrează cu un antrenor**: partajarea datelor și programarea antrenamentelor cu acordul clientului.
-- **Continuă de pe telefon**: instalează aplicația pe ecranul principal și sincronizează profilul între dispozitive.
+- **Plan and log workouts** with routines, exercises, sets, reps, weights, and rest timers.
+- **Track progress** through workout history, statistics, muscle-group balance, personal records, and body weight.
+- **Log nutrition** with calories, macros, fiber, sodium, food diary, and daily targets.
+- **Import meals from Eat & Track** and keep imported foods in your personal library.
+- **Work with a coach** by sharing selected data and receiving scheduled workouts with the client's consent.
+- **Stay in sync across devices** with a mobile-friendly progressive web app and a shared profile.
 
-Estimările calorice pentru antrenament sunt orientative, nu măsurători medicale.
+Workout calorie estimates are approximate and intended for general fitness tracking.
 
-## Liftrio pe telefon
+## Built to grow
 
-Deschide aplicația în Safari sau Chrome, apoi alege **Adaugă pe ecranul principal**. Liftrio rulează ca PWA și se deschide într-o fereastră dedicată.
+Liftrio is designed to support a broader fitness experience over time, from individual workout and nutrition tracking to coach-supported training and richer progress insights. Its current React and Vite frontend, Vercel Functions API, and Supabase Postgres data layer provide a flexible foundation for future features.
 
-## Cod și deploy
+## Use Liftrio on your phone
 
-Versiunea Liftrio folosită în producție este pe ramura [vercel-supabase](https://github.com/cornaciu/openGym/tree/vercel-supabase). Interfața folosește React și Vite, API-ul rulează pe Vercel Functions, iar profilurile se sincronizează prin Supabase Postgres.
+Open the app in Safari or Chrome and choose **Add to Home Screen**. Liftrio runs as a progressive web app and opens in its own app-like window.
 
-Pentru pornire locală, clonează ramura activă:
+## Development and deployment
+
+The production version of Liftrio is maintained on the [vercel-supabase branch](https://github.com/cornaciu/openGym/tree/vercel-supabase). The interface uses React and Vite, the API runs on Vercel Functions, and user profiles sync through Supabase Postgres.
+
+To run the app locally:
 
 ```bash
 git clone --branch vercel-supabase https://github.com/cornaciu/openGym.git
@@ -50,22 +54,22 @@ npm install --prefix frontend
 npm run dev --prefix frontend
 ```
 
-Pentru configurarea completă și deployment consultă [ghidul Vercel + Supabase](https://github.com/cornaciu/openGym/blob/vercel-supabase/docs/VERCEL.md).
+For setup and deployment details, see the [Vercel + Supabase guide](https://github.com/cornaciu/openGym/blob/vercel-supabase/docs/VERCEL.md).
 
-Build-ul de producție:
+Build the frontend:
 
 ```bash
-npm run build
+npm run build --prefix frontend
 ```
 
-## Origine și licență
+## Origin and license
 
-Liftrio este o versiune personalizată, derivată din [openGym de Duarte Santos](https://github.com/DuarteSantos8/openGym). Păstrează licența AGPL-3.0 și atribuirea din [NOTICE.md](NOTICE.md). Codul și contribuțiile din acest repository sunt distribuite conform [LICENSE](LICENSE).
+Liftrio is a customized version derived from [openGym by Duarte Santos](https://github.com/DuarteSantos8/openGym). It retains the AGPL-3.0 license and the attribution in [NOTICE.md](NOTICE.md). This repository's code and contributions are distributed under the terms of [LICENSE](LICENSE).
 
-Biblioteca de exerciții folosește [exercises-dataset](https://github.com/hasaneyldrm/exercises-dataset); verifică fișierul NOTICE pentru detalii despre atribuire și licențe.
+The exercise library uses [exercises-dataset](https://github.com/hasaneyldrm/exercises-dataset); see NOTICE for attribution and license details.
 
 ---
 
 <div align="center">
-<sub>Liftrio · construit pentru antrenamente consecvente și progres urmărit clar.</sub>
+<sub>Liftrio · Train with purpose. Fuel your progress.</sub>
 </div>
