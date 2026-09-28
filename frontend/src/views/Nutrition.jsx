@@ -182,6 +182,15 @@ export default function Nutrition() {
       </div>}
     </div>
 
+    {nutrition.coachPlan && <div className="card nutrition-coach-plan">
+      <div className="row between"><h2>{nutrition.coachPlan.name}</h2><span className="tag acc">{t('From {0}', nutrition.coachPlan.trainerName)}</span></div>
+      <p className="small muted">{t('Your accepted nutrition plan')}</p>
+      {(nutrition.coachPlan.meals || []).map((meal, index) => <div className="nutrition-coach-meal" key={index}>
+        <strong>{meal.name}</strong><p className="small muted" style={{ whiteSpace: 'pre-wrap' }}>{meal.details}</p>
+      </div>)}
+      {nutrition.coachPlan.notes && <p className="small muted" style={{ whiteSpace: 'pre-wrap', marginTop: 12 }}>{nutrition.coachPlan.notes}</p>}
+    </div>}
+
     <div className="nutrition-section-head"><div className="nutrition-section-title"><h2>{t('Food diary')}</h2></div><Button type="button" variant="tinted" icon="upload" onClick={() => importRef.current?.click()}>{t('Import Eat & Track')}</Button></div>
     <input ref={importRef} type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden onChange={event => { const file = event.target.files?.[0]; if (file) readEatTrack(file); event.target.value = '' }} />
     {importBusy && <div className="card nutrition-import-preview"><span>{t('Reading Eat & Track export…')}</span></div>}
