@@ -15,6 +15,9 @@ export default function TabBar({ onStart }) {
   const cur = loc.pathname.split('/')[1] || 'home'
   const on = k => cur === k || (cur === 'history' && k === 'stats') || (cur === 'settings' && k === 'home' && user?.role !== 'trainer') || (cur === 'coaching' && k === 'coaching')
 
+  const trainerIndex = cur === 'coaching' ? 1 : cur === 'plan' ? 2 : cur === 'library' ? 3 : cur === 'settings' ? 4 : 0
+  const clientIndex = cur === 'plan' ? 1 : cur === 'workout' ? 2 : cur === 'stats' || cur === 'history' ? 3 : cur === 'library' ? 4 : 0
+
   const startWorkout = () => {
     if (!S.active) {
       const r = effectiveRoutine(S, todayISO())
@@ -28,7 +31,7 @@ export default function TabBar({ onStart }) {
     </button>
   )
 
-  if (user?.role === 'trainer') return <nav id="tabbar" className="liftrio-nav trainer-nav" aria-label={t('Navigation')}>
+  if (user?.role === 'trainer') return <nav id="tabbar" className="liftrio-nav trainer-nav" style={{ '--nav-index': trainerIndex }} aria-label={t('Navigation')}>
     <Tab k="home" icon="house" to="/home" label={t('Home')} />
     <Tab k="coaching" icon="personCircle" to="/coaching" label={t('Clients')} />
     <button className={'start' + (cur === 'plan' ? ' on' : '')} aria-current={cur === 'plan' ? 'page' : undefined} onClick={() => nav('/plan')}>
@@ -39,10 +42,10 @@ export default function TabBar({ onStart }) {
   </nav>
 
   return (
-    <nav id="tabbar" className="liftrio-nav" aria-label={t('Navigation')}>
+    <nav id="tabbar" className="liftrio-nav" style={{ '--nav-index': clientIndex }} aria-label={t('Navigation')}>
       <Tab k="home" icon="house" to="/home" label={t('Home')} />
       <Tab k="plan" icon="calendar" to="/plan" label={t('Plan')} />
-      <button className={'start' + (S.active ? ' rec' : '')} onClick={startWorkout}>
+      <button className={'start' + (cur === 'workout' ? ' on' : '') + (S.active ? ' rec' : '')} aria-current={cur === 'workout' ? 'page' : undefined} onClick={startWorkout}>
         <span className="cir"><Icon name={S.active ? 'play' : 'dumbbell'} /></span>
         <span>{S.active ? t('Resume') : t('Start')}</span>
       </button>
