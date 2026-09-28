@@ -43,16 +43,14 @@ into both native projects — re-run it after every web-code change before build
 
 ## App icons & splash screens
 
-`frontend/resources/icon.svg` is the 1024×1024 source (the app's dumbbell glyph on the
-app background). Generate all platform assets from it on a machine with the tooling:
+`frontend/resources/icon.png` is the original Liftrio artwork. The PWA icons are
+resized copies of this image. Generate native platform assets from it with:
 
 ```sh
 cd frontend
-npx @capacitor/assets generate --iconBackgroundColor '#0c0e12' --splashBackgroundColor '#0c0e12'
+npx @capacitor/assets generate --iconBackgroundColor '#CCFF00' --splashBackgroundColor '#CCFF00'
 ```
 
-(If the generator won't take the SVG directly, export it to `resources/icon.png` at
-1024×1024 first — any image tool can do it.)
 
 ## Distribution — deliberately no app stores
 
