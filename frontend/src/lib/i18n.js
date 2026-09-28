@@ -11,6 +11,11 @@ export const LANGS = {
   pt: 'Português', pl: 'Polski', tr: 'Türkçe', ru: 'Русский', zh: '中文',
   ko: '한국어', hi: 'हिन्दी', ro: 'Română'
 }
+export const LANG_FLAGS = {
+  en: '🇬🇧', de: '🇩🇪', es: '🇪🇸', fr: '🇫🇷', it: '🇮🇹',
+  pt: '🇵🇹', pl: '🇵🇱', tr: '🇹🇷', ru: '🇷🇺', zh: '🇨🇳',
+  ko: '🇰🇷', hi: '🇮🇳', ro: '🇷🇴'
+}
 export const INSTR_LANGS = ['en', 'es', 'fr', 'it', 'tr', 'ru', 'zh', 'hi', 'pl', 'ko']
 const DATE_LOCALES = {
   en: 'en-GB', de: 'de-DE', es: 'es-ES', fr: 'fr-FR', it: 'it-IT', pt: 'pt-PT',
