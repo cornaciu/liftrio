@@ -136,7 +136,7 @@ export default function Settings() {
       <div className="settings-accent">
         <span className="lrow-t">{t('Accent color')}</span>
         <div className="swatches">
-          {Object.entries(ACCENTS).map(([k, c]) => (
+          {Object.entries(ACCENTS).filter(([key]) => key !== 'neon').map(([k, c]) => (
             <button key={k} className={'swatch' + ((S.accent || 'lime') === k ? ' on' : '')}
               style={{ background: c }} onClick={() => update(s => { s.accent = k })} aria-label={k} title={k === 'neon' ? '#CCFF00' : k} />
           ))}
@@ -193,10 +193,7 @@ export default function Settings() {
         subtitle={t('to install Liftrio as a full-screen app.') + ' ' + (user ? t('Your data syncs with your profile — sign in anywhere to see it.') : t('Guest data stays on this device — export a backup now and then!'))} />
     </Section>}
 
-    <div className="dim small" style={{ textAlign: 'center', marginTop: 4, lineHeight: 1.6 }}>
-      Liftrio · {t('free & open source (AGPL v3)')}<br />
-      <a href="https://github.com/cornaciu/liftrio" target="_blank" rel="noopener">cod sursă</a> · Liftrio include cod derivat din <a href="https://github.com/DuarteSantos8/openGym" target="_blank" rel="noopener">openGym de Duarte Santos</a> · date exerciții: hasaneyldrm/exercises-dataset (CC)
-    </div>
+
   </div>
 }
 
