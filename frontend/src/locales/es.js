@@ -560,4 +560,5 @@ export default {
   'Ready when you are.': 'Cuando tú quieras.',
   'Your space to get stronger.': 'Tu espacio para ganar fuerza.',
   'Progress': 'Progreso',
+  'Nutrition': 'Nutrición',
 }

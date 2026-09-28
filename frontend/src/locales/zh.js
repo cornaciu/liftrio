@@ -560,4 +560,5 @@ export default {
   'Ready when you are.': '准备好了就开始。',
   'Your space to get stronger.': '属于你的变强空间。',
   'Progress': '进步',
+  'Nutrition': '营养',
 }

@@ -560,4 +560,5 @@ export default {
   'Ready when you are.': 'Hazır olduğunda başla.',
   'Your space to get stronger.': 'Güçlenmek için senin alanın.',
   'Progress': 'Gelişim',
+  'Nutrition': 'Beslenme',
 }

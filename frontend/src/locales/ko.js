@@ -560,4 +560,5 @@ export default {
   'Ready when you are.': '준비되면 시작하세요.',
   'Your space to get stronger.': '더 강해지는 나만의 공간.',
   'Progress': '성장',
+  'Nutrition': '영양',
 }

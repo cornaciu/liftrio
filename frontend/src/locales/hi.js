@@ -560,4 +560,5 @@ export default {
   'Ready when you are.': 'जब आप तैयार हों।',
   'Your space to get stronger.': 'और मजबूत बनने की आपकी जगह।',
   'Progress': 'प्रगति',
+  'Nutrition': 'पोषण',
 }
