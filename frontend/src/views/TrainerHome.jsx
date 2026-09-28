@@ -27,7 +27,7 @@ export default function TrainerHome() {
   }, [user?.id])
 
   const shared = clients.filter(c => c.canViewDashboard).length
-  const pending = clients.reduce((sum, c) => sum + c.pendingTraining + c.pendingNutrition, 0)
+  const pending = clients.reduce((sum, c) => sum + (c.pendingTraining || 0) + (c.pendingNutrition || 0), 0)
   return <div className="narrow trainer-home">
     <div className="hdr">
       <div><h1>{t('Hi {0}', user?.name || '')}</h1><div className="sub">{new Date().toLocaleDateString(dateLocale(), { weekday: 'long', day: 'numeric', month: 'long' })}</div></div>
@@ -67,11 +67,11 @@ export default function TrainerHome() {
         <div><span>{t('Weight')}</span><b>{client.overview.latestWeight != null ? fmtNum(client.overview.latestWeight) + ' ' + client.overview.unit : '—'}</b></div>
         <div><span>{t('Routines')}</span><b>{client.overview.routines}</b></div>
       </div> : <p className="small muted trainer-private">{t('Progress appears after the client shares their dashboard.')}</p>}
-      {(client.pendingTraining + client.pendingNutrition) > 0 && <p className="small muted trainer-pending">{t('{0} plans awaiting approval', client.pendingTraining + client.pendingNutrition)}</p>}
+      {((client.pendingTraining || 0) + (client.pendingNutrition || 0)) > 0 && <p className="small muted trainer-pending">{t('{0} plans awaiting approval', client.pendingTraining + client.pendingNutrition)}</p>}
       <div className="trainer-client-actions">
         <Button size="sm" variant="tinted" icon="dumbbell" disabled={!client.canSendPlans}
           onClick={() => nav('/plan?client=' + encodeURIComponent(client.id))}>{t('Training plan')}</Button>
-        <Button size="sm" variant="tinted" icon="forkKnife" disabled={!client.canSendNutrition}
+        <Button size="sm" variant="tinted" icon="flame" disabled={!client.canSendNutrition}
           onClick={() => nav('/coaching/nutrition/' + encodeURIComponent(client.id))}>{t('Nutrition plan')}</Button>
       </div>
       {(!client.canSendPlans || !client.canSendNutrition) && <div className="small dim">{t('The client must allow each type of plan before you can send it.')}</div>}
