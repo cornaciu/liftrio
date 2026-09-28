@@ -38,6 +38,7 @@ export default function TrainerNutritionPlan() {
       await post('/api/coaching/nutrition/send', { clientId, plan: {
         name: name.trim(), targets, meals: meals.map(m => ({ name: m.name.trim(), details: m.details.trim() })), notes: notes.trim()
       } })
+      window.dispatchEvent(new Event('liftrio:coaching-change'))
       nav('/home')
     } catch (e) { setError(e.message || t('Could not send nutrition plan.')) }
     finally { setBusy(false) }
