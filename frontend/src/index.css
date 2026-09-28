@@ -1352,3 +1352,43 @@ h4.sec{
 .coach-trainer-panel .row.between.small{gap:10px;align-items:flex-start}
 .coach-trainer-panel .row.between.small>span:first-child{min-width:0;overflow-wrap:anywhere}
 .coach-trainer-panel .row.between.small>span:last-child{flex:none}
+
+
+/* Sliding glass selection shared by the trainer and client navigation. */
+#tabbar.liftrio-nav{
+  isolation:isolate;
+  background:color-mix(in srgb,var(--surface) 68%,transparent);
+  -webkit-backdrop-filter:blur(30px) saturate(180%);
+  backdrop-filter:blur(30px) saturate(180%);
+}
+#tabbar.liftrio-nav::before{
+  content:"";position:absolute;z-index:0;
+  left:8px;top:7px;bottom:calc(7px + var(--sab));
+  width:calc((100% - 32px)/5);
+  border:1px solid color-mix(in srgb,var(--label) 32%,transparent);
+  border-radius:14px;
+  background:linear-gradient(155deg,
+    color-mix(in srgb,var(--label) 26%,transparent),
+    color-mix(in srgb,var(--label) 9%,transparent) 54%,
+    color-mix(in srgb,var(--acc) 12%,transparent));
+  box-shadow:inset 0 1px 1px color-mix(in srgb,var(--label) 30%,transparent),
+    0 5px 14px rgba(0,0,0,.22),0 0 0 1px color-mix(in srgb,var(--acc) 15%,transparent);
+  transform:translateX(calc(var(--nav-index,0) * (100% + 4px)));
+  transition:transform 420ms cubic-bezier(.22,1.4,.36,1),background 220ms ease;
+  pointer-events:none;
+}
+#tabbar.liftrio-nav button{position:relative;z-index:1;transition:color 220ms ease,transform 220ms ease}
+#tabbar.liftrio-nav button.on{background:transparent;color:var(--label);transform:translateY(-1px)}
+#tabbar.liftrio-nav button.on .icn{color:var(--acc);filter:drop-shadow(0 0 6px var(--acc-soft))}
+#tabbar.liftrio-nav button.start.on .cir .icn{color:var(--acc)}
+#tabbar.liftrio-nav button.start.on span:last-child{color:var(--label)}
+#tabbar.liftrio-nav button.start.rec.on{color:var(--label)}
+#tabbar.liftrio-nav button.start.rec.on .cir{background:transparent;box-shadow:none}
+#tabbar.liftrio-nav button.start.rec.on .cir .icn{color:var(--orange)}
+#tabbar.liftrio-nav button:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
+@media(min-width:1000px){
+  #tabbar.liftrio-nav::before{bottom:7px}
+}
+@media(prefers-reduced-motion:reduce){
+  #tabbar.liftrio-nav::before,#tabbar.liftrio-nav button{transition:none}
+}
