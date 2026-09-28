@@ -31,7 +31,7 @@ export default function TabBar({ onStart }) {
     </button>
   )
 
-  if (user?.role === 'trainer') return <nav id="tabbar" className="liftrio-nav trainer-nav" style={{ '--nav-index': trainerIndex }} aria-label={t('Navigation')}>
+  if (user?.role === 'trainer') return <nav id="tabbar" className={`liftrio-nav trainer-nav nav-pos-${trainerIndex}`} aria-label={t('Navigation')}>
     <Tab k="home" icon="house" to="/home" label={t('Home')} />
     <Tab k="coaching" icon="personCircle" to="/coaching" label={t('Clients')} />
     <button className={'start' + (cur === 'plan' ? ' on' : '')} aria-current={cur === 'plan' ? 'page' : undefined} onClick={() => nav('/plan')}>
@@ -42,7 +42,7 @@ export default function TabBar({ onStart }) {
   </nav>
 
   return (
-    <nav id="tabbar" className="liftrio-nav" style={{ '--nav-index': clientIndex }} aria-label={t('Navigation')}>
+    <nav id="tabbar" className={`liftrio-nav nav-pos-${clientIndex}`} aria-label={t('Navigation')}>
       <Tab k="home" icon="house" to="/home" label={t('Home')} />
       <Tab k="plan" icon="calendar" to="/plan" label={t('Plan')} />
       <button className={'start' + (cur === 'workout' ? ' on' : '') + (S.active ? ' rec' : '')} aria-current={cur === 'workout' ? 'page' : undefined} onClick={startWorkout}>
