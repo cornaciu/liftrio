@@ -130,6 +130,7 @@ export async function coachingRoute({ key, db, user, body = {}, saveDb, readStat
   }
 
   if (key === 'POST /api/coaching/nutrition-consent') {
+    if (role !== 'member') { reply(403, { error: 'client role required' }); return true; }
     const trainer = db.users.find(u => u.id === body.trainerId);
     if (!trainer || trainer.id === user.id ||
         (body.allow === true && !activeTrainer(db, trainer.id, adminUids))) {
@@ -147,6 +148,7 @@ export async function coachingRoute({ key, db, user, body = {}, saveDb, readStat
   }
 
   if (key === 'POST /api/coaching/data-consent') {
+    if (role !== 'member') { reply(403, { error: 'client role required' }); return true; }
     const trainer = db.users.find(u => u.id === body.trainerId);
     if (!trainer || trainer.id === user.id ||
         (body.allow === true && !activeTrainer(db, trainer.id, adminUids))) {
@@ -179,6 +181,7 @@ export async function coachingRoute({ key, db, user, body = {}, saveDb, readStat
   }
 
   if (key === 'POST /api/coaching/consent') {
+    if (role !== 'member') { reply(403, { error: 'client role required' }); return true; }
     const trainer = db.users.find(u => u.id === body.trainerId);
     if (!trainer || trainer.id === user.id ||
         (body.allow === true && !activeTrainer(db, trainer.id, adminUids))) {
