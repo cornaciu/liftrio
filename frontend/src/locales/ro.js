@@ -97,6 +97,7 @@ export default {
   "Delete": "Șterge",
   "Save": "Salvează",
   "Import": "Importă",
+  "Import / Export": "Importă / Exportă",
   "Discard": "Renunță",
   "All": "Toate",
   "Rest": "Pauză",
