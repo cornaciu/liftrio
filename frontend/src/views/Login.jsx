@@ -113,7 +113,7 @@ export default function Login() {
       </header>
       <main className="login-main">
         <div className="login-story">
-          <div className="login-eyebrow"><span className="login-live-dot" /> LIFTRIO / 01</div>
+          <div className="login-eyebrow"><span className="login-live-dot" /> LIFTRIO</div>
           <h1 ref={headlineRef}><span>{headlineFirst}</span><em>{headlineSecond}</em></h1>
           <p className="login-intro">{t('Training, nutrition and progress in one place.')}</p>
           <div className="login-steps" aria-label={t('Training, nutrition and progress in one place.')}>
