@@ -20,6 +20,18 @@ const validPlan = plan => {
   return true;
 };
 
+const validNutritionPlan = plan => {
+  if (!plan || typeof plan !== 'object' || JSON.stringify(plan).length > 16000 ||
+      typeof plan.name !== 'string' || !plan.name.trim() || plan.name.length > 100 ||
+      typeof plan.notes !== 'string' || plan.notes.length > 2000 ||
+      !Array.isArray(plan.meals) || plan.meals.length < 1 || plan.meals.length > 8 ||
+      !plan.meals.every(m => typeof m.name === 'string' && m.name.trim() && m.name.length <= 80 &&
+        typeof m.details === 'string' && m.details.trim() && m.details.length <= 1000)) return false;
+  const limits = { kcal: 10000, protein: 1000, carbs: 1500, fat: 500 };
+  return Object.entries(limits).every(([key, max]) =>
+    Number.isFinite(plan.targets?.[key]) && plan.targets[key] >= 0 && plan.targets[key] <= max);
+};
+
 // Both the self-hosted API and the Vercel adapter use this policy. The user owns the
 // grant. A trainer never receives another profile's state and can only submit a plan
 // for that user to review and merge into their own state.
@@ -30,9 +42,12 @@ export async function coachingRoute({ key, db, user, body = {}, saveDb, readStat
   db.coachLinks ||= [];
   db.coachPlans ||= [];
   db.coachDataGrants ||= [];
+  db.coachNutritionGrants ||= [];
+  db.coachNutritionPlans ||= [];
   const role = roleOf(user, adminUids);
   const linkFor = (trainerId, clientId) => db.coachLinks.find(l => l.trainerId === trainerId && l.clientId === clientId);
   const dataGrantFor = (trainerId, clientId) => db.coachDataGrants.find(g => g.trainerId === trainerId && g.clientId === clientId);
+  const nutritionGrantFor = (trainerId, clientId) => db.coachNutritionGrants.find(g => g.trainerId === trainerId && g.clientId === clientId);
 
   if (key === 'POST /api/admin/user/role') {
     if (role !== 'admin') { reply(403, { error: 'forbidden' }); return true; }
@@ -46,7 +61,9 @@ export async function coachingRoute({ key, db, user, body = {}, saveDb, readStat
     if (body.role === 'member') {
       db.coachLinks = db.coachLinks.filter(l => l.trainerId !== target.id);
       db.coachDataGrants = db.coachDataGrants.filter(g => g.trainerId !== target.id);
+      db.coachNutritionGrants = db.coachNutritionGrants.filter(g => g.trainerId !== target.id);
       db.coachPlans.forEach(p => { if (p.trainerId === target.id && p.status === 'pending') p.status = 'withdrawn'; });
+      db.coachNutritionPlans.forEach(p => { if (p.trainerId === target.id && p.status === 'pending') p.status = 'withdrawn'; });
     }
     await saveDb();
     reply(200, { id: target.id, role: roleOf(target, adminUids) });
@@ -62,17 +79,70 @@ export async function coachingRoute({ key, db, user, body = {}, saveDb, readStat
     const dashboardGrants = db.coachDataGrants.filter(g => g.clientId === user.id).map(g => g.trainerId);
     const clientIds = role === 'member' ? new Set() : new Set([
       ...db.coachLinks.filter(l => l.trainerId === user.id).map(l => l.clientId),
-      ...db.coachDataGrants.filter(g => g.trainerId === user.id).map(g => g.clientId)
+      ...db.coachDataGrants.filter(g => g.trainerId === user.id).map(g => g.clientId),
+      ...db.coachNutritionGrants.filter(g => g.trainerId === user.id).map(g => g.clientId)
     ]);
     const clients = [...clientIds].map(id => {
       const client = db.users.find(u => u.id === id && !u.disabled);
-      return client && { id, name: client.name, canSendPlans: !!linkFor(user.id, id), canViewDashboard: !!dataGrantFor(user.id, id) };
+      return client && { id, name: client.name, canSendPlans: !!linkFor(user.id, id), canViewDashboard: !!dataGrantFor(user.id, id), canSendNutrition: !!nutritionGrantFor(user.id, id) };
     }).filter(Boolean);
     const assignments = db.coachPlans.filter(p => p.clientId === user.id || p.trainerId === user.id)
       .filter(p => p.clientId === user.id || !!linkFor(user.id, p.clientId))
       .map(p => ({ ...p, trainerName: db.users.find(u => u.id === p.trainerId)?.name || '',
         clientName: db.users.find(u => u.id === p.clientId)?.name || '' }));
-    reply(200, { role, trainers, connections, dashboardGrants, clients, assignments });
+    const nutritionGrants = db.coachNutritionGrants.filter(g => g.clientId === user.id).map(g => g.trainerId);
+    const nutritionAssignments = db.coachNutritionPlans.filter(p => p.clientId === user.id || p.trainerId === user.id)
+      .filter(p => p.clientId === user.id || !!nutritionGrantFor(user.id, p.clientId))
+      .map(p => ({ ...p, trainerName: db.users.find(u => u.id === p.trainerId)?.name || '',
+        clientName: db.users.find(u => u.id === p.clientId)?.name || '' }));
+    reply(200, { role, trainers, connections, dashboardGrants, nutritionGrants, clients, assignments, nutritionAssignments });
+    return true;
+  }
+
+  if (key === 'GET /api/coaching/overview') {
+    if (role === 'member') { reply(403, { error: 'trainer role required' }); return true; }
+    const ids = new Set([
+      ...db.coachLinks.filter(l => l.trainerId === user.id).map(l => l.clientId),
+      ...db.coachDataGrants.filter(g => g.trainerId === user.id).map(g => g.clientId),
+      ...db.coachNutritionGrants.filter(g => g.trainerId === user.id).map(g => g.clientId)
+    ]);
+    const clients = await Promise.all([...ids].map(async id => {
+      const client = db.users.find(u => u.id === id && !u.disabled);
+      if (!client) return null;
+      const canViewDashboard = !!dataGrantFor(user.id, id);
+      const state = canViewDashboard && typeof readState === 'function' ? await readState(id) : null;
+      const workouts = state?.workouts || [];
+      const weight = state?.bodyweight || [];
+      return { id, name: client.name, canViewDashboard,
+        canSendPlans: !!linkFor(user.id, id), canSendNutrition: !!nutritionGrantFor(user.id, id),
+        overview: state ? {
+          lastWorkout: workouts.map(w => w.d).filter(Boolean).sort().at(-1) || null,
+          workouts: workouts.length, routines: (state.routines || []).length,
+          latestWeight: weight.slice().sort((a, b) => (b.d || '').localeCompare(a.d || ''))[0]?.w ?? null,
+          unit: state.unit || 'kg', kcalTarget: state.nutrition?.targets?.kcal || 0
+        } : null,
+        pendingTraining: db.coachPlans.filter(p => p.trainerId === user.id && p.clientId === id && p.status === 'pending').length,
+        pendingNutrition: db.coachNutritionPlans.filter(p => p.trainerId === user.id && p.clientId === id && p.status === 'pending').length
+      };
+    }));
+    reply(200, { clients: clients.filter(Boolean) });
+    return true;
+  }
+
+  if (key === 'POST /api/coaching/nutrition-consent') {
+    const trainer = db.users.find(u => u.id === body.trainerId);
+    if (!trainer || trainer.id === user.id ||
+        (body.allow === true && !activeTrainer(db, trainer.id, adminUids))) {
+      reply(400, { error: 'invalid trainer' }); return true;
+    }
+    if (body.allow === true) {
+      if (!nutritionGrantFor(trainer.id, user.id)) db.coachNutritionGrants.push({ trainerId: trainer.id, clientId: user.id, since: new Date().toISOString() });
+    } else if (body.allow === false) {
+      db.coachNutritionGrants = db.coachNutritionGrants.filter(g => !(g.trainerId === trainer.id && g.clientId === user.id));
+      db.coachNutritionPlans.forEach(p => { if (p.trainerId === trainer.id && p.clientId === user.id && p.status === 'pending') p.status = 'withdrawn'; });
+    } else { reply(400, { error: 'allow must be boolean' }); return true; }
+    await saveDb();
+    reply(200, { ok: true });
     return true;
   }
 
@@ -139,6 +209,38 @@ export async function coachingRoute({ key, db, user, body = {}, saveDb, readStat
     db.coachPlans.push(assignment);
     await saveDb();
     reply(200, { id: assignment.id });
+    return true;
+  }
+
+  if (key === 'POST /api/coaching/nutrition/send') {
+    if (role === 'member') { reply(403, { error: 'trainer role required' }); return true; }
+    if (!nutritionGrantFor(user.id, body.clientId) || !db.users.some(u => u.id === body.clientId && !u.disabled)) {
+      reply(403, { error: 'client nutrition consent required' }); return true;
+    }
+    if (!validNutritionPlan(body.plan)) { reply(400, { error: 'invalid nutrition plan' }); return true; }
+    if (db.coachNutritionPlans.filter(p => p.trainerId === user.id && p.clientId === body.clientId && p.status === 'pending').length >= 5) {
+      reply(429, { error: 'too many nutrition plans awaiting this client' }); return true;
+    }
+    const assignment = { id: crypto.randomUUID(), trainerId: user.id, clientId: body.clientId,
+      plan: body.plan, status: 'pending', created: new Date().toISOString() };
+    db.coachNutritionPlans.push(assignment);
+    await saveDb();
+    reply(200, { id: assignment.id });
+    return true;
+  }
+
+  if (key === 'POST /api/coaching/nutrition/respond') {
+    const p = db.coachNutritionPlans.find(x => x.id === body.id && x.clientId === user.id);
+    if (!p) { reply(404, { error: 'nutrition plan not found' }); return true; }
+    if (p.status !== 'pending') { reply(409, { error: 'plan already handled' }); return true; }
+    if (body.accept === true && !nutritionGrantFor(p.trainerId, user.id)) { reply(403, { error: 'trainer access revoked' }); return true; }
+    if (typeof body.accept !== 'boolean') { reply(400, { error: 'accept must be boolean' }); return true; }
+    p.status = body.accept ? 'accepted' : 'declined';
+    p.decided = new Date().toISOString();
+    p.summary = { name: p.plan.name, meals: p.plan.meals.length };
+    delete p.plan;
+    await saveDb();
+    reply(200, { ok: true });
     return true;
   }
 
