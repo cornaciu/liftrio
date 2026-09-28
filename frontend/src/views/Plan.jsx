@@ -30,6 +30,7 @@ export default function Plan() {
     setBusy(true); setError('')
     try {
       await api('/api/coaching/send', { method: 'POST', body: JSON.stringify({ clientId, plan: buildPlanBundle(S, t('Training plan for {0}', client.name)) }) })
+      window.dispatchEvent(new Event('liftrio:coaching-change'))
       toast(t('Plan sent for approval'))
       nav('/home')
     } catch (e) { setError(e.message || t('Could not send plan.')) }
