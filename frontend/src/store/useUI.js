@@ -52,7 +52,7 @@ export const useUI = create((set, get) => ({
   toast(msg) {
     set({ toastMsg: msg })
     clearTimeout(toastTm)
-    toastTm = setTimeout(() => set({ toastMsg: '' }), 2200)
+    toastTm = setTimeout(() => set({ toastMsg: '' }), 2000)
   },
 
   startRest(sec) {
