@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
+import { useUI } from '../store/useUI.js'
+import { api } from '../lib/api.js'
 import { effectiveRoutine, effectiveRoutineId, streakWeeks, lastBW, setsDoneActive } from '../lib/history.js'
 import { fmtNum, fmtDate, todayISO, isoOf, weekKey, DAYS } from '../lib/format.js'
 import { t, dateLocale } from '../lib/i18n.js'
@@ -17,6 +19,40 @@ export default function Home() {
   const S = useStore(s => s.S)
   const user = useStore(s => s.user)
   const [weekOffset, setWeekOffset] = useState(0)
+  const [coaching, setCoaching] = useState(null)
+  const toast = useUI(s => s.toast)
+
+  useEffect(() => {
+    if (!user || user.role === 'trainer' || user.role === 'admin') { setCoaching(null); return }
+    let alive = true
+    const load = async () => {
+      try {
+        const data = await api('/api/coaching')
+        if (!alive) return
+        const pending = [...(data.assignments || []), ...(data.nutritionAssignments || [])].filter(plan => plan.clientId === user.id && plan.status === 'pending')
+        const key = 'liftrio_seen_coach_plans_' + user.id
+        let seen = []
+        try { seen = JSON.parse(localStorage.getItem(key) || '[]') } catch { /* reset invalid local list */ }
+        const fresh = pending.filter(plan => !seen.includes(plan.id))
+        if (fresh.length) {
+          toast(t(fresh.length === 1 ? 'A new plan from your trainer is waiting for approval.' : '{0} new plans from your trainer are waiting for approval.', fresh.length))
+          localStorage.setItem(key, JSON.stringify([...new Set([...seen, ...pending.map(plan => plan.id)])].slice(-200)))
+        }
+        setCoaching(data)
+      } catch { /* Keep the home screen usable while offline. */ }
+    }
+    load()
+    const onVisible = () => { if (document.visibilityState === 'visible') load() }
+    const poll = setInterval(load, 30000)
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('liftrio:coaching-change', load)
+    return () => { alive = false; clearInterval(poll); document.removeEventListener('visibilitychange', onVisible); window.removeEventListener('liftrio:coaching-change', load) }
+  }, [user?.id])
+
+  const trainerNames = (coaching?.connections || []).map(connection => connection.name).filter(Boolean)
+  const pendingTraining = (coaching?.assignments || []).filter(plan => plan.clientId === user?.id && plan.status === 'pending')
+  const pendingNutrition = (coaching?.nutritionAssignments || []).filter(plan => plan.clientId === user?.id && plan.status === 'pending')
+  const pendingPlans = [...pendingTraining.map(plan => ({ ...plan, kind: 'training' })), ...pendingNutrition.map(plan => ({ ...plan, kind: 'nutrition' }))]
 
   const today = new Date()
   const routine = effectiveRoutine(S, todayISO())
@@ -51,6 +87,18 @@ export default function Home() {
       <div><h1>{user ? t('Hi {0}', user.name) : 'Liftrio'}</h1><div className="sub">{today.toLocaleDateString(dateLocale(), { weekday: 'long', day: 'numeric', month: 'long' })}</div></div>
       <Button className="home-settings-action" icon="gear" onClick={() => nav('/settings')}>{t('Settings')}</Button>
     </div>
+
+    {(trainerNames.length > 0 || pendingPlans.length > 0) && <section className="card home-coaching">
+      <div className="home-coaching-head"><span className="home-coaching-symbol"><Icon name="personCircle" /></span><div><h2>{t('Your trainer')}</h2><p>{trainerNames.join(' · ') || t('Training plans')}</p></div></div>
+      {pendingPlans.length > 0 && <div className="home-coaching-pending">
+        <strong>{t('{0} plans awaiting approval', pendingPlans.length)}</strong>
+        {pendingPlans.slice(0, 3).map(plan => <div key={plan.id} className="home-coaching-plan">
+          <span>{t(plan.kind === 'training' ? 'Training plan' : 'Nutrition plan')}</span>
+          <b>{plan.plan?.name || plan.summary?.name || plan.trainerName || t('Plan')}</b>
+        </div>)}
+      </div>}
+      <Button className="home-coaching-action" trailingIcon="chevronRight" onClick={() => nav('/coaching')}>{pendingPlans.length ? t('Review plans') : t('Trainer access')}</Button>
+    </section>}
 
     <div className="card">
       <div className="week-panel">
