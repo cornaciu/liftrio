@@ -88,17 +88,6 @@ export default function Home() {
       <Button className="home-settings-action" icon="gear" onClick={() => nav('/settings')}>{t('Settings')}</Button>
     </div>
 
-    {(trainerNames.length > 0 || pendingPlans.length > 0) && <section className="card home-coaching">
-      <div className="home-coaching-head"><span className="home-coaching-symbol"><Icon name="personCircle" /></span><div><h2>{t('Your trainer')}</h2><p>{trainerNames.join(' · ') || t('Training plans')}</p></div></div>
-      {pendingPlans.length > 0 && <div className="home-coaching-pending">
-        <strong>{t('{0} plans awaiting approval', pendingPlans.length)}</strong>
-        {pendingPlans.slice(0, 3).map(plan => <div key={plan.id} className="home-coaching-plan">
-          <span>{t(plan.kind === 'training' ? 'Training plan' : 'Nutrition plan')}</span>
-          <b>{plan.plan?.name || plan.summary?.name || plan.trainerName || t('Plan')}</b>
-        </div>)}
-      </div>}
-      <Button className="home-coaching-action" trailingIcon="chevronRight" onClick={() => nav('/coaching')}>{pendingPlans.length ? t('Review plans') : t('Trainer access')}</Button>
-    </section>}
 
     <div className="card">
       <div className="week-panel">
@@ -184,5 +173,17 @@ export default function Home() {
         <Icon name="calendar" className="chev" style={{ fontSize: 20 }} />
       </div>
     </div>
+    {(trainerNames.length > 0 || pendingPlans.length > 0) && <section className="card home-coaching">
+      <div className="home-coaching-head"><span className="home-coaching-symbol"><Icon name="personCircle" /></span><div><h2>{t('Your trainer')}</h2><div className="home-trainer-names">{trainerNames.length ? trainerNames.map((name, index) => <span className="home-trainer-name" key={`${name}-${index}`}>{name}</span>) : <span>{t('Training plans')}</span>}</div></div></div>
+      {pendingPlans.length > 0 && <div className="home-coaching-pending">
+        <strong>{t('{0} plans awaiting approval', pendingPlans.length)}</strong>
+        {pendingPlans.slice(0, 3).map(plan => <div key={plan.id} className="home-coaching-plan">
+          <span>{t(plan.kind === 'training' ? 'Training plan' : 'Nutrition plan')}</span>
+          <b>{plan.plan?.name || plan.summary?.name || plan.trainerName || t('Plan')}</b>
+        </div>)}
+      </div>}
+      <Button className="home-coaching-action" trailingIcon="chevronRight" onClick={() => nav('/coaching')}>{pendingPlans.length ? t('Review plans') : t('Trainer access')}</Button>
+    </section>}
+
   </div>
 }
