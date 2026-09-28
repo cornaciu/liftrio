@@ -1400,7 +1400,7 @@ h4.sec{
 #tabbar.liftrio-nav::before{
   box-sizing:border-box;
   left:var(--nav-pad);
-  width:calc((100% - 2 * var(--nav-pad) - 16px)/5);
+  width:calc((100% - 32px)/5);
   transform:translateX(0);
 }
 #tabbar.liftrio-nav.nav-pos-1::before{transform:translateX(calc(100% + 4px))}
