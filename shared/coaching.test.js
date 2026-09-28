@@ -86,6 +86,7 @@ test('nutrition plans require separate consent and client approval', async () =>
   const plan = { name: 'Balanced', targets: { kcal: 2200, protein: 140, carbs: 260, fat: 60 },
     meals: [{ name: 'Lunch', details: 'Rice and vegetables' }], notes: '' };
   assert.equal((await call(f, 'POST /api/coaching/nutrition/send', f.db.users[0], { clientId: 'client', plan })).status, 403);
+  await call(f, 'POST /api/coaching/consent', f.db.users[1], { trainerId: 'coach', allow: true });
   await call(f, 'POST /api/coaching/nutrition-consent', f.db.users[1], { trainerId: 'coach', allow: true });
   const sent = await call(f, 'POST /api/coaching/nutrition/send', f.db.users[0], { clientId: 'client', plan });
   assert.equal(sent.status, 200);
@@ -99,6 +100,7 @@ test('revoking nutrition consent withdraws pending plans', async () => {
   const f = fixture();
   const plan = { name: 'Balanced', targets: { kcal: 2200, protein: 140, carbs: 260, fat: 60 },
     meals: [{ name: 'Lunch', details: 'Rice and vegetables' }], notes: '' };
+  await call(f, 'POST /api/coaching/consent', f.db.users[1], { trainerId: 'coach', allow: true });
   await call(f, 'POST /api/coaching/nutrition-consent', f.db.users[1], { trainerId: 'coach', allow: true });
   await call(f, 'POST /api/coaching/nutrition/send', f.db.users[0], { clientId: 'client', plan });
   await call(f, 'POST /api/coaching/nutrition-consent', f.db.users[1], { trainerId: 'coach', allow: false });
