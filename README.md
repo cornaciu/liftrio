@@ -24,12 +24,12 @@ Urmărește-ți antrenamentele, mesele și evoluția într-o singură aplicație
 
 ## Ce poți face
 
-- **Planifica și înregistra antrenamentele**: rutine, exerciții, serii, repetări, greutăți și pauze.
-- **Urmări progresul**: istoric, statistici, grupe musculare, recorduri și greutate corporală.
+- **Planifică și înregistrează antrenamentele**: rutine, exerciții, serii, repetări, greutăți și pauze.
+- **Urmărește progresul**: istoric, statistici, grupe musculare, recorduri și greutate corporală.
 - **Ține evidența nutriției**: calorii, macronutrienți, fibre și sare, cu jurnal alimentar și obiective zilnice.
-- **Importa mesele din Eat & Track** și păstra alimentele importate în biblioteca personală.
-- **Lucra cu un antrenor**: partajarea datelor și programarea antrenamentelor cu acordul clientului.
-- **Continua de pe telefon**: instalează aplicația pe ecranul principal și sincronizează profilul între dispozitive.
+- **Importă mesele din Eat & Track** și păstrează alimentele importate în biblioteca personală.
+- **Lucrează cu un antrenor**: partajarea datelor și programarea antrenamentelor cu acordul clientului.
+- **Continuă de pe telefon**: instalează aplicația pe ecranul principal și sincronizează profilul între dispozitive.
 
 Estimările calorice pentru antrenament sunt orientative, nu măsurători medicale.
 
@@ -37,16 +37,20 @@ Estimările calorice pentru antrenament sunt orientative, nu măsurători medica
 
 Deschide aplicația în Safari sau Chrome, apoi alege **Adaugă pe ecranul principal**. Liftrio rulează ca PWA și se deschide într-o fereastră dedicată.
 
-## Dezvoltare și deploy
+## Cod și deploy
 
-Interfața este construită cu React și Vite. API-ul folosește Vercel Functions, iar datele conturilor se păstrează în Supabase Postgres.
+Versiunea Liftrio folosită în producție este pe ramura [vercel-supabase](https://github.com/cornaciu/openGym/tree/vercel-supabase). Interfața folosește React și Vite, API-ul rulează pe Vercel Functions, iar profilurile se sincronizează prin Supabase Postgres.
 
-Pentru configurare și deployment consultă [ghidul Vercel + Supabase](docs/VERCEL.md). Pentru rularea interfeței local:
+Pentru pornire locală, clonează ramura activă:
 
 ```bash
+git clone --branch vercel-supabase https://github.com/cornaciu/openGym.git
+cd openGym
 npm install --prefix frontend
 npm run dev --prefix frontend
 ```
+
+Pentru configurarea completă și deployment consultă [ghidul Vercel + Supabase](https://github.com/cornaciu/openGym/blob/vercel-supabase/docs/VERCEL.md).
 
 Build-ul de producție:
 
