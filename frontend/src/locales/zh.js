@@ -554,4 +554,10 @@ export default {
   '{0} sets of {1} — time to add weight or move to a harder variation.': '{0} 组 × {1} 次——该加重量或换更难的变式了。',
   '{0} per side': '每侧 {0} 次',
   'You still log the total: {0} is {1} per side.': '你记录的仍然是总数：{0} 表示每侧 {1} 次。',
+  'Train with purpose.': '有目标地训练。',
+  'See the progress.': '看见每一步进步。',
+  'Training, nutrition and progress in one place.': '训练、营养和进步，尽在一处。',
+  'Ready when you are.': '准备好了就开始。',
+  'Your space to get stronger.': '属于你的变强空间。',
+  'Progress': '进步',
 }

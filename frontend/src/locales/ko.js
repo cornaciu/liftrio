@@ -554,4 +554,10 @@ export default {
   '{0} sets of {1} — time to add weight or move to a harder variation.': '{1}회 {0}세트 — 이제 무게를 올리거나 더 어려운 동작으로 넘어가세요.',
   '{0} per side': '한쪽당 {0}회',
   'You still log the total: {0} is {1} per side.': '기록은 그대로 합계로 합니다: {0}회는 한쪽당 {1}회입니다.',
+  'Train with purpose.': '목표를 갖고 운동하세요.',
+  'See the progress.': '성장의 변화를 확인하세요.',
+  'Training, nutrition and progress in one place.': '운동, 영양, 기록을 한곳에서.',
+  'Ready when you are.': '준비되면 시작하세요.',
+  'Your space to get stronger.': '더 강해지는 나만의 공간.',
+  'Progress': '성장',
 }

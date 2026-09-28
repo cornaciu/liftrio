@@ -807,4 +807,10 @@ export default {
   "accepted": "Acceptat",
   "declined": "Refuzat",
   "withdrawn": "Retras",
+  'Train with purpose.': 'Antrenează-te cu un scop.',
+  'See the progress.': 'Vezi progresul.',
+  'Training, nutrition and progress in one place.': 'Antrenamente, nutriție și progres într-un singur loc.',
+  'Ready when you are.': 'Începe când ești pregătit.',
+  'Your space to get stronger.': 'Spațiul tău pentru a deveni mai puternic.',
+  'Progress': 'Progres',
 }

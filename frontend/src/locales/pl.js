@@ -554,4 +554,10 @@ export default {
   '{0} sets of {1} — time to add weight or move to a harder variation.': '{0} × {1} powt. — czas dodać ciężar albo przejść na trudniejszy wariant.',
   '{0} per side': '{0} na stronę',
   'You still log the total: {0} is {1} per side.': 'Nadal zapisujesz łączną liczbę: {0} to {1} na stronę.',
+  'Train with purpose.': 'Trenuj z celem.',
+  'See the progress.': 'Śledź postępy.',
+  'Training, nutrition and progress in one place.': 'Trening, odżywianie i postępy w jednym miejscu.',
+  'Ready when you are.': 'Zacznij, kiedy chcesz.',
+  'Your space to get stronger.': 'Twoje miejsce, by stawać się silniejszym.',
+  'Progress': 'Postępy',
 }

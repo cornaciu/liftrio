@@ -2,10 +2,11 @@ import { useStore } from '../store/useStore.js'
 import { useUI } from '../store/useUI.js'
 import { webauthnOK, passkeyLogin, passkeyRegister, api, BIO } from '../lib/api.js'
 import { hasData } from '../store/useStore.js'
-import { t } from '../lib/i18n.js'
+import { t, LANGS } from '../lib/i18n.js'
 import { DEMO, REPO } from '../lib/demo.js'
 import { useState, useRef, useEffect } from 'react'
 import { Button } from '../components/ui.jsx'
+import Icon from '../components/Icon.jsx'
 
 function RegisterSheet({ close }) {
   const { setUser, pushState, pullState } = useStore()
@@ -48,44 +49,63 @@ function RegisterSheet({ close }) {
 }
 
 export default function Login() {
-  const { setUser, pullState, setGuest } = useStore()
+  const { setUser, pullState, setGuest, update } = useStore()
+  const lang = useStore(s => s.S.lang || 'en')
+  const [languagesOpen, setLanguagesOpen] = useState(false)
+  const languageRef = useRef(null)
+  useEffect(() => {
+    if (!languagesOpen) return
+    const close = e => { if (!languageRef.current?.contains(e.target)) setLanguagesOpen(false) }
+    const escape = e => { if (e.key === 'Escape') setLanguagesOpen(false) }
+    document.addEventListener('pointerdown', close)
+    document.addEventListener('keydown', escape)
+    return () => { document.removeEventListener('pointerdown', close); document.removeEventListener('keydown', escape) }
+  }, [languagesOpen])
   const signIn = async () => {
     try { const u = await passkeyLogin(); setUser(u); await pullState(); useUI.getState().toast(t('Welcome back, {0}', u.name)) }
     catch (e) { if (e.name !== 'NotAllowedError' && e.name !== 'AbortError') useUI.getState().toast(e.message || t('Sign-in failed')) }
   }
-  const head = <>
-    <div style={{ display: 'flex', justifyContent: 'center' }}><img src="icon-180.png" alt="" width="80" height="80" style={{ borderRadius: 18 }} /></div>
-    <h1 style={{ fontSize: 34, fontWeight: 700, letterSpacing: '-.028em', margin: '10px 0 4px' }}>Liftrio</h1>
-  </>
-  const wrap = { display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: '78vh', textAlign: 'center' }
-
-  // Demo build: no backend to sign in against — the only way in is the local guest profile.
-  if (DEMO) return (
-    <div className="narrow" style={wrap}>
-      {head}
-      <div className="muted" style={{ marginBottom: 30 }}>{t('Live demo — everything stays in this browser.')}</div>
-      <Button variant="primary" icon="sparkles" onClick={() => setGuest(true)}>{t('Start the demo')}</Button>
-      <div className="card small muted" style={{ textAlign: 'left', marginTop: 16 }}>
-        {t('This demo runs entirely in your browser on example data — nothing is sent anywhere. Passkey sign-in and sync across your devices come with the Liftrio server, which you get by self-hosting it.')}
-      </div>
-      <div className="dim small" style={{ marginTop: 22, lineHeight: 1.6 }}>
-        <a href={REPO} target="_blank" rel="noopener">{t('Self-host it in a minute →')}</a>
-      </div>
-    </div>
-  )
-
   return (
-    <div className="narrow" style={wrap}>
-      {head}
-      <div className="muted" style={{ marginBottom: 34 }}>{t('Your workouts. Your weights. Your profile.')}</div>
-      {webauthnOK() ? <>
-        <Button variant="primary" icon="person" onClick={signIn}>{t('Sign in with passkey')}</Button>
-        <div style={{ height: 10 }} />
-        <Button icon="sparkles" onClick={() => useUI.getState().openSheet(close => <RegisterSheet close={close} />)}>{t('Create new profile')}</Button>
-        <div style={{ height: 10 }} />
-      </> : <div className="card small muted" style={{ textAlign: 'left' }}>{t("This browser doesn't support passkeys — you can still use Liftrio locally on this device.")}</div>}
-      <Button variant="ghost" className="dim" onClick={() => setGuest(true)}>{t('Continue without account')}</Button>
-      <div className="dim small" style={{ marginTop: 26, lineHeight: 1.5 }}>{t('Passkeys use {0} — no passwords.', BIO)}<br />{t('Each profile keeps its own plan, workouts & body weight.')}</div>
+    <div className="login-page">
+      <header className="login-top">
+        <div className="login-brand"><img src="icon-180.png" alt="" width="38" height="38" /><span>Liftrio<span className="login-brand-mark">.</span></span></div>
+        <div className="login-language" ref={languageRef}>
+          <button type="button" className="login-language-trigger" aria-label={t('Language')} aria-haspopup="menu" aria-expanded={languagesOpen} onClick={() => setLanguagesOpen(v => !v)}>
+            <Icon name="globe" /><span>{LANGS[lang] || 'English'}</span><Icon name="chevronDown" />
+          </button>
+          {languagesOpen && <div className="login-language-menu" role="menu" aria-label={t('Language')}>
+            {Object.entries(LANGS).map(([code, name]) => <button type="button" role="menuitemradio" aria-checked={code === lang} key={code} onClick={() => { update(s => { s.lang = code }, false); setLanguagesOpen(false) }}>{name}{code === lang && <span aria-hidden="true">✓</span>}</button>)}
+          </div>}
+        </div>
+      </header>
+      <main className="login-main">
+        <div className="login-story">
+          <div className="login-eyebrow"><span className="login-live-dot" /> LIFTRIO / 01</div>
+          <h1>{t('Train with purpose.')}<br /><em>{t('See the progress.')}</em></h1>
+          <p className="login-intro">{t('Training, nutrition and progress in one place.')}</p>
+          <div className="login-steps" aria-label={t('Training, nutrition and progress in one place.')}>
+            <span><b>01</b>{t('Workouts')}</span><span><b>02</b>{t('Nutrition')}</span><span><b>03</b>{t('Progress')}</span>
+          </div>
+        </div>
+        <div className="login-entry">
+          <div className="login-entry-head"><span className="login-entry-line" /><span>L / ACCOUNT</span></div>
+          <h2>{t('Ready when you are.')}</h2>
+          <p>{DEMO ? t('Live demo — everything stays in this browser.') : t('Passkeys use {0} — no passwords.', BIO)}</p>
+          <div className="login-actions">
+            {DEMO ? <>
+              <Button variant="primary" icon="sparkles" onClick={() => setGuest(true)}>{t('Start the demo')}</Button>
+              <a className="login-repo" href={REPO} target="_blank" rel="noopener">{t('Self-host it in a minute →')}</a>
+            </> : <>
+              {webauthnOK() ? <>
+                <Button variant="primary" icon="person" onClick={signIn}>{t('Sign in with passkey')}</Button>
+                <Button className="login-create" onClick={() => useUI.getState().openSheet(close => <RegisterSheet close={close} />)}>{t('Create new profile')}</Button>
+              </> : <div className="small muted">{t("This browser doesn't support passkeys — you can still use Liftrio locally on this device.")}</div>}
+              <button className="login-guest" onClick={() => setGuest(true)}>{t('Continue without account')} <span aria-hidden="true">↗</span></button>
+            </>}
+          </div>
+        </div>
+      </main>
+      <footer className="login-footer"><span>LIFTRIO®</span><span>{t('Your space to get stronger.')}</span></footer>
     </div>
   )
 }
