@@ -137,7 +137,7 @@ export default function Settings() {
         <span className="lrow-t">{t('Accent color')}</span>
         <div className="swatches">
           {Object.entries(ACCENTS).filter(([key]) => key !== 'neon').map(([k, c]) => (
-            <button key={k} className={'swatch' + ((S.accent || 'lime') === k ? ' on' : '')}
+            <button key={k} className={'swatch' + (((S.accent || 'lime') === k || (S.accent === 'neon' && k === 'lime')) ? ' on' : '')}
               style={{ background: c }} onClick={() => update(s => { s.accent = k })} aria-label={k} title={k === 'neon' ? '#CCFF00' : k} />
           ))}
         </div>
