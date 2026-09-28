@@ -8,7 +8,7 @@
 
 Liftrio brings strength training, nutrition tracking, and progress insights together in one mobile-friendly app.
 
-[**Open Liftrio**](https://open-gym-bay.vercel.app) · [**Explore the source**](https://github.com/cornaciu/openGym)
+[**Open Liftrio**](https://liftrio.vercel.app) · [**Explore the source**](https://github.com/cornaciu/liftrio)
 
 <br>
 
@@ -41,25 +41,27 @@ Liftrio is designed to support a broader fitness experience over time, from indi
 
 Open the app in Safari or Chrome and choose **Add to Home Screen**. Liftrio runs as a progressive web app and opens in its own app-like window.
 
+Existing profiles created on the legacy hostname can continue signing in there while their passkeys remain tied to that address: [open-gym-bay.vercel.app](https://open-gym-bay.vercel.app).
+
 ## Development and deployment
 
-The production version of Liftrio is maintained on the [vercel-supabase branch](https://github.com/cornaciu/openGym/tree/vercel-supabase). The interface uses React and Vite, the API runs on Vercel Functions, and user profiles sync through Supabase Postgres.
+The production version of Liftrio is maintained on the [vercel-supabase branch](https://github.com/cornaciu/liftrio/tree/vercel-supabase). The interface uses React and Vite, the API runs on Vercel Functions, and user profiles sync through Supabase Postgres.
 
 To run the app locally:
 
 ```bash
-git clone --branch vercel-supabase https://github.com/cornaciu/openGym.git
-cd openGym
+git clone --branch vercel-supabase https://github.com/cornaciu/liftrio.git
+cd liftrio
 npm install --prefix frontend
 npm run dev --prefix frontend
 ```
 
-For setup and deployment details, see the [Vercel + Supabase guide](https://github.com/cornaciu/openGym/blob/vercel-supabase/docs/VERCEL.md).
+For setup and deployment details, see the [Vercel + Supabase guide](https://github.com/cornaciu/liftrio/blob/vercel-supabase/docs/VERCEL.md).
 
-Build the frontend:
+Build the production frontend:
 
 ```bash
-npm run build --prefix frontend
+npm run build
 ```
 
 ## Origin and license

@@ -14,7 +14,7 @@ self.addEventListener('push', e => {
     body: data.body || '',
     icon: 'icon-512.png',
     badge: 'icon-180.png',
-    tag: data.tag || 'opengym',
+    tag: data.tag || 'liftrio',
     renotify: true
   }))
 })

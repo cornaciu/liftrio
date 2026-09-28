@@ -1,7 +1,7 @@
 // Read-only Open Food Facts lookup for the nutrition diary. Keep the request
 // server-side so the upstream receives the identifying User-Agent it requires.
 const FIELDS = 'code,product_name,product_name_ro,brands,quantity,nutriments,image_front_small_url,countries_tags';
-const USER_AGENT = 'openGym/1.2.4 (https://github.com/cornaciu/openGym)';
+const USER_AGENT = 'Liftrio/1.2.4 (https://github.com/cornaciu/liftrio)';
 
 function searchUrl(query, romanianOnly) {
   const params = new URLSearchParams({

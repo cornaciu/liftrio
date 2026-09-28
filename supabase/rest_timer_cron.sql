@@ -7,7 +7,7 @@ create extension if not exists pg_net with schema extensions;
 
 -- Replace both placeholders. Keep the secret private; this SQL is not part of the app bundle.
 select vault.create_secret('REPLACE_WITH_REST_TIMER_CRON_SECRET', 'opengym_rest_timer_secret');
-select vault.create_secret('https://open-gym-bay.vercel.app/api/push/rest-timer/dispatch', 'opengym_rest_timer_url');
+select vault.create_secret('https://liftrio.vercel.app/api/push/rest-timer/dispatch', 'opengym_rest_timer_url');
 
 -- Remove a prior job when re-running this script.
 select cron.unschedule(jobid)

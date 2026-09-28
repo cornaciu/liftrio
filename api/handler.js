@@ -1,4 +1,4 @@
-// Vercel adapter for openGym. Persistent state and one-use WebAuthn challenges
+// Liftrio's Vercel adapter. Persistent state and one-use WebAuthn challenges
 // live in Supabase Postgres; no process memory or writable filesystem is needed.
 import crypto from 'node:crypto';
 import pg from 'pg';
@@ -22,6 +22,22 @@ const pool = new pg.Pool({
 });
 const RP_ID = process.env.RP_ID || 'open-gym-bay.vercel.app';
 const ORIGIN = process.env.ORIGIN || `https://${RP_ID}`;
+const PASSKEY_ORIGINS = new Set([
+  ORIGIN,
+  'https://open-gym-bay.vercel.app',
+  'https://liftrio.vercel.app',
+  ...(process.env.PASSKEY_ORIGINS || '').split(',').map(value => value.trim()).filter(Boolean)
+].map(value => {
+  try { return new URL(value).origin; } catch { return ''; }
+}).filter(Boolean));
+const webauthnContext = req => {
+  try {
+    const requestOrigin = new URL(req.headers.origin || ORIGIN);
+    if (!PASSKEY_ORIGINS.has(requestOrigin.origin)) return null;
+    if (requestOrigin.protocol !== 'https:' && requestOrigin.hostname !== 'localhost') return null;
+    return { origin: requestOrigin.origin, rpID: requestOrigin.hostname };
+  } catch { return null; }
+};
 const RP_NAME = process.env.RP_NAME && process.env.RP_NAME !== 'openGym' ? process.env.RP_NAME : 'Liftrio';
 const INVITE_ONLY = /^(1|true|yes|on)$/i.test(process.env.INVITE_ONLY || '');
 const ADMIN_UIDS = (process.env.ADMIN_UIDS || '').split(',').map(s => s.trim()).filter(Boolean);
@@ -128,21 +144,23 @@ export default async function handler(req, res) {
         break;
       }
       case 'POST /api/register/options': {
+        const authContext = webauthnContext(req);
+        if (!authContext) { send(res, 403, { error: 'unsupported passkey origin' }); break; }
         const name = String(body.name || '').trim().slice(0, 40);
         const role = body.role === 'trainer' ? 'trainer' : 'member';
         const code = String(body.code || '').trim().toUpperCase();
         if (!name) { send(res, 400, { error: 'name required' }); break; }
         if (INVITE_ONLY && !db.invites.some(i => i.code === code && !i.usedBy && !i.revoked)) { send(res, 403, { error: 'a valid invite code is required' }); break; }
         const uid = crypto.randomBytes(12).toString('base64url');
-        const options = await generateRegistrationOptions({ rpName: RP_NAME, rpID: RP_ID, userID: Buffer.from(uid), userName: name, userDisplayName: name, attestationType: 'none', authenticatorSelection: { residentKey: 'required', userVerification: 'preferred' }, excludeCredentials: [] });
-        const cid = await challenge({ challenge: options.challenge, uid, name, code, role });
+        const options = await generateRegistrationOptions({ rpName: RP_NAME, rpID: authContext.rpID, userID: Buffer.from(uid), userName: name, userDisplayName: name, attestationType: 'none', authenticatorSelection: { residentKey: 'required', userVerification: 'preferred' }, excludeCredentials: [] });
+        const cid = await challenge({ challenge: options.challenge, uid, name, code, role, origin: authContext.origin, rpID: authContext.rpID });
         send(res, 200, { cid, options }); break;
       }
       case 'POST /api/register/verify': {
         const c = await consumeChallenge(body.cid);
         if (!c?.uid) { send(res, 400, { error: 'challenge expired — try again' }); break; }
         let verification;
-        try { verification = await verifyRegistrationResponse({ response: body.credential, expectedChallenge: c.challenge, expectedOrigin: ORIGIN, expectedRPID: RP_ID, requireUserVerification: false }); }
+        try { verification = await verifyRegistrationResponse({ response: body.credential, expectedChallenge: c.challenge, expectedOrigin: c.origin || ORIGIN, expectedRPID: c.rpID || RP_ID, requireUserVerification: false }); }
         catch (e) { send(res, 400, { error: 'verification failed: ' + e.message }); break; }
         if (!verification.verified) { send(res, 400, { error: 'not verified' }); break; }
         const { credential } = verification.registrationInfo;
@@ -157,8 +175,10 @@ export default async function handler(req, res) {
         send(res, 200, { user: { id: user.id, name: user.name, admin: isAdmin(user), role: roleOf(user, ADMIN_UIDS) } }, { 'Set-Cookie': sessionCookie(user) }); break;
       }
       case 'POST /api/login/options': {
-        const options = await generateAuthenticationOptions({ rpID: RP_ID, userVerification: 'preferred', allowCredentials: [] });
-        const cid = await challenge({ challenge: options.challenge });
+        const authContext = webauthnContext(req);
+        if (!authContext) { send(res, 403, { error: 'unsupported passkey origin' }); break; }
+        const options = await generateAuthenticationOptions({ rpID: authContext.rpID, userVerification: 'preferred', allowCredentials: [] });
+        const cid = await challenge({ challenge: options.challenge, origin: authContext.origin, rpID: authContext.rpID });
         send(res, 200, { cid, options }); break;
       }
       case 'POST /api/login/verify': {
@@ -167,7 +187,7 @@ export default async function handler(req, res) {
         const cred = db.creds.find(x => x.id === body.credential?.id);
         if (!cred) { send(res, 404, { error: 'unknown passkey — create a profile first' }); break; }
         let verification;
-        try { verification = await verifyAuthenticationResponse({ response: body.credential, expectedChallenge: c.challenge, expectedOrigin: ORIGIN, expectedRPID: RP_ID, requireUserVerification: false, credential: { id: cred.id, publicKey: Buffer.from(cred.publicKey, 'base64url'), counter: cred.counter, transports: cred.transports } }); }
+        try { verification = await verifyAuthenticationResponse({ response: body.credential, expectedChallenge: c.challenge, expectedOrigin: c.origin || ORIGIN, expectedRPID: c.rpID || RP_ID, requireUserVerification: false, credential: { id: cred.id, publicKey: Buffer.from(cred.publicKey, 'base64url'), counter: cred.counter, transports: cred.transports } }); }
         catch (e) { send(res, 400, { error: 'verification failed: ' + e.message }); break; }
         if (!verification.verified) { send(res, 400, { error: 'not verified' }); break; }
         cred.counter = verification.authenticationInfo.newCounter;

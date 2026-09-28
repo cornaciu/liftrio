@@ -16,16 +16,15 @@ base64 < prod-ca-2021.crt | tr -d '\n'
 Paste the output as the environment variable value, then redeploy. Keep TLS
 verification enabled; the API returns 503 if this certificate is missing.
 
-Run `supabase/opengym.sql` once in the database SQL editor. Set these Vercel
+Run `supabase/opengym.sql` once in the database SQL editor. The existing `opengym_kv` table name is retained so deployed Liftrio data remains compatible. Set these Vercel
 environment variables for Production (and Preview if using preview deployments):
 
-- `RP_ID=open-gym-bay.vercel.app` (or the final custom hostname, without scheme)
-- `ORIGIN=https://open-gym-bay.vercel.app` (or the matching full custom origin)
+- `ORIGIN=https://open-gym-bay.vercel.app` may stay in place for existing sessions and push settings; Liftrio accepts passkeys from both the legacy hostname and `https://liftrio.vercel.app`.
+- `PASSKEY_ORIGINS` is optional; add comma-separated HTTPS origins here if you connect another hostname.
 - `RP_NAME=Liftrio` (optional; if omitted, the API uses Liftrio automatically)
 - `INVITE_ONLY=true` is optional; leave false for first registration.
 
-Passkeys are tied to the hostname. Changing domains later means registering new
-passkeys on the new hostname. The exercise media uses the pinned public exercise
+Passkeys are tied to their hostname. Keep the legacy Liftrio hostname available for profiles whose passkeys were created there; those users can continue signing in through that address while new profiles use the Liftrio hostname. The exercise media uses the pinned public exercise
 dataset CDN rather than bundling ~140 MB into the Vercel deployment.
 
 The Vercel version persists profiles, credentials, sessions, and workout state in

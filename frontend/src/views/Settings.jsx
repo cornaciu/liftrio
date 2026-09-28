@@ -26,7 +26,7 @@ export default function Settings() {
 
   const doExport = async () => {
     const json = JSON.stringify(S, null, 2)
-    const name = 'opengym-backup-' + todayISO() + '.json'
+    const name = 'liftrio-backup-' + todayISO() + '.json'
     // WKWebView can't download blob URLs — the native build hands the file to the share sheet.
     if (MOBILE) {
       try { await shareExport(json, name); toast(t('Backup exported')) } catch (e) { /* share sheet dismissed */ }
@@ -195,7 +195,7 @@ export default function Settings() {
 
     <div className="dim small" style={{ textAlign: 'center', marginTop: 4, lineHeight: 1.6 }}>
       Liftrio · {t('free & open source (AGPL v3)')}<br />
-      <a href="https://github.com/cornaciu/openGym" target="_blank" rel="noopener">cod sursă</a> · proiect derivat din openGym · date exerciții: hasaneyldrm/exercises-dataset (CC)
+      <a href="https://github.com/cornaciu/liftrio" target="_blank" rel="noopener">cod sursă</a> · Liftrio include cod derivat din <a href="https://github.com/DuarteSantos8/openGym" target="_blank" rel="noopener">openGym de Duarte Santos</a> · date exerciții: hasaneyldrm/exercises-dataset (CC)
     </div>
   </div>
 }

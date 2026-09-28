@@ -38,7 +38,7 @@ export function totalsFor(entries, date, importedMicros = {}) {
   const totals = Object.fromEntries(NUTRIENTS.map(key => [key, 0]));
   let embeddedSummary = null
   // Eat & Track's itemized sheet omits fiber and salt, but its daily summary includes both.
-  // Keep these source totals as a dated baseline, then add foods logged in openGym afterward.
+  // Keep these source totals as a dated baseline, then add foods logged in Liftrio afterward.
   for (const entry of entries || []) {
     if (entry.date !== date) continue;
     if (entry.source === 'eat-track' && entry.dailyMicros) embeddedSummary = entry.dailyMicros
