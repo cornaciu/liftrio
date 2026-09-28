@@ -28,6 +28,16 @@ export default function TabBar({ onStart }) {
     </button>
   )
 
+  if (user?.role === 'trainer') return <nav id="tabbar">
+    <Tab k="home" icon="house" to="/home" label={t('Home')} />
+    <Tab k="coaching" icon="personCircle" to="/coaching" label={t('Clients')} />
+    <button className="start" onClick={() => nav('/plan')}>
+      <span className="cir"><Icon name="clipboard" /></span><span>{t('Plan')}</span>
+    </button>
+    <Tab k="library" icon="list" to="/library" label={t('Exercises')} />
+    <Tab k="settings" icon="gear" to="/settings" label={t('Settings')} />
+  </nav>
+
   return (
     <nav id="tabbar">
       <Tab k="home" icon="house" to="/home" label={t('Home')} />
