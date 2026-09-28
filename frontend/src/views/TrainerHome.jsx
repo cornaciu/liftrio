@@ -43,7 +43,7 @@ export default function TrainerHome() {
   return <div className="narrow trainer-home">
     <div className="hdr">
       <div><h1>{t('Hi {0}', user?.name || '')}</h1><div className="sub">{new Date().toLocaleDateString(dateLocale(), { weekday: 'long', day: 'numeric', month: 'long' })}</div></div>
-      <button className="iconbtn" onClick={() => nav('/settings')} aria-label={t('Settings')}><Icon name="gear" /></button>
+      <Button className="home-settings-action" icon="gear" onClick={() => nav('/settings')}>{t('Settings')}</Button>
     </div>
 
     <div className="trainer-hero">
