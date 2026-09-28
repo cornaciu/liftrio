@@ -9,12 +9,14 @@ import NutritionSummary from '../components/NutritionSummary.jsx'
 import Icon from '../components/Icon.jsx'
 import { EXIDX } from '../lib/exercises.js'
 
+const MEAL_ORDER = ['Breakfast', 'Lunch', 'Dinner', 'Snacks']
+
 function MacroLine({ entry }) {
   const per100 = entry.per100 || entry
   const grams = Number(entry.grams) || 0
   const value = key => fmtNum((Number(per100[key]) || 0) * grams / 100)
   return <div className="row between small" style={{ gap: 12, padding: '8px 0', borderBottom: '1px solid var(--sep)' }}>
-    <div className="grow"><b>{entry.name}</b><div className="muted">{fmtDate(entry.date)} · {entry.meal || t('Meal')} · {fmtNum(grams)} g</div></div>
+    <div className="grow"><b>{entry.name}</b><div className="muted">{fmtNum(grams)} g</div></div>
     <div className="muted" style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>{value('kcal')} kcal<br />P {value('protein')} · C {value('carbs')} · G {value('fat')}</div>
   </div>
 }
@@ -53,7 +55,8 @@ export default function CoachingClient() {
   const todayEntries = nutritionEntries.filter(e => e.date === today)
   const diaryDays = Object.entries(nutritionEntries.reduce((days, entry) => {
     const date = entry.date || ''
-    ;(days[date] ||= []).push(entry)
+    const meal = entry.meal || 'Meal'
+    ;((days[date] ||= {})[meal] ||= []).push(entry)
     return days
   }, {}))
 
@@ -66,12 +69,12 @@ export default function CoachingClient() {
     {loading && !payload && <div className="card muted small">{t('Loading client data…')}</div>}
     {error && <div className="card"><div className="row" style={{ gap: 9, color: 'var(--orange)' }}><Icon name="lock" />{error}</div></div>}
     {state && <>
-      <div className="card">
-        <div className="row between"><h2 style={{ margin: 0 }}>{t('Overview')}</h2><span className="tag">{workouts.length} {t(workouts.length === 1 ? 'workout' : 'workouts')}</span></div>
-        <div className="row" style={{ gap: 24, marginTop: 12, flexWrap: 'wrap' }}>
-          <div><div className="small muted">{t('Latest body weight')}</div><strong className="big">{bodyweight[0] ? fmtNum(bodyweight[0].w) : '—'} <span className="muted small">{state.unit || 'kg'}</span></strong></div>
-          <div><div className="small muted">{t('Daily calorie target')}</div><strong className="big">{state.nutrition?.targets?.kcal ? fmtNum(state.nutrition.targets.kcal) : '—'} <span className="muted small">kcal</span></strong></div>
-          <div><div className="small muted">{t('Routines')}</div><strong className="big">{state.routines?.length || 0}</strong></div>
+      <div className="card coach-overview">
+        <div className="coach-overview-top"><span className="coach-overview-symbol"><Icon name="chart" /></span><div><span className="coach-overview-kicker">{t('Client dashboard')}</span><h2>{t('Overview')}</h2></div><span className="coach-overview-count">{workouts.length} {t(workouts.length === 1 ? 'workout' : 'workouts')}</span></div>
+        <div className="coach-overview-grid">
+          <div><Icon name="chart" /><span>{t('Latest body weight')}</span><strong>{bodyweight[0] ? fmtNum(bodyweight[0].w) : '—'} <small>{state.unit || 'kg'}</small></strong></div>
+          <div><Icon name="flame" /><span>{t('Daily calorie target')}</span><strong>{state.nutrition?.targets?.kcal ? fmtNum(state.nutrition.targets.kcal) : '—'} <small>kcal</small></strong></div>
+          <div><Icon name="clipboard" /><span>{t('Routines')}</span><strong>{state.routines?.length || 0}</strong></div>
         </div>
         {loading && <div className="dim small" style={{ marginTop: 8 }}>{t('Updating shared data…')}</div>}
       </div>
