@@ -1,5 +1,9 @@
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import { useStore } from '../store/useStore.js'
+import { useUI } from '../store/useUI.js'
+import { api } from '../lib/api.js'
+import { buildPlanBundle } from '../lib/plan-share.js'
 import { DAYN, uid, exCount } from '../lib/format.js'
 import { t } from '../lib/i18n.js'
 import { dayAssignSheet, loadStarterPlan, planToolsSheet } from '../sheets.jsx'
@@ -9,20 +13,49 @@ import { glyphOf, DEFAULT_GLYPH } from '../lib/glyphs.js'
 
 export default function Plan() {
   const nav = useNavigate()
+  const [params] = useSearchParams()
+  const clientId = params.get('client')
+  const suffix = clientId ? '?client=' + encodeURIComponent(clientId) : ''
+  const user = useStore(s => s.user)
+  const [client, setClient] = useState(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const toast = useUI(s => s.toast)
+  useEffect(() => {
+    if (!clientId) return
+    api('/api/coaching').then(data => setClient((data.clients || []).find(c => c.id === clientId) || null))
+      .catch(e => setError(e.message || t('Could not load client.')))
+  }, [clientId])
+  const send = async () => {
+    setBusy(true); setError('')
+    try {
+      await api('/api/coaching/send', { method: 'POST', body: JSON.stringify({ clientId, plan: buildPlanBundle(S, t('Training plan for {0}', client.name)) }) })
+      toast(t('Plan sent for approval'))
+      nav('/home')
+    } catch (e) { setError(e.message || t('Could not send plan.')) }
+    finally { setBusy(false) }
+  }
   const S = useStore(s => s.S)
   const update = useStore(s => s.update)
 
   const addRoutine = () => {
     const r = { id: uid(), name: t('New routine'), emoji: DEFAULT_GLYPH, ex: [] }
     update(s => { s.routines.push(r) })
-    nav('/plan/r/' + r.id)
+    nav('/plan/r/' + r.id + suffix)
   }
 
   return <>
     <div className="hdr">
-      <div><h1>{t('Plan')}</h1><div className="sub">{t('Your weekly routine')}</div></div>
+      <div><h1>{user?.role === 'trainer' ? t('Training plans') : t('Plan')}</h1><div className="sub">{clientId ? t('For {0}', client?.name || t('Client')) : user?.role === 'trainer' ? t('Build reusable routines for your clients') : t('Your weekly routine')}</div></div>
       <button className="iconbtn" onClick={planToolsSheet} aria-label={t('Share your plan')} title={t('Share your plan')}><Icon name="upload" /></button>
     </div>
+    {clientId && <div className="card coach-card">
+      <h2>{t('Training plan for {0}', client?.name || t('Client'))}</h2>
+      <p className="small muted">{t('Build routines below, assign the week, then send this plan for the client to approve.')}</p>
+      {client && !client.canSendPlans && <p className="small" style={{ color: 'var(--orange)' }}>{t('This client has not allowed training plans yet.')}</p>}
+      {error && <p className="small" role="alert" style={{ color: 'var(--red)' }}>{error}</p>}
+      <Button variant="primary" disabled={!client?.canSendPlans || !S.routines.length || busy} onClick={send}>{busy ? t('Sending…') : t('Send for approval')}</Button>
+    </div>}
     <div className="cols"><div>
       <h4 className="sec">{t('Week schedule')}</h4>
       <div className="list" style={{ display: 'flex', flexDirection: 'column' }}>
