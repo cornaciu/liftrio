@@ -49,12 +49,11 @@ export default function Plan() {
       <div><h1>{user?.role === 'trainer' ? t('Training plans') : t('Plan')}</h1><div className="sub">{clientId ? t('For {0}', client?.name || t('Client')) : user?.role === 'trainer' ? t('Build reusable routines for your clients') : t('Your weekly routine')}</div></div>
       <button className="iconbtn" onClick={planToolsSheet} aria-label={t('Share your plan')} title={t('Share your plan')}><Icon name="upload" /></button>
     </div>
-    {clientId && <div className="card coach-card">
-      <h2>{t('Training plan for {0}', client?.name || t('Client'))}</h2>
-      <p className="small muted">{t('Build routines below, assign the week, then send this plan for the client to approve.')}</p>
+    {clientId && <div className="card coach-card coach-plan-banner">
+      <div className="coach-plan-intro"><span className="coach-plan-mark"><Icon name="clipboard" /></span><div><div className="coach-plan-kicker">{t('Training plans')}</div><h2>{t('Training plan for {0}', client?.name || t('Client'))}</h2><p className="small muted">{t('Build routines below, assign the week, then send this plan for the client to approve.')}</p></div></div>
       {client && !client.canSendPlans && <p className="small" style={{ color: 'var(--orange)' }}>{t('This client has not allowed training plans yet.')}</p>}
       {error && <p className="small" role="alert" style={{ color: 'var(--red)' }}>{error}</p>}
-      <Button variant="primary" disabled={!client?.canSendPlans || !S.routines.length || busy} onClick={send}>{busy ? t('Sending…') : t('Send for approval')}</Button>
+      <Button className="coach-plan-send" variant="primary" disabled={!client?.canSendPlans || !S.routines.length || busy} onClick={send}>{busy ? t('Sending…') : t('Send for approval')}</Button>
     </div>}
     <div className="cols"><div>
       <h4 className="sec">{t('Week schedule')}</h4>
