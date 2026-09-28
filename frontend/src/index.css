@@ -1336,3 +1336,19 @@ h4.sec{
   .coach-client-row{flex-wrap:wrap}
   .coach-client-row>.btn{margin-left:46px}
 }
+
+
+.coach-trainer-panel>p{line-height:1.45;margin:0 0 15px}
+.coach-trainer-panel>label{display:block;margin:13px 0 6px;color:var(--label);font-weight:600}
+.coach-trainer-panel>select.input{
+  width:100%;min-height:48px;padding:12px 14px;
+  border:1px solid var(--sep);border-radius:11px;
+  background:var(--bg-el);color:var(--label);
+  font-size:15px;appearance:auto;
+}
+.coach-trainer-panel>select.input:focus{border-color:var(--acc);outline:2px solid var(--acc-soft)}
+.coach-trainer-panel>.btn.primary{width:100%;min-height:48px}
+.coach-trainer-panel .sec{margin-top:21px}
+.coach-trainer-panel .row.between.small{gap:10px;align-items:flex-start}
+.coach-trainer-panel .row.between.small>span:first-child{min-width:0;overflow-wrap:anywhere}
+.coach-trainer-panel .row.between.small>span:last-child{flex:none}
