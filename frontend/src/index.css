@@ -1611,3 +1611,6 @@ h4.sec{
 .home-coaching-plan b{min-width:0;text-align:right;overflow-wrap:anywhere;font-size:12px}
 .home-coaching-action.btn{width:100%;min-height:44px;margin-top:12px;padding:9px 12px;justify-content:space-between;border:1px solid var(--acc-line);border-radius:11px;background:var(--acc-soft);color:var(--label);font-size:13px;font-weight:700}
 .home-coaching-action .icn{color:var(--acc-ink)}
+
+.trainer-metrics span{display:block;margin-top:0;min-height:2.7em}
+.trainer-metrics strong{display:block;margin-top:auto;padding-top:9px}
