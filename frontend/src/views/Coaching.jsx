@@ -122,12 +122,12 @@ export default function Coaching() {
           </div>
           <div className="coach-permission">
             <div className="coach-permission-copy"><b>{t('Can view my dashboard')}</b><span>{t('Nutrition, workouts, weight and history')}</span></div>
-            <Switch checked={dashboardGrants.has(trainer.id)} disabled={busy} ariaLabel={t('Share dashboard with {0}', trainer.name)}
+            <Switch checked={dashboardGrants.has(trainer.id)} disabled={busy || !connected.has(trainer.id)} ariaLabel={t('Share dashboard with {0}', trainer.name)}
               onChange={allow => shareDashboard(trainer.id, allow)} />
           </div>
           <div className="coach-permission">
             <div className="coach-permission-copy"><b>{t('May send nutrition plans')}</b><span>{t('You approve each nutrition plan before it changes your targets.')}</span></div>
-            <Switch checked={nutritionGrants.has(trainer.id)} disabled={busy} ariaLabel={t('Allow nutrition plans from {0}', trainer.name)}
+            <Switch checked={nutritionGrants.has(trainer.id)} disabled={busy || !connected.has(trainer.id)} ariaLabel={t('Allow nutrition plans from {0}', trainer.name)}
               onChange={allow => shareNutrition(trainer.id, allow)} />
           </div>
         </div>
@@ -168,7 +168,7 @@ export default function Coaching() {
       {!incomingNutrition.length && <div className="muted small">{t('No nutrition plans waiting.')}</div>}
     </div>}
 
-    {isTrainer && <div className="card coach-card coach-trainer-panel">
+    {data && isTrainer && <div className="card coach-card coach-trainer-panel">
       <div className="coach-panel-heading"><Icon name="dumbbell" /><h2>{t('Send a training plan')}</h2></div>
       <p className="muted small">{t('Only people who gave you access appear here. Build the routines in your Plan tab, then send a copy for them to approve.')}</p>
       <label className="small muted" htmlFor="coach-client">{t('Client')}</label>
@@ -186,7 +186,7 @@ export default function Coaching() {
       {data && !data.clients.length && <p className="muted small">{t('A client must allow you first.')}</p>}
       {sent.length > 0 && <><h4 className="sec">{t('Sent plans')}</h4>{sent.slice(0, 10).map(a => <div className="row between small" key={a.id} style={{ padding: '7px 0' }}><span>{a.clientName} · {a.plan?.name || a.summary?.name || t('Plan')}</span><span className="muted">{t(a.status)}</span></div>)}</>}
     </div>}
-    {isTrainer && <div className="card coach-card coach-trainer-panel">
+    {data && isTrainer && <div className="card coach-card coach-trainer-panel">
       <div className="coach-panel-heading"><Icon name="flame" /><h2>{t('Nutrition plans')}</h2></div>
       <p className="muted small">{t('Create a meal plan and daily targets for clients who allowed nutrition plans.')}</p>
       {(data?.clients || []).filter(c => c.canSendNutrition).map(c => <div className="coach-client-row" key={c.id}>
@@ -195,7 +195,7 @@ export default function Coaching() {
       {data && !data.clients.some(c => c.canSendNutrition) && <div className="muted small">{t('No clients have allowed nutrition plans yet.')}</div>}
       {sentNutrition.length > 0 && <><h4 className="sec">{t('Sent nutrition plans')}</h4>{sentNutrition.slice(0, 10).map(a => <div className="row between small" key={a.id} style={{ padding: '7px 0' }}><span>{a.clientName} · {a.plan?.name || a.summary?.name}</span><span className="muted">{t(a.status)}</span></div>)}</>}
     </div>}
-    {isTrainer && <div className="card coach-card coach-trainer-panel">
+    {data && isTrainer && <div className="card coach-card coach-trainer-panel">
       <div className="coach-panel-heading"><Icon name="personCircle" /><h2>{t('Client dashboards')}</h2></div>
       <p className="muted small">{t('Only clients who explicitly shared their dashboard appear here. Access includes nutrition, training, body weight and history.')}</p>
       {(data?.clients || []).filter(c => c.canViewDashboard).map(c => <div className="coach-client-row" key={c.id}>
