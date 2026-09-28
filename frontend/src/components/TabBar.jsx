@@ -13,7 +13,7 @@ export default function TabBar({ onStart }) {
   const isGuest = useStore(s => s.isGuest())
   if (!user && !isGuest) return null
   const cur = loc.pathname.split('/')[1] || 'home'
-  const on = k => cur === k || (cur === 'history' && k === 'stats') || (cur === 'settings' && k === 'home' && user?.role !== 'trainer')
+  const on = k => cur === k || (cur === 'history' && k === 'stats') || (cur === 'settings' && k === 'home' && user?.role !== 'trainer') || (cur === 'coaching' && k === 'coaching')
 
   const startWorkout = () => {
     if (!S.active) {
@@ -23,15 +23,15 @@ export default function TabBar({ onStart }) {
     nav('/workout')
   }
   const Tab = ({ k, icon, to, label }) => (
-    <button className={on(k) ? 'on' : ''} onClick={() => nav(to)}>
+    <button className={on(k) ? 'on' : ''} aria-current={on(k) ? 'page' : undefined} onClick={() => nav(to)}>
       <Icon name={icon} /><span>{label}</span>
     </button>
   )
 
-  if (user?.role === 'trainer') return <nav id="tabbar">
+  if (user?.role === 'trainer') return <nav id="tabbar" className="liftrio-nav trainer-nav" aria-label={t('Navigation')}>
     <Tab k="home" icon="house" to="/home" label={t('Home')} />
     <Tab k="coaching" icon="personCircle" to="/coaching" label={t('Clients')} />
-    <button className="start" onClick={() => nav('/plan')}>
+    <button className={'start' + (cur === 'plan' ? ' on' : '')} aria-current={cur === 'plan' ? 'page' : undefined} onClick={() => nav('/plan')}>
       <span className="cir"><Icon name="clipboard" /></span><span>{t('Plan')}</span>
     </button>
     <Tab k="library" icon="list" to="/library" label={t('Exercises')} />
@@ -39,7 +39,7 @@ export default function TabBar({ onStart }) {
   </nav>
 
   return (
-    <nav id="tabbar">
+    <nav id="tabbar" className="liftrio-nav" aria-label={t('Navigation')}>
       <Tab k="home" icon="house" to="/home" label={t('Home')} />
       <Tab k="plan" icon="calendar" to="/plan" label={t('Plan')} />
       <button className={'start' + (S.active ? ' rec' : '')} onClick={startWorkout}>
