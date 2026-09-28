@@ -207,6 +207,7 @@ body.login-screen{height:100dvh;overflow:hidden;background:#0a0a0a}
 .login-eyebrow{display:flex;align-items:center;gap:10px;font-size:11px;font-weight:800;letter-spacing:.22em;color:#a4a4a0;margin-bottom:clamp(16px,3vh,34px)}
 .login-live-dot{width:8px;height:8px;border-radius:50%;background:#CCFF00;box-shadow:0 0 18px #CCFF00}
 .login-story h1{font-size:clamp(49px,6.4vw,104px);font-weight:800;line-height:.96;letter-spacing:-.075em;max-width:850px}
+.login-story h1 span,.login-story h1 em{display:block;white-space:nowrap}
 .login-story h1 em{font-style:normal;color:#CCFF00}
 .login-intro{max-width:460px;font-size:clamp(15px,1.5vw,19px);line-height:1.5;color:#a9a9a6;margin-top:clamp(18px,3vh,34px)}
 .login-steps{display:flex;gap:clamp(18px,3vw,48px);margin-top:clamp(24px,6vh,76px);padding-top:18px;border-top:1px solid #363636}
@@ -222,7 +223,8 @@ body.login-screen{height:100dvh;overflow:hidden;background:#0a0a0a}
 .login-entry h2{font-size:clamp(27px,2.7vw,38px);line-height:1.08;letter-spacing:-.05em;margin-top:40px}
 .login-entry p{font-size:14px;color:#a5a5a1;line-height:1.45;margin-top:11px;min-height:40px}
 .login-actions{display:flex;flex-direction:column;gap:10px;margin-top:33px}
-.login-actions .btn{width:100%;min-height:50px}
+.login-actions .btn{width:100%;height:54px;min-height:54px;padding:0 12px}
+.login-actions .login-auth-action>span{white-space:nowrap;min-width:0;line-height:1.1}
 .login-actions .btn.primary{background:#CCFF00;color:#000}
 .login-actions .btn.login-create{border:1px solid #5a5a5a;color:#f4f4f1;border-radius:12px;font-weight:600;background:transparent}
 .login-guest{min-height:45px;font-size:13px;color:#aaa;text-align:center}
@@ -244,7 +246,7 @@ body.login-screen{height:100dvh;overflow:hidden;background:#0a0a0a}
   .login-entry h2{margin-top:17px;font-size:27px}
   .login-entry p{min-height:0;margin-top:6px;font-size:12px}
   .login-actions{margin-top:17px;gap:7px}
-  .login-actions .btn{min-height:44px}
+  .login-actions .btn{height:50px;min-height:50px;font-size:16px}
   .login-guest{min-height:35px}
   .login-footer{padding-top:10px;font-size:9px}
 }
@@ -259,7 +261,7 @@ body.login-screen{height:100dvh;overflow:hidden;background:#0a0a0a}
   .login-entry{padding:16px 18px}
   .login-entry h2{font-size:24px;margin-top:10px}
   .login-actions{margin-top:9px;gap:5px}
-  .login-actions .btn{min-height:40px}
+  .login-actions .btn{height:44px;min-height:44px}
   .login-guest{min-height:30px}
 }
 @media(max-height:510px) and (max-width:760px){.login-intro,.login-footer,.login-entry-head{display:none}}
@@ -1196,22 +1198,4 @@ h4.sec{
   #timer.rest .head{flex:1;min-width:0}
   .exmedia img{height:380px}
   .hm-wrap{display:flex;flex-direction:column;align-items:center}
-}
-
-
-/* Login and registration actions share one fixed footprint across languages. */
-.login-actions .btn{
-  height:68px;
-  min-height:68px;
-}
-.login-actions .btn>span{
-  flex:1 1 auto;
-  min-width:0;
-  font-size:clamp(14px,4vw,18px);
-  line-height:1.12;
-  text-wrap:balance;
-  display:-webkit-box;
-  -webkit-box-orient:vertical;
-  -webkit-line-clamp:2;
-  overflow:hidden;
 }

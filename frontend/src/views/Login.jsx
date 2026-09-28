@@ -4,7 +4,7 @@ import { webauthnOK, passkeyLogin, passkeyRegister, api, BIO } from '../lib/api.
 import { hasData } from '../store/useStore.js'
 import { t, LANGS } from '../lib/i18n.js'
 import { DEMO, REPO } from '../lib/demo.js'
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useLayoutEffect } from 'react'
 import { Button } from '../components/ui.jsx'
 import Icon from '../components/Icon.jsx'
 
@@ -53,6 +53,37 @@ export default function Login() {
   const lang = useStore(s => s.S.lang || 'en')
   const [languagesOpen, setLanguagesOpen] = useState(false)
   const languageRef = useRef(null)
+  const headlineRef = useRef(null)
+  const actionsRef = useRef(null)
+  const headlineFirst = t('Train with purpose.')
+  const headlineSecond = t('See the progress.')
+  const signInLabel = t('Sign in with passkey')
+  const registerLabel = t('Create new profile')
+  useLayoutEffect(() => {
+    const fit = () => {
+      const headline = headlineRef.current
+      if (headline) {
+        headline.style.fontSize = ''
+        const base = parseFloat(getComputedStyle(headline).fontSize)
+        const longest = Math.max(...Array.from(headline.children, line => line.scrollWidth))
+        if (longest > headline.clientWidth) headline.style.fontSize = `${base * headline.clientWidth / longest}px`
+      }
+      actionsRef.current?.querySelectorAll('.login-auth-action').forEach(button => {
+        const label = button.querySelector('span')
+        if (!label) return
+        label.style.fontSize = ''
+        const style = getComputedStyle(button)
+        const icon = button.querySelector('.icn')
+        const gap = icon ? parseFloat(style.columnGap) || 0 : 0
+        const available = button.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight) - (icon?.getBoundingClientRect().width || 0) - gap
+        const base = parseFloat(getComputedStyle(label).fontSize)
+        if (label.scrollWidth > available) label.style.fontSize = `${base * available / label.scrollWidth}px`
+      })
+    }
+    fit()
+    window.addEventListener('resize', fit)
+    return () => window.removeEventListener('resize', fit)
+  }, [headlineFirst, headlineSecond, signInLabel, registerLabel])
   useEffect(() => {
     if (!languagesOpen) return
     const close = e => { if (!languageRef.current?.contains(e.target)) setLanguagesOpen(false) }
@@ -81,7 +112,7 @@ export default function Login() {
       <main className="login-main">
         <div className="login-story">
           <div className="login-eyebrow"><span className="login-live-dot" /> LIFTRIO / 01</div>
-          <h1>{t('Train with purpose.')}<br /><em>{t('See the progress.')}</em></h1>
+          <h1 ref={headlineRef}><span>{headlineFirst}</span><em>{headlineSecond}</em></h1>
           <p className="login-intro">{t('Training, nutrition and progress in one place.')}</p>
           <div className="login-steps" aria-label={t('Training, nutrition and progress in one place.')}>
             <span><b>01</b>{t('Workouts')}</span><span><b>02</b>{t('Nutrition')}</span><span><b>03</b>{t('Progress')}</span>
@@ -91,14 +122,14 @@ export default function Login() {
           <div className="login-entry-head"><span className="login-entry-line" /><span>LOGIN / REGISTER</span></div>
           <h2>{t('Ready when you are.')}</h2>
           <p>{DEMO ? t('Live demo — everything stays in this browser.') : t('Passkeys use {0} — no passwords.', BIO)}</p>
-          <div className="login-actions">
+          <div className="login-actions" ref={actionsRef}>
             {DEMO ? <>
               <Button variant="primary" icon="sparkles" onClick={() => setGuest(true)}>{t('Start the demo')}</Button>
               <a className="login-repo" href={REPO} target="_blank" rel="noopener">{t('Self-host it in a minute →')}</a>
             </> : <>
               {webauthnOK() ? <>
-                <Button variant="primary" icon="person" onClick={signIn}>{t('Sign in with passkey')}</Button>
-                <Button className="login-create" onClick={() => useUI.getState().openSheet(close => <RegisterSheet close={close} />)}>{t('Create new profile')}</Button>
+                <Button variant="primary" className="login-auth-action" icon="person" onClick={signIn}>{signInLabel}</Button>
+                <Button className="login-create login-auth-action" onClick={() => useUI.getState().openSheet(close => <RegisterSheet close={close} />)}>{registerLabel}</Button>
               </> : <div className="small muted">{t("This browser doesn't support passkeys — you can still use Liftrio locally on this device.")}</div>}
               <button className="login-guest" onClick={() => setGuest(true)}>{t('Continue without account')} <span aria-hidden="true">↗</span></button>
             </>}
