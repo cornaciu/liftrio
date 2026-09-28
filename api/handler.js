@@ -297,6 +297,8 @@ export default async function handler(req, res) {
           if (u.disabled) {
             db.coachLinks = (db.coachLinks || []).filter(l => l.trainerId !== u.id);
             db.coachDataGrants = (db.coachDataGrants || []).filter(g => g.trainerId !== u.id && g.clientId !== u.id);
+             db.coachNutritionGrants = (db.coachNutritionGrants || []).filter(g => g.trainerId !== u.id && g.clientId !== u.id);
+             (db.coachNutritionPlans || []).forEach(p => { if (p.trainerId === u.id && p.status === 'pending') p.status = 'withdrawn'; });
             (db.coachPlans || []).forEach(p => { if (p.trainerId === u.id && p.status === 'pending') p.status = 'withdrawn'; });
           }
           await saveDb(); send(res, 200, { ok: true, id: u.id, disabled: u.disabled });
