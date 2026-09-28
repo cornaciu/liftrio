@@ -113,6 +113,12 @@ function BwSheet({ required, onDone, close }) {
     {required && <>
       <div style={{ height: 8 }} /><Button variant="ghost" className="dim" onClick={() => { close(); onDone && onDone(null) }}>{t('Start without weighing in')}</Button>
       <div style={{ height: 2 }} /><Button variant="ghost" className="dim" icon="reset" onClick={() => { close(); nav('/workout') }}>{t('Choose a different workout')}</Button>
+      <div style={{ height: 2 }} /><Button variant="ghost" className="dim" icon="moon" onClick={() => {
+        update(s => { s.dayPlan[todayISO()] = 'rest' })
+        close()
+        nav('/home')
+        toast(t('Today is now a rest day'))
+      }}>{t('Restore rest day')}</Button>
     </>}
     {!required && recent.length > 0 && <>
       <h4 className="sec">{t('Recent weigh-ins')}</h4>
