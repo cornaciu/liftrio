@@ -65,3 +65,39 @@ test('a client account cannot use the trainer dashboard endpoint', async () => {
   const denied = await call(f, 'GET /api/coaching/client/client', f.db.users[1]);
   assert.equal(denied.status, 403);
 });
+
+test('trainer overview only contains shared client metrics', async () => {
+  const f = fixture();
+  await call(f, 'POST /api/coaching/nutrition-consent', f.db.users[1], { trainerId: 'coach', allow: true });
+  let result = await call(f, 'GET /api/coaching/overview', f.db.users[0]);
+  assert.equal(result.payload.clients[0].overview, null);
+  assert.equal(result.payload.clients[0].canSendNutrition, true);
+  await call(f, 'POST /api/coaching/data-consent', f.db.users[1], { trainerId: 'coach', allow: true });
+  result = await call(f, 'GET /api/coaching/overview', f.db.users[0]);
+  assert.equal(result.payload.clients[0].overview.latestWeight, 74);
+  assert.equal((await call(f, 'GET /api/coaching/overview', f.db.users[1])).status, 403);
+});
+
+test('nutrition plans require separate consent and client approval', async () => {
+  const f = fixture();
+  const plan = { name: 'Balanced', targets: { kcal: 2200, protein: 140, carbs: 260, fat: 60 },
+    meals: [{ name: 'Lunch', details: 'Rice and vegetables' }], notes: '' };
+  assert.equal((await call(f, 'POST /api/coaching/nutrition/send', f.db.users[0], { clientId: 'client', plan })).status, 403);
+  await call(f, 'POST /api/coaching/nutrition-consent', f.db.users[1], { trainerId: 'coach', allow: true });
+  const sent = await call(f, 'POST /api/coaching/nutrition/send', f.db.users[0], { clientId: 'client', plan });
+  assert.equal(sent.status, 200);
+  assert.equal((await call(f, 'POST /api/coaching/nutrition/respond', f.db.users[0], { id: sent.payload.id, accept: true })).status, 404);
+  assert.equal((await call(f, 'POST /api/coaching/nutrition/respond', f.db.users[1], { id: sent.payload.id, accept: true })).status, 200);
+  assert.equal(f.db.coachNutritionPlans[0].status, 'accepted');
+  assert.equal('plan' in f.db.coachNutritionPlans[0], false);
+});
+
+test('revoking nutrition consent withdraws pending plans', async () => {
+  const f = fixture();
+  const plan = { name: 'Balanced', targets: { kcal: 2200, protein: 140, carbs: 260, fat: 60 },
+    meals: [{ name: 'Lunch', details: 'Rice and vegetables' }], notes: '' };
+  await call(f, 'POST /api/coaching/nutrition-consent', f.db.users[1], { trainerId: 'coach', allow: true });
+  await call(f, 'POST /api/coaching/nutrition/send', f.db.users[0], { clientId: 'client', plan });
+  await call(f, 'POST /api/coaching/nutrition-consent', f.db.users[1], { trainerId: 'coach', allow: false });
+  assert.equal(f.db.coachNutritionPlans[0].status, 'withdrawn');
+});
