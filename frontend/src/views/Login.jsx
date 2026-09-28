@@ -2,7 +2,7 @@ import { useStore } from '../store/useStore.js'
 import { useUI } from '../store/useUI.js'
 import { webauthnOK, passkeyLogin, passkeyRegister, api, BIO } from '../lib/api.js'
 import { hasData } from '../store/useStore.js'
-import { t, LANGS } from '../lib/i18n.js'
+import { t, LANGS, LANG_FLAGS } from '../lib/i18n.js'
 import { DEMO, REPO } from '../lib/demo.js'
 import { useState, useRef, useEffect, useLayoutEffect } from 'react'
 import { Button } from '../components/ui.jsx'
@@ -104,10 +104,10 @@ export default function Login() {
         <div className="login-brand"><img src="icon-180.png" alt="" width="38" height="38" /><span>Liftrio<span className="login-brand-mark">.</span></span></div>
         <div className="login-language" ref={languageRef}>
           <button type="button" className="login-language-trigger" aria-label={t('Language')} aria-haspopup="menu" aria-expanded={languagesOpen} onClick={() => setLanguagesOpen(v => !v)}>
-            <Icon name="globe" /><span>{LANGS[lang] || 'English'}</span><Icon name="chevronDown" />
+            <span className="login-flag" aria-hidden="true">{LANG_FLAGS[lang] || '🌐'}</span><span>{LANGS[lang] || 'English'}</span><Icon name="chevronDown" />
           </button>
           {languagesOpen && <div className="login-language-menu" role="menu" aria-label={t('Language')}>
-            {Object.entries(LANGS).map(([code, name]) => <button type="button" role="menuitemradio" aria-checked={code === lang} key={code} onClick={() => { update(s => { s.lang = code }, false); setLanguagesOpen(false) }}>{name}{code === lang && <span aria-hidden="true">✓</span>}</button>)}
+            {Object.entries(LANGS).map(([code, name]) => <button type="button" role="menuitemradio" aria-checked={code === lang} key={code} onClick={() => { update(s => { s.lang = code }, false); setLanguagesOpen(false) }}><span className="login-language-option"><span className="login-flag" aria-hidden="true">{LANG_FLAGS[code]}</span>{name}</span>{code === lang && <span aria-hidden="true">✓</span>}</button>)}
           </div>}
         </div>
       </header>
