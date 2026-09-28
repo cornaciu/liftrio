@@ -51,6 +51,11 @@ export default function CoachingClient() {
   const bodyweight = (state?.bodyweight || []).slice().sort((a, b) => (b.d || '').localeCompare(a.d || ''))
   const nutritionEntries = (state?.nutrition?.entries || []).slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''))
   const todayEntries = nutritionEntries.filter(e => e.date === today)
+  const diaryDays = Object.entries(nutritionEntries.reduce((days, entry) => {
+    const date = entry.date || ''
+    ;(days[date] ||= []).push(entry)
+    return days
+  }, {}))
 
   return <div className="narrow">
     <div className="hdr">
@@ -78,7 +83,10 @@ export default function CoachingClient() {
 
       <div className="card">
         <h2>{t('Food diary history')}</h2>
-        {nutritionEntries.length ? nutritionEntries.map((entry, i) => <MacroLine key={entry.id || `${entry.date}-${i}`} entry={entry} />)
+        {diaryDays.length ? diaryDays.map(([date, entries]) => <section className="coach-diary-day" key={date}>
+          <div className="coach-diary-date"><strong>{date ? fmtDate(date, true) : t('Unknown date')}</strong><span>{t('{0} foods', entries.length)}</span></div>
+          {entries.map((entry, i) => <MacroLine key={entry.id || `${date}-${i}`} entry={entry} />)}
+        </section>)
           : <div className="muted small">{t('No foods logged yet.')}</div>}
         {todayEntries.length > 0 && <div className="dim small" style={{ marginTop: 10 }}>{t('{0} foods logged today', todayEntries.length)}</div>}
       </div>
