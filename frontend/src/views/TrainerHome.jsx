@@ -58,8 +58,8 @@ export default function TrainerHome() {
     </div>}
     {clients.map(client => <div className="card trainer-client" key={client.id}>
       <div className="trainer-client-head">
-        <span className="trainer-avatar"><Icon name="person" /></span>
-        <div><h3>{client.name}</h3><span className="small muted">{client.canViewDashboard ? t('Dashboard shared') : t('Dashboard not shared')}</span></div>
+        <span className="trainer-avatar" aria-hidden="true">{(client.name || t('Client')).trim().charAt(0).toLocaleUpperCase()}</span>
+        <div className="trainer-client-identity"><span className="trainer-client-label">{t('Client')}</span><h3>{client.name}</h3><span className="trainer-share-status">{client.canViewDashboard ? t('Dashboard shared') : t('Dashboard not shared')}</span></div>
         {client.canViewDashboard && <button className="iconbtn" aria-label={t('View {0}', client.name)} onClick={() => nav('/coaching/client/' + encodeURIComponent(client.id))}><Icon name="chevronRight" /></button>}
       </div>
       {client.overview ? <div className="trainer-client-stats">
