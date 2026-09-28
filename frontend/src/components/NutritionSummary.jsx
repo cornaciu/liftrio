@@ -22,17 +22,16 @@ export default function NutritionSummary({ nutrition, date, state, compact = fal
   const remaining = available - totals.kcal
   const progress = targets.kcal && available ? Math.min(100, totals.kcal / available * 100) : 0
   const ringRadius = 43
-  const ringLength = 2 * Math.PI * ringRadius
-  const ringOffset = ringLength * (1 - progress / 100)
+  const ringOffset = 100 - progress
 
   return <div className={'nutrition-summary' + (compact ? ' compact' : '')}>
     <div className="nutrition-energy">
       <div className="nutrition-ring">
         <svg className="nutrition-ring-svg" viewBox="0 0 100 100" aria-hidden="true">
           <circle className="nutrition-ring-track" cx="50" cy="50" r={ringRadius} />
-          <circle className="nutrition-ring-progress" cx="50" cy="50" r={ringRadius} strokeDasharray={ringLength} strokeDashoffset={ringOffset} />
+          {progress > 0 && <circle className="nutrition-ring-progress" cx="50" cy="50" r={ringRadius} pathLength="100" strokeDasharray="100 100" strokeDashoffset={ringOffset} />}
         </svg>
-        <div className="nutrition-ring-center"><span className="nutrition-ring-label">{t('Consumed today')}</span><strong>{fmtNum(totals.kcal)}</strong><span className="nutrition-ring-unit">kcal</span></div>
+        <div className="nutrition-ring-center"><span className="nutrition-ring-label">{t('Consumed')}</span><strong>{fmtNum(totals.kcal)}</strong><span className="nutrition-ring-unit">kcal</span></div>
       </div>
       <div className="nutrition-energy-text">
         <span className="nutrition-kicker"><Icon name="flame" /> {targets.kcal ? t(remaining >= 0 ? 'Remaining today' : 'Over target') : t('Calories today')}</span>

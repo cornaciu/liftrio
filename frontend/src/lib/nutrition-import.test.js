@@ -58,6 +58,12 @@ describe('Eat & Track nutrition import', () => {
     expect(totalsFor(attached, '2026-09-22')).toMatchObject({ fiber: 24.5, salt: 5.2 })
   })
 
+  it('sums fiber and salt from all existing logged foods, including imported rows', () => {
+    const date = '2026-09-22'
+    const entries = [{ date, source: 'eat-track', grams: 200, per100: { kcal: 0, protein: 0, carbs: 0, fat: 0, fiber: 3.5, salt: 1.2 } }]
+    expect(totalsFor(entries, date)).toMatchObject({ fiber: 7, salt: 2.4 })
+  })
+
   it('rejects exports without the detailed food journal', () => {
     expect(() => parseEatTrackWorkbook({ SheetNames: ['Jurnal (Sumar)'], Sheets: {} })).toThrow(/Jurnal/)
   })

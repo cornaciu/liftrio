@@ -44,9 +44,8 @@ export function totalsFor(entries, date, importedMicros = {}) {
     if (entry.source === 'eat-track' && entry.dailyMicros) embeddedSummary = entry.dailyMicros
     const factor = clean(entry.grams) / 100;
     for (const key of ['kcal', 'protein', 'carbs', 'fat']) totals[key] += clean(entry.per100?.[key]) * factor;
-    if (entry.source !== 'eat-track') {
-      for (const key of ['fiber', 'salt']) totals[key] += clean(entry.per100?.[key]) * factor;
-    }
+    // Count micronutrients from every logged item, including imported entries that already contain them.
+    for (const key of ['fiber', 'salt']) totals[key] += clean(entry.per100?.[key]) * factor;
   }
   const dailySummary = embeddedSummary || importedMicros?.[date]
   for (const key of ['fiber', 'salt']) totals[key] += clean(dailySummary?.[key]);
