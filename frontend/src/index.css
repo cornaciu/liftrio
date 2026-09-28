@@ -1564,3 +1564,50 @@ h4.sec{
 .trainer-client-actions .btn{display:flex;justify-content:center;text-align:center;min-height:45px}
 .trainer-client-actions .btn span{width:100%;text-align:center}
 @media(max-width:390px){.trainer-client-stats b{font-size:13px}.trainer-client-stats>div{padding:10px 7px}}
+
+
+/* Equal metric rhythm even when labels wrap onto two lines. */
+.trainer-client-stats>div,.trainer-metrics>div,.coach-overview-grid>div{
+  display:flex;flex-direction:column;align-items:flex-start;
+}
+.trainer-client-stats span{display:flex;align-items:flex-start;min-height:2.7em}
+.trainer-client-stats b{margin-top:auto;padding-top:9px}
+.trainer-metrics{gap:0;border:1px solid var(--sep-op);border-radius:15px;overflow:hidden;background:var(--bg-el)}
+.trainer-metrics>div{padding:14px 10px;background:transparent;border-radius:0}
+.trainer-metrics>div+div{border-left:1px solid var(--sep-op)}
+.trainer-metrics strong{color:var(--label);font-size:25px}
+.trainer-metrics span{min-height:2.7em;margin-top:8px;font-size:10px;line-height:1.3;text-transform:uppercase;letter-spacing:.05em}
+.coach-overview-grid>div{min-height:119px}
+.coach-overview-grid .icn{flex:none;margin-bottom:9px}
+.coach-overview-grid span{display:block;min-height:2.7em}
+.coach-overview-grid strong{margin-top:auto;padding-top:8px}
+.coach-overview-count{
+  display:inline-flex;align-items:center;justify-content:center;min-height:38px;
+  padding:8px 11px;border:1px solid var(--acc-line);border-radius:11px;
+  background:var(--acc-soft);color:var(--label);font-size:12px;font-weight:700;text-align:center;
+}
+@media(max-width:390px){
+  .trainer-metrics>div{padding:11px 7px}
+  .trainer-metrics strong{font-size:22px}
+  .coach-overview-grid>div{min-height:116px}
+  .coach-overview-count{max-width:90px;line-height:1.15}
+}
+/* Visible flags, names and scrollbar in the language picker. */
+.login-flag{display:inline-flex;align-items:center;justify-content:center;flex:none;font-size:18px;line-height:1}
+.login-language-option{display:inline-flex;align-items:center;gap:8px;min-width:0;color:#f4f4f1!important}
+.login-language-option .login-flag{color:inherit!important}
+.login-language-menu button[aria-checked="true"]>.login-language-option{color:#f4f4f1!important}
+/* Trainer connection and plan inbox on the client home. */
+.home-coaching{padding:17px;border:1px solid var(--acc-line);background:linear-gradient(125deg,var(--acc-soft),var(--surface) 68%)}
+.home-coaching-head{display:flex;align-items:center;gap:11px}
+.home-coaching-symbol{flex:none;display:grid;place-items:center;width:42px;height:42px;border-radius:13px;background:var(--acc);color:var(--on-acc);font-size:21px}
+.home-coaching-head>div{min-width:0}
+.home-coaching h2{margin:0;font-size:18px;color:var(--label)}
+.home-coaching p{margin:4px 0 0;font-size:13px;color:var(--label-2);overflow-wrap:anywhere}
+.home-coaching-pending{margin-top:15px;padding:12px;border-radius:12px;background:var(--bg-el);border:1px solid var(--sep-op)}
+.home-coaching-pending>strong{display:block;margin-bottom:8px;font-size:13px;color:var(--label)}
+.home-coaching-plan{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:6px 0;border-top:1px solid var(--sep-op)}
+.home-coaching-plan span{flex:none;color:var(--label-2);font-size:11px}
+.home-coaching-plan b{min-width:0;text-align:right;overflow-wrap:anywhere;font-size:12px}
+.home-coaching-action.btn{width:100%;min-height:44px;margin-top:12px;padding:9px 12px;justify-content:space-between;border:1px solid var(--acc-line);border-radius:11px;background:var(--acc-soft);color:var(--label);font-size:13px;font-weight:700}
+.home-coaching-action .icn{color:var(--acc-ink)}
