@@ -49,7 +49,7 @@ export default function Home() {
   return <div className="narrow">
     <div className="hdr">
       <div><h1>{user ? t('Hi {0}', user.name) : 'Liftrio'}</h1><div className="sub">{today.toLocaleDateString(dateLocale(), { weekday: 'long', day: 'numeric', month: 'long' })}</div></div>
-      <button className="iconbtn" onClick={() => nav('/settings')} aria-label={t('Settings')}><Icon name="gear" /></button>
+      <Button className="home-settings-action" icon="gear" onClick={() => nav('/settings')}>{t('Settings')}</Button>
     </div>
 
     <div className="card">
