@@ -1629,3 +1629,11 @@ h4.sec{
 #toast .toast-copy small{text-transform:uppercase;letter-spacing:.12em;font-size:10px;font-weight:750;color:var(--acc-ink)}
 .home-trainer-names{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .home-trainer-name{display:inline-flex;align-items:center;min-height:31px;padding:5px 10px;border:1px solid var(--acc-line);border-radius:9px;background:var(--bg-el);color:var(--label);font-size:14px;font-weight:700;letter-spacing:-.01em;overflow-wrap:anywhere}
+
+
+.settings-page .settings-accent .swatches{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:14px 0;width:100%;max-width:none;margin:0;justify-items:center;
+}
+.settings-page .settings-accent .swatch{width:38px;height:38px}
+@media(max-width:360px){.settings-page .settings-accent .swatch{width:34px;height:34px}}
