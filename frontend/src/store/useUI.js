@@ -9,21 +9,21 @@ import { MOBILE, scheduleRestAlert, cancelRestAlert } from '../lib/mobile.js'
 // Keep rest-alert requests in order. An older cancel must never arrive after the
 // schedule for the next set and erase it from the server.
 let restAlertRequest = Promise.resolve()
-const queueRestAlert = (action, seconds) => {
+const queueRestAlert = (action, endsAt) => {
   const userId = useStore.getState().user?.id
   if (!MOBILE && !userId) return
   restAlertRequest = restAlertRequest.catch(() => {}).then(async () => {
     if (!MOBILE && useStore.getState().user?.id !== userId) return
-    if (MOBILE) return action === 'schedule' ? scheduleRestAlert(seconds) : cancelRestAlert()
+    if (MOBILE) return action === 'schedule' ? scheduleRestAlert(endsAt) : cancelRestAlert()
     return api(action === 'schedule' ? '/api/push/rest-timer' : '/api/push/rest-timer/cancel', {
-      method: 'POST', body: JSON.stringify(action === 'schedule' ? { seconds } : {})
+      method: 'POST', body: JSON.stringify(action === 'schedule' ? { endsAt } : {})
     })
   }).catch(e => {
     if (e.status === 409) useUI.getState().toast(t('Enable notifications in Settings to get rest alerts.'))
     else console.warn('Rest alert request failed', e)
   })
 }
-const pushRestTimer = sec => queueRestAlert('schedule', sec)
+const pushRestTimer = endsAt => queueRestAlert('schedule', endsAt)
 const cancelPushRestTimer = () => queueRestAlert('cancel')
 
 let toastTm = null
@@ -60,7 +60,7 @@ export const useUI = create((set, get) => ({
     restWasHidden = false
     const endsAt = Date.now() + sec * 1000
     set({ timer: { left: sec, total: sec, endsAt } })
-    pushRestTimer(sec)
+    pushRestTimer(endsAt)
     timerTick = () => {
       const tm = get().timer
       if (!tm) return
@@ -85,12 +85,12 @@ export const useUI = create((set, get) => ({
   addRest(sec) {
     const tm = get().timer
     if (!tm) return
-    const left = tm.left + sec
-    // taking off more than is left means "I'm ready now" — same as skipping, and it keeps a
-    // negative duration out of both the progress bar and the server-side push schedule
-    if (left <= 0) { get().stopRest(); return }
-    set({ timer: { ...tm, left, total: tm.total + sec, endsAt: tm.endsAt + sec * 1000 } })
-    pushRestTimer(left)
+    // endsAt is authoritative; tm.left can be stale while iOS suspends the app.
+    const endsAt = tm.endsAt + sec * 1000
+    if (endsAt <= Date.now()) { get().stopRest(); return }
+    const left = Math.max(1, Math.round((endsAt - Date.now()) / 1000))
+    set({ timer: { ...tm, left, total: Math.max(1, tm.total + sec), endsAt } })
+    pushRestTimer(endsAt)
   },
   stopRest(options) {
     if (timerInt) clearInterval(timerInt); timerInt = null

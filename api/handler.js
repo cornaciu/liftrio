@@ -217,13 +217,12 @@ export default async function handler(req, res) {
       case 'POST /api/push/rest-timer':
       {
         const user = requireUser(); if (!user) break;
-        const requested = Number(body.seconds);
-        if (!Number.isFinite(requested) || requested < 1) { send(res, 400, { error: 'seconds required' }); break; }
-        const seconds = Math.min(3600, Math.round(requested));
+        const endsAt = Number(body.endsAt);
+        const now = Date.now();
+        if (!Number.isFinite(endsAt) || endsAt > now + 3600000) { send(res, 400, { error: 'valid endsAt required' }); break; }
         if (!db.subs.some(s => s.userId === user.id)) { send(res, 409, { error: 'push notifications are not enabled for this account' }); break; }
         db.restTimers = (db.restTimers || []).filter(t => t.userId !== user.id);
-        const endsAt = Date.now() + seconds * 1000;
-        db.restTimers.push({ userId: user.id, endsAt });
+        if (endsAt > now) db.restTimers.push({ userId: user.id, endsAt });
         await saveDb(); send(res, 200, { ok: true, endsAt }); break;
       }
       case 'POST /api/push/rest-timer/cancel': {

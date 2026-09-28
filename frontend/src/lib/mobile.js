@@ -60,15 +60,17 @@ export async function syncReminder(S, interactive = false) {
 
 // Native iOS/Android can schedule the rest alert with the OS, so it still fires while the
 // app is backgrounded or the phone is locked. The web/PWA version uses server push instead.
-export async function scheduleRestAlert(seconds) {
+export async function scheduleRestAlert(endsAt) {
   try {
     const { LocalNotifications } = await import('@capacitor/local-notifications')
     const perm = await LocalNotifications.checkPermissions()
     if (perm.display !== 'granted') return false
     await LocalNotifications.cancel({ notifications: [{ id: 9001 }] }).catch(() => {})
+    const at = Number(endsAt)
+    if (!Number.isFinite(at) || at <= Date.now()) return true
     await LocalNotifications.schedule({ notifications: [{
       id: 9001, title: 'Pauza s-a încheiat 💪', body: 'E timpul pentru următoarea serie.',
-      schedule: { at: new Date(Date.now() + Math.max(1, seconds) * 1000), allowWhileIdle: true },
+      schedule: { at: new Date(at), allowWhileIdle: true },
     }] })
     return true
   } catch { return false }
