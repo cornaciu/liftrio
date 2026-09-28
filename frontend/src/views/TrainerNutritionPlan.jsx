@@ -6,6 +6,13 @@ import Icon from '../components/Icon.jsx'
 import { Button, NumberField } from '../components/ui.jsx'
 
 const blankMeal = () => ({ name: '', details: '' })
+const ENERGY = { protein: 4, carbs: 4, fat: 9 }
+const macroGrams = (kcal, shares) => Object.fromEntries(Object.keys(ENERGY).map(key => [key, Math.round((Number(kcal) || 0) * (Number(shares[key]) || 0) / 100 / ENERGY[key])]))
+const macroKcal = grams => Object.keys(ENERGY).reduce((sum, key) => sum + (Number(grams[key]) || 0) * ENERGY[key], 0)
+const macroShares = grams => {
+  const total = macroKcal(grams)
+  return Object.fromEntries(Object.keys(ENERGY).map(key => [key, total ? Math.round((Number(grams[key]) || 0) * ENERGY[key] / total * 10) / 10 : 0]))
+}
 const post = (path, data) => api(path, { method: 'POST', body: JSON.stringify(data) })
 
 export default function TrainerNutritionPlan() {
@@ -15,6 +22,8 @@ export default function TrainerNutritionPlan() {
   const [loading, setLoading] = useState(true)
   const [name, setName] = useState('')
   const [targets, setTargets] = useState({ kcal: 0, protein: 0, carbs: 0, fat: 0 })
+  const [shares, setShares] = useState({ protein: 30, carbs: 40, fat: 30 })
+  const [manualMacros, setManualMacros] = useState(false)
   const [meals, setMeals] = useState([blankMeal()])
   const [notes, setNotes] = useState('')
   const [busy, setBusy] = useState(false)
@@ -26,11 +35,30 @@ export default function TrainerNutritionPlan() {
       .finally(() => setLoading(false))
   }, [clientId])
 
+  const shareTotal = Object.values(shares).reduce((sum, value) => sum + (Number(value) || 0), 0)
+  const changeKcal = kcal => { setTargets({ kcal, ...macroGrams(kcal, shares) }); setManualMacros(false) }
+  const changeShare = (key, value) => {
+    const next = { ...shares, [key]: value }
+    setShares(next)
+    setTargets(current => ({ kcal: current.kcal, ...macroGrams(current.kcal, next) }))
+    setManualMacros(false)
+  }
+  const changeGrams = (key, value) => {
+    const grams = { ...targets, [key]: value }
+    const kcal = macroKcal(grams)
+    setTargets({ ...grams, kcal })
+    setShares(macroShares(grams))
+    setManualMacros(true)
+  }
   const setMeal = (index, key, value) => setMeals(items => items.map((meal, i) => i === index ? { ...meal, [key]: value } : meal))
   const send = async () => {
     setError('')
     if (!name.trim() || !targets.kcal || meals.some(m => !m.name.trim() || !m.details.trim())) {
       setError(t('Add a plan name, a calorie target and details for every meal.'))
+      return
+    }
+    if (!manualMacros && Math.abs(shareTotal - 100) > 0.01) {
+      setError(t('Macro percentages must add up to 100%.'))
       return
     }
     setBusy(true)
@@ -57,10 +85,25 @@ export default function TrainerNutritionPlan() {
         <h2>{t('Plan details')}</h2>
         <label className="coach-field">{t('Plan name')}<input className="input" maxLength={100} value={name} onChange={e => setName(e.target.value)} placeholder={t('Example: Balanced nutrition plan')} /></label>
         <p className="small muted">{t('Daily targets are suggestions. The client reviews and accepts the plan before it changes their account.')}</p>
-        <div className="coach-target-grid">
-          {[['kcal', 'Calories', 'kcal'], ['protein', 'Protein', 'g'], ['carbs', 'Carbs', 'g'], ['fat', 'Fat', 'g']].map(([key, label, unit]) =>
-            <label className="coach-field" key={key}>{t(label)} ({unit})<NumberField className="coach-number" aria-label={`${t(label)} (${unit})`} value={targets[key]} decimal={false} onChange={value => setTargets(current => ({ ...current, [key]: value }))} /></label>)}
+        <label className="coach-field coach-kcal-field">{t('Calories')} (kcal)
+          <NumberField className="coach-number" aria-label={t('Calories')} value={targets.kcal} decimal={false} onChange={changeKcal} />
+        </label>
+        <div className="coach-macro-heading"><strong>{t('Macro split')}</strong><span>{t('Protein · Carbs · Fat')}</span></div>
+        <div className="coach-macro-grid">
+          {[[ 'protein', 'Protein' ], [ 'carbs', 'Carbs' ], [ 'fat', 'Fat' ]].map(([key, label]) => <div className="coach-macro" key={key}>
+            <strong>{t(label)}</strong>
+            <label className="coach-field">{t('Percentage')} (%)
+              <NumberField className="coach-number" aria-label={`${t(label)} (%)`} value={shares[key]} decimal onChange={value => changeShare(key, value)} />
+            </label>
+            <label className="coach-field">{t('Grams')} (g)
+              <NumberField className="coach-number" aria-label={`${t(label)} (g)`} value={targets[key]} decimal={false} onChange={value => changeGrams(key, value)} />
+            </label>
+          </div>)}
         </div>
+        <p className={`coach-macro-note ${!manualMacros && Math.abs(shareTotal - 100) > 0.01 ? 'invalid' : ''}`}>
+          {manualMacros ? t('Calories are calculated from grams: protein × 4 + carbs × 4 + fat × 9.')
+            : t('Macro percentages: {0}% total. Enter 100% to send the plan.', Math.round(shareTotal * 10) / 10)}
+        </p>
       </div>
       <div className="card coach-form-card">
         <div className="row between coach-meals-head"><h2>{t('Meals')}</h2><Button size="sm" variant="tinted" icon="plus" disabled={meals.length >= 8} onClick={() => setMeals(items => [...items, blankMeal()])}>{t('Add meal')}</Button></div>
