@@ -12,6 +12,7 @@ import NutritionSummary from '../components/NutritionSummary.jsx'
 
 const MEALS = ['Breakfast', 'Lunch', 'Dinner', 'Snacks']
 const LABELS = { kcal: 'Calories', protein: 'Protein', carbs: 'Carbs', fat: 'Fat', fiber: 'Fiber', salt: 'Salt' }
+const MACRO_ENERGY = { protein: 4, carbs: 4, fat: 9 }
 
 async function lookup(params) {
   const response = await fetch('/api/food?' + new URLSearchParams(params))
@@ -167,6 +168,15 @@ export default function Nutrition() {
     }
   })
 
+  const setMacroPercent = (key, percent) => update(s => {
+    s.nutrition ||= { targets: {}, entries: [] }
+    s.nutrition.targets ||= {}
+    const kcal = Number(s.nutrition.targets.kcal) || 0
+    s.nutrition.targets[key] = Math.round(kcal * Math.min(100, Number(percent) || 0) / 100 / MACRO_ENERGY[key] * 10) / 10
+  })
+  const macroPercent = key => targets.kcal ? Math.round((Number(targets[key]) || 0) * MACRO_ENERGY[key] / targets.kcal * 1000) / 10 : 0
+  const percentTotal = Math.round(['protein', 'carbs', 'fat'].reduce((sum, key) => sum + macroPercent(key), 0) * 10) / 10
+
   return <div className="narrow nutrition">
     <div className="hdr"><button className="iconbtn" onClick={() => nav('/home')} aria-label={t('Home')}><Icon name="chevronLeft" /></button><h1 style={{ marginLeft: 10 }}>{t('Nutrition')}</h1></div>
     <div className="card nutrition-day-card">
@@ -175,7 +185,12 @@ export default function Nutrition() {
       <button className="nutrition-target-toggle" onClick={() => setEditTargets(v => !v)} aria-expanded={editTargets}><Icon name="target" /><span>{editTargets ? t('Hide daily targets') : t('Set daily targets')}</span><Icon name="chevronRight" className={editTargets ? 'nutrition-chevron open' : 'nutrition-chevron'} /></button>
       {editTargets && <div className="nutrition-target-panel">
         <label className="nutrition-input nutrition-kcal-input">{t('Calorie goal')} (kcal)<NumberField value={targets.kcal} onChange={v => setTarget('kcal', v)} decimal={false} /></label>
-        <div className="nutrition-target-macros">{['protein', 'carbs', 'fat'].map(k => <label key={k} className="nutrition-input">{t(LABELS[k])} (g)<NumberField value={targets[k]} onChange={v => setTarget(k, v)} /></label>)}</div>
+        <div className="nutrition-target-macros">{['protein', 'carbs', 'fat'].map(k => <div key={k} className="nutrition-target-macro">
+          <strong>{t(LABELS[k])}</strong>
+          <label className="nutrition-input">{t('Percentage')} (%)<NumberField value={macroPercent(k)} onChange={v => setMacroPercent(k, v)} disabled={!targets.kcal} /></label>
+          <label className="nutrition-input">{t('Grams')} (g)<NumberField value={targets[k]} onChange={v => setTarget(k, v)} /></label>
+        </div>)}</div>
+        <p className="nutrition-percent-total">{t('Macro percentages: {0}% total. Enter 100% to send the plan.', percentTotal).replace(t(' to send the plan.'), '')}</p>
         <div className="nutrition-target-micros">{['fiber', 'salt'].map(k => <label key={k} className="nutrition-input">{t(LABELS[k])} (g)<NumberField value={targets[k]} onChange={v => setTarget(k, v)} /></label>)}</div>
         <div className="nutrition-calculated"><div><span>{t('Calculated from macros')}</span><strong>{fmtNum(macroCalories)} kcal</strong></div><small>{t('Protein and carbs: 4 kcal/g · fat: 9 kcal/g')}</small></div>
         {Math.abs(targetDifference) >= 1 && <div className="nutrition-target-difference"><span>{t('Difference from calorie goal')}: {fmtNum(Math.abs(targetDifference))} kcal</span><button onClick={() => setTarget('kcal', macroCalories)}>{t('Use macro total')}</button></div>}
