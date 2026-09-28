@@ -1206,3 +1206,36 @@ h4.sec{
   .exmedia img{height:380px}
   .hm-wrap{display:flex;flex-direction:column;align-items:center}
 }
+
+
+/* Trainer dashboard and client plan forms */
+.trainer-hero{padding:24px;margin-bottom:18px;border:1px solid var(--acc-line);border-radius:var(--r-xl);background:linear-gradient(140deg,var(--acc-soft),var(--surface) 65%)}
+.trainer-kicker{font-size:11px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--acc)}
+.trainer-hero h2{font-size:28px;line-height:1.08;letter-spacing:-.03em;margin:10px 0 7px}
+.trainer-hero p{color:var(--label-2);font-size:14px;line-height:1.4}
+.trainer-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:22px}
+.trainer-metrics>div{min-width:0;padding:12px;background:var(--surface-2);border-radius:12px}
+.trainer-metrics strong{display:block;font-size:25px;line-height:1.1;color:var(--label)}
+.trainer-metrics span{display:block;margin-top:5px;font-size:11px;line-height:1.25;color:var(--label-2)}
+.trainer-section-head{margin:0 0 10px}.trainer-section-head h2{font-size:18px}
+.trainer-client{padding:16px}.trainer-client-head{display:flex;align-items:center;gap:11px}
+.trainer-client-head>div{flex:1;min-width:0}.trainer-client-head h3{font-size:17px;line-height:1.2}
+.trainer-avatar{width:38px;height:38px;flex:none;display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--acc-soft);color:var(--acc)}
+.trainer-client-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:16px 0}
+.trainer-client-stats>div{min-width:0;padding:10px;background:var(--surface-2);border-radius:9px}
+.trainer-client-stats span{display:block;font-size:11px;color:var(--label-2)}
+.trainer-client-stats b{display:block;margin-top:3px;font-size:13px;overflow-wrap:anywhere}
+.trainer-private,.trainer-pending{margin:14px 0}.trainer-client-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0}
+.trainer-client-actions .btn{width:100%;min-width:0;font-size:13px;padding:10px 5px;gap:5px}
+.trainer-client-actions .btn span{min-width:0;overflow-wrap:anywhere}
+.trainer-empty{display:flex;flex-direction:column;align-items:center;text-align:center;gap:9px;padding:30px 18px}
+.trainer-empty .icn{font-size:34px;color:var(--acc)}.trainer-empty p{max-width:360px;color:var(--label-2);font-size:14px}
+.coach-field{display:block;font-size:13px;color:var(--label-2);margin:14px 0 0}
+.coach-field .input,.coach-field .field{display:block;margin-top:6px;color:var(--label)}
+.coach-target-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 12px}
+.coach-meal{border-top:1px solid var(--sep);padding:15px 0}.coach-meal:first-of-type{margin-top:10px}
+.coach-nutrition-review{padding:14px 0;border-top:1px solid var(--sep)}
+.nutrition-coach-plan h2{font-size:18px;color:var(--label);margin:0}
+.nutrition-coach-meal{padding:11px 0;border-bottom:1px solid var(--sep)}
+.nutrition-coach-meal p{margin-top:4px}
+@media(max-width:390px){.trainer-client-actions{grid-template-columns:1fr}.trainer-metrics>div{padding:9px}.trainer-metrics strong{font-size:21px}}
