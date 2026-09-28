@@ -4,6 +4,7 @@ import crypto from 'node:crypto';
 import pg from 'pg';
 import webpush from 'web-push';
 import { coachingRoute, roleOf } from '../shared/coaching.js';
+import { normalizeUsername, usernameTaken } from '../shared/username.js';
 import {
   generateRegistrationOptions, verifyRegistrationResponse,
   generateAuthenticationOptions, verifyAuthenticationResponse
@@ -146,10 +147,11 @@ export default async function handler(req, res) {
       case 'POST /api/register/options': {
         const authContext = webauthnContext(req);
         if (!authContext) { send(res, 403, { error: 'unsupported passkey origin' }); break; }
-        const name = String(body.name || '').trim().slice(0, 40);
+        const name = normalizeUsername(body.username ?? body.name);
         const role = body.role === 'trainer' ? 'trainer' : 'member';
         const code = String(body.code || '').trim().toUpperCase();
-        if (!name) { send(res, 400, { error: 'name required' }); break; }
+        if (!name) { send(res, 400, { error: 'username required' }); break; }
+        if (usernameTaken(db.users, name)) { send(res, 409, { error: 'username already taken' }); break; }
         if (INVITE_ONLY && !db.invites.some(i => i.code === code && !i.usedBy && !i.revoked)) { send(res, 403, { error: 'a valid invite code is required' }); break; }
         const uid = crypto.randomBytes(12).toString('base64url');
         const options = await generateRegistrationOptions({ rpName: RP_NAME, rpID: authContext.rpID, userID: Buffer.from(uid), userName: name, userDisplayName: name, attestationType: 'none', authenticatorSelection: { residentKey: 'required', userVerification: 'preferred' }, excludeCredentials: [] });
@@ -165,6 +167,7 @@ export default async function handler(req, res) {
         if (!verification.verified) { send(res, 400, { error: 'not verified' }); break; }
         const { credential } = verification.registrationInfo;
         if (db.creds.some(x => x.id === credential.id)) { send(res, 409, { error: 'credential already registered' }); break; }
+        if (usernameTaken(db.users, c.name)) { send(res, 409, { error: 'username already taken' }); break; }
         const invite = INVITE_ONLY ? db.invites.find(i => i.code === c.code && !i.usedBy && !i.revoked) : null;
         if (INVITE_ONLY && !invite) { send(res, 403, { error: 'invite code is no longer valid' }); break; }
         const user = { id: c.uid, name: c.name, created: new Date().toISOString(), trainer: c.role === 'trainer' };

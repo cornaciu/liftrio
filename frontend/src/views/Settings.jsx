@@ -337,18 +337,18 @@ function RegisterInline({ close, setUser, pushState, pullState, toast }) {
   useEffect(() => { api('/api/config').then(c => setInviteOnly(!!c.invite_only)).catch(() => {}) }, [])
   const go = async () => {
     const n = (nameRef.current.value || '').trim()
-    if (!n) { toast(t('Enter a name')); return }
+    if (!n) { toast(t('Enter a username')); return }
     if (inviteOnly && !code.trim()) { toast(t('An invite code is required')); return }
     try {
       const u = await passkeyRegister(n, code.trim(), role); setUser(u); close()
       if (hasData(useStore.getState().S)) { await pushState(); toast(t('Profile created — data moved into it')) }
       else { await pullState(); toast(t('Welcome, {0}', u.name)) }
-    } catch (e) { if (e.name !== 'NotAllowedError' && e.name !== 'AbortError') toast(e.message || t('Registration failed')) }
+    } catch (e) { if (e.name !== 'NotAllowedError' && e.name !== 'AbortError') toast(e.message ? t(e.message) : t('Registration failed')) }
   }
   return <>
     <h3>{t('Create your profile')}</h3>
-    <div className="muted small" style={{ marginBottom: 14 }}>{t('Pick a name, then confirm with your device.')}</div>
-    <TextField ref={nameRef} placeholder={t('Your name')} maxLength={40} />
+    <div className="muted small" style={{ marginBottom: 14 }}>{t('Pick a unique username, then confirm with your device.')}</div>
+    <TextField ref={nameRef} aria-label={t('Username')} placeholder={t('Username')} autoComplete="username" autoCapitalize="none" spellCheck={false} maxLength={40} />
     <label className="small muted" htmlFor="register-role-settings" style={{ display: 'block', marginTop: 12 }}>{t('Create account as')}</label>
     <select className="input" id="register-role-settings" value={role} onChange={e => setRole(e.target.value)} style={{ marginTop: 6 }}>
       <option value="member">{t('User / client')}</option>

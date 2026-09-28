@@ -9,7 +9,7 @@ import { Button } from '../components/ui.jsx'
 
 function RegisterSheet({ close }) {
   const { setUser, pushState, pullState } = useStore()
-  const [name, setName] = useState('')
+  const [username, setUsername] = useState('')
   const [code, setCode] = useState('')
   const [role, setRole] = useState('member')
   const [inviteOnly, setInviteOnly] = useState(false)
@@ -17,20 +17,20 @@ function RegisterSheet({ close }) {
   useEffect(() => { setTimeout(() => ref.current?.focus(), 250) }, [])
   useEffect(() => { api('/api/config').then(c => setInviteOnly(!!c.invite_only)).catch(() => {}) }, [])
   const go = async () => {
-    const n = name.trim()
-    if (!n) { useUI.getState().toast(t('Enter a name')); return }
+    const n = username.trim()
+    if (!n) { useUI.getState().toast(t('Enter a username')); return }
     if (inviteOnly && !code.trim()) { useUI.getState().toast(t('An invite code is required')); return }
     try {
       const u = await passkeyRegister(n, code.trim(), role)
       setUser(u); close()
       if (hasData(useStore.getState().S)) { await pushState(); useUI.getState().toast(t('Profile created — data from this device moved into it')) }
       else { await pullState(); useUI.getState().toast(t('Welcome, {0}', u.name)) }
-    } catch (e) { if (e.name !== 'NotAllowedError' && e.name !== 'AbortError') useUI.getState().toast(e.message || t('Registration failed')) }
+    } catch (e) { if (e.name !== 'NotAllowedError' && e.name !== 'AbortError') useUI.getState().toast(e.message ? t(e.message) : t('Registration failed')) }
   }
   return <>
     <h3>{t('Create your profile')}</h3>
-    <div className="muted small" style={{ marginBottom: 14 }}>{t('Pick a name, then confirm with {0}. The passkey is saved in your device — no password needed.', BIO)}</div>
-    <input ref={ref} className="input" placeholder={t('Your name')} maxLength={40} value={name} onChange={e => setName(e.target.value)} />
+    <div className="muted small" style={{ marginBottom: 14 }}>{t('Pick a unique username, then confirm with {0}. The passkey is saved on your device — no password needed.', BIO)}</div>
+    <input ref={ref} className="input" aria-label={t('Username')} placeholder={t('Username')} autoComplete="username" autoCapitalize="none" spellCheck={false} maxLength={40} value={username} onChange={e => setUsername(e.target.value)} />
     <label className="small muted" htmlFor="register-role" style={{ display: 'block', textAlign: 'left', marginTop: 12 }}>{t('Create account as')}</label>
     <select className="input" id="register-role" value={role} onChange={e => setRole(e.target.value)} style={{ marginTop: 6 }}>
       <option value="member">{t('User / client')}</option>

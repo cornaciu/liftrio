@@ -10,6 +10,7 @@ import {
 } from '@simplewebauthn/server';
 import webpush from 'web-push';
 import { coachingRoute, roleOf } from '../shared/coaching.js';
+import { normalizeUsername, usernameTaken } from '../shared/username.js';
 
 const PORT = +(process.env.PORT || 3000);
 const DATA = process.env.DATA_DIR || '/data';
@@ -268,8 +269,9 @@ const routes = {
 
   'POST /api/register/options': async (req, res) => {
     const body = await readBody(req);
-    const name = String(body.name || '').trim().slice(0, 40);
-    if (!name) return json(res, 400, { error: 'name required' });
+    const name = normalizeUsername(body.username ?? body.name);
+    if (!name) return json(res, 400, { error: 'username required' });
+    if (usernameTaken(db.users, name)) return json(res, 409, { error: 'username already taken' });
     const role = body.role === 'trainer' ? 'trainer' : 'member';
     const code = String(body.code || '').trim().toUpperCase();
     if (INVITE_ONLY && !db.invites.some(i => i.code === code && !i.usedBy && !i.revoked))
@@ -303,6 +305,7 @@ const routes = {
     if (!verification.verified) return json(res, 400, { error: 'not verified' });
     const { credential } = verification.registrationInfo;
     if (db.creds.find(x => x.id === credential.id)) return json(res, 409, { error: 'credential already registered' });
+    if (usernameTaken(db.users, c.name)) return json(res, 409, { error: 'username already taken' });
     // Re-check the invite at the last moment (it may have been used/revoked since options), then burn it.
     let invite = null;
     if (INVITE_ONLY) {
