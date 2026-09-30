@@ -5,6 +5,7 @@ import pg from 'pg';
 import webpush from 'web-push';
 import { coachingRoute, roleOf } from '../shared/coaching.js';
 import { normalizeUsername, usernameTaken } from '../shared/username.js';
+import { ANALYTICS_PREFIX, analyticsVisitorKey, recordVisit, recordConversion } from '../shared/analytics.js';
 import {
   generateRegistrationOptions, verifyRegistrationResponse,
   generateAuthenticationOptions, verifyAuthenticationResponse
@@ -155,7 +156,7 @@ export default async function handler(req, res) {
         if (INVITE_ONLY && !db.invites.some(i => i.code === code && !i.usedBy && !i.revoked)) { send(res, 403, { error: 'a valid invite code is required' }); break; }
         const uid = crypto.randomBytes(12).toString('base64url');
         const options = await generateRegistrationOptions({ rpName: RP_NAME, rpID: authContext.rpID, userID: Buffer.from(uid), userName: name, userDisplayName: name, attestationType: 'none', authenticatorSelection: { residentKey: 'required', userVerification: 'preferred' }, excludeCredentials: [] });
-        const cid = await challenge({ challenge: options.challenge, uid, name, code, role, origin: authContext.origin, rpID: authContext.rpID });
+        const cid = await challenge({ challenge: options.challenge, uid, name, code, role, visitorKey: analyticsVisitorKey(body.visitorId, secret), origin: authContext.origin, rpID: authContext.rpID });
         send(res, 200, { cid, options }); break;
       }
       case 'POST /api/register/verify': {
@@ -172,6 +173,11 @@ export default async function handler(req, res) {
         if (INVITE_ONLY && !invite) { send(res, 403, { error: 'invite code is no longer valid' }); break; }
         const user = { id: c.uid, name: c.name, created: new Date().toISOString(), trainer: c.role === 'trainer' };
         if (invite) { user.invitedBy = invite.code; invite.usedBy = user.id; invite.usedAt = user.created; }
+        if (c.visitorKey?.startsWith(ANALYTICS_PREFIX)) {
+          const previous = await get(c.visitorKey);
+          const converted = recordConversion(previous);
+          if (converted !== previous) await put(c.visitorKey, converted);
+        }
         db.users.push(user);
         db.creds.push({ id: credential.id, userId: user.id, publicKey: Buffer.from(credential.publicKey).toString('base64url'), counter: credential.counter || 0, transports: body.credential?.response?.transports || [] });
         await saveDb();
@@ -267,6 +273,39 @@ export default async function handler(req, res) {
         });
         send(res, 200, { ok: true, delivered: due.length }); break;
       }
+      case 'POST /api/analytics/visit': {
+        if (!webauthnContext(req)) { send(res, 403, { error: 'unsupported origin' }); break; }
+        const visitorKey = analyticsVisitorKey(body.visitorId, secret);
+        if (!visitorKey || !['landing', 'guest'].includes(body.mode)) {
+          send(res, 400, { error: 'invalid analytics visit' }); break;
+        }
+        // Logged-in traffic is excluded even if a stale client sends a guest event.
+        if (!readSession()) await put(visitorKey, recordVisit(await get(visitorKey), body.mode));
+        send(res, 200, { ok: true }); break;
+      }
+      case 'GET /api/admin/analytics': {
+        if (!requireAdmin()) break;
+        const summary = await client.query(`
+          select count(*)::int as visitors,
+            count(*) filter (where (value->>'guestSessions')::int > 1)::int as returning,
+            coalesce(sum((value->>'guestSessions')::int), 0)::int as sessions,
+            count(*) filter (where value->>'convertedAt' is not null)::int as converted,
+            min((value->>'firstGuestAt')::bigint) as "since"
+          from public.opengym_kv
+          where key like $1 and value->>'firstGuestAt' is not null
+        `, [ANALYTICS_PREFIX + '%']);
+        const recent = await client.query(`
+          select right(key, 10) as visitor,
+            (value->>'firstGuestAt')::bigint as "firstGuestAt",
+            (value->>'lastGuestAt')::bigint as "lastGuestAt",
+            (value->>'guestSessions')::int as sessions,
+            (value->>'convertedAt')::bigint as "convertedAt"
+          from public.opengym_kv
+          where key like $1 and value->>'firstGuestAt' is not null
+          order by (value->>'lastGuestAt')::bigint desc limit 20
+        `, [ANALYTICS_PREFIX + '%']);
+        send(res, 200, { summary: summary.rows[0], recent: recent.rows }); break;
+      }
       case 'POST /api/activity': {
         const user = requireUser(); if (user) send(res, 200, { ok: true }); break;
       }
@@ -333,3 +372,4 @@ export default async function handler(req, res) {
     if (!res.headersSent) send(res, 500, { error: 'server error' });
   } finally { client.release(); }
 }
+
