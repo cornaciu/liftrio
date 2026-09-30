@@ -1,5 +1,9 @@
 // Romanian UI translations. English source strings are the lookup keys.
 export default {
+  "Privacy": "Confidențialitate",
+  "Guest usage statistics": "Statistici pentru accesul fără cont",
+  "A random browser ID counts guest visits and returns. No names, workout or nutrition data are sent.": "Un ID aleatoriu al browserului numără vizitele fără cont și revenirile. Nu sunt trimise nume sau date de antrenament ori nutriție.",
+  "Guest visit statistics use a random browser ID. You can turn them off in Settings.": "Statisticile vizitelor fără cont folosesc un ID aleatoriu. Le poți opri din Setări.",
   "Self-host Liftrio": "Configurează Liftrio pe serverul tău",
   "This demo runs entirely in your browser on example data — nothing is sent anywhere. Passkey sign-in and sync across your devices come with the Liftrio server, which you get by self-hosting it.": "Această demonstrație rulează integral în browser, cu date exemplificative. Conectarea cu cheie de acces și sincronizarea între dispozitive sunt disponibile când găzduiești Liftrio pe propriul server.",
   "Nutrition": "Nutriție",
@@ -896,3 +900,4 @@ export default {
   "Your clients and sent plans": "Clienții tăi și planurile trimise",
   "From {0}": "De la {0}",
 }
+

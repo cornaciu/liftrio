@@ -103,6 +103,33 @@ function InvitesCard({ invites, reload }) {
   </div>
 }
 
+function GuestAnalytics({ data, failed }) {
+  const summary = data?.summary
+  const date = ts => ts ? new Date(Number(ts)).toLocaleString() : '—'
+  return <div className="card" style={{ marginBottom: 18 }}>
+    <h2 style={{ margin: '0 0 8px' }}>Guest visitors</h2>
+    <p className="small muted">Random browser IDs, counted from the update onward. A new session starts after 30 minutes without activity. Clearing browser data creates a new visitor.</p>
+    <div className="tiles" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
+      {[['Unique guests', 'visitors'], ['Returning guests', 'returning'], ['Guest sessions', 'sessions'], ['Created an account', 'converted']].map(([label, key]) =>
+        <div className="tile" key={key}><div className="l" style={{ minHeight: '2.8em', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{label}</div><div className="v">{summary ? summary[key] : '—'}</div></div>)}
+    </div>
+    {failed && <p className="small muted" role="status">Could not load guest statistics. Use refresh to try again.</p>}
+    {summary && <p className="small muted">{summary.since ? 'First guest visit: ' + date(summary.since) : 'No guest visits recorded yet.'}</p>}
+    {!!data?.recent?.length && <>
+      <h4 className="sec">Latest guest visits</h4>
+      <div className="list">
+        {data.recent.map(visitor => <div className="item" key={visitor.visitor}>
+          <div className="grow" style={{ minWidth: 0 }}>
+            <div className="tt">Browser {visitor.visitor}</div>
+            <div className="ss">Last visit: {date(visitor.lastGuestAt)}</div>
+            <div className="ss">{visitor.sessions} sessions{visitor.convertedAt ? ' · account created ' + date(visitor.convertedAt) : ''}</div>
+          </div>
+        </div>)}
+      </div>
+    </>}
+  </div>
+}
+
 export default function Admin() {
   const nav = useNavigate()
   const user = useStore(s => s.user)
@@ -111,11 +138,14 @@ export default function Admin() {
   const [users, setUsers] = useState(null)
   const [invites, setInvites] = useState(null)
   const [inviteOnly, setInviteOnly] = useState(false)
+  const [analytics, setAnalytics] = useState(null)
+  const [analyticsFailed, setAnalyticsFailed] = useState(false)
 
   const loadUsers = () => api('/api/admin/users').then(d => { setUsers(d.users); setInviteOnly(d.invite_only) }).catch(e => toast(e.message || 'Failed to load'))
   const loadInvites = () => api('/api/admin/invites').then(d => setInvites(d.invites)).catch(() => {})
+  const loadAnalytics = () => api('/api/admin/analytics').then(data => { setAnalytics(data); setAnalyticsFailed(false) }).catch(() => setAnalyticsFailed(true))
   // poll every 15s so the "training now" section stays live without a manual refresh
-  useEffect(() => { if (!user?.admin) return; loadUsers(); loadInvites(); const iv = setInterval(loadUsers, 15000); return () => clearInterval(iv) }, [])
+  useEffect(() => { if (!user?.admin) return; loadUsers(); loadInvites(); loadAnalytics(); const iv = setInterval(() => { loadUsers(); loadAnalytics() }, 15000); return () => clearInterval(iv) }, [user?.admin])
   if (!user?.admin) return null
 
   const openUser = id => openSheet(close => <UserDetail id={id} onChanged={loadUsers} close={close} />)
@@ -128,7 +158,7 @@ export default function Admin() {
       <button className="iconbtn" onClick={() => nav('/settings')} aria-label="Back"><Icon name="chevronLeft" /></button>
       <div style={{ flex: 1, marginLeft: 8 }}><h1 style={{ margin: 0 }}>Admin</h1>
         <div className="sub">{users ? users.length + ' users · ' + activeCount + ' active this week' : 'Loading…'}</div></div>
-      <button className="iconbtn" onClick={() => { loadUsers(); loadInvites() }} aria-label="refresh">↻</button>
+      <button className="iconbtn" onClick={() => { loadUsers(); loadInvites(); loadAnalytics() }} aria-label="refresh">↻</button>
     </div>
 
     <div className="tiles" style={{ marginBottom: 12 }}>
@@ -147,6 +177,8 @@ export default function Admin() {
       </div>)}
     </div>}
 
+    <GuestAnalytics data={analytics} failed={analyticsFailed} />
+
     <InvitesCard invites={invites} reload={loadInvites} />
 
     <h4 className="sec">Users</h4>
@@ -160,3 +192,4 @@ export default function Admin() {
     </div>
   </div>
 }
+

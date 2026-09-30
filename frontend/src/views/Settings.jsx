@@ -10,6 +10,7 @@ import { wakeLockSupported } from '../lib/wakelock.js'
 import { t, LANGS, LANG_FLAGS, INSTR_LANGS } from '../lib/i18n.js'
 import { DEMO, REPO } from '../lib/demo.js'
 import { MOBILE, shareExport, syncReminder } from '../lib/mobile.js'
+import { analyticsEnabled, setAnalyticsEnabled } from '../lib/analytics.js'
 import { loadStarterPlan, confirmSheet, importFromApp } from '../sheets.jsx'
 import Icon from '../components/Icon.jsx'
 import { Section, Row, SelectRow, Switch, Segmented, Button, TextField } from '../components/ui.jsx'
@@ -23,6 +24,7 @@ export default function Settings() {
   const fileRef = useRef(null)
   const importRef = useRef(null)
   const wakeOK = wakeLockSupported()
+  const [usageStats, setUsageStats] = useState(analyticsEnabled)
 
   const doExport = async () => {
     const json = JSON.stringify(S, null, 2)
@@ -98,6 +100,13 @@ export default function Settings() {
       )}
     </Section>
     {!user && !DEMO && !MOBILE && <p className="sect-f" style={{ marginTop: -18, marginBottom: 22 }}>{t('Guest mode — data lives only in this browser.')}</p>}
+
+    {!DEMO && !MOBILE && <Section title={t('Privacy')}>
+      <Row icon="shield" iconTint="var(--grey)" title={t('Guest usage statistics')}
+        subtitle={t('A random browser ID counts guest visits and returns. No names, workout or nutrition data are sent.')}>
+        <Switch ariaLabel={t('Guest usage statistics')} checked={usageStats} onChange={enabled => { setAnalyticsEnabled(enabled); setUsageStats(analyticsEnabled()) }} />
+      </Row>
+    </Section>}
 
     {/* ---------- general ---------- */}
     <Section title={t('Preferences')} footer={t('Note: switching units only changes the label — logged numbers are not converted.')}>
@@ -360,3 +369,4 @@ function RegisterInline({ close, setUser, pushState, pullState, toast }) {
     <div style={{ height: 12 }} /><Button variant="primary" onClick={go}>{t('Create passkey')}</Button>
   </>
 }
+
