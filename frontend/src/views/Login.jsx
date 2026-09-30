@@ -133,6 +133,7 @@ export default function Login() {
                 <Button className="login-create login-auth-action" onClick={() => useUI.getState().openSheet(close => <RegisterSheet close={close} />)}>{registerLabel}</Button>
               </> : <div className="small muted">{t("This browser doesn't support passkeys — you can still use Liftrio locally on this device.")}</div>}
               <button className="login-guest" onClick={() => setGuest(true)}>{t('Continue without account')} <span aria-hidden="true">↗</span></button>
+              <p className="dim" style={{ fontSize: '.65rem', lineHeight: 1.4, margin: '6px 0 0', textAlign: 'center' }}>{t('Guest visit statistics use a random browser ID. You can turn them off in Settings.')}</p>
             </>}
           </div>
         </div>
@@ -141,3 +142,4 @@ export default function Login() {
     </div>
   )
 }
+
