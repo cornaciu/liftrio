@@ -8,6 +8,7 @@ import { setLang, useLang } from './lib/i18n.js'
 import { setNav } from './lib/nav.js'
 import { useWakeLock } from './lib/wakelock.js'
 import { startFlow } from './sheets.jsx'
+import { trackVisit, ANALYTICS_CHANGED } from './lib/analytics.js'
 import TabBar from './components/TabBar.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
 import Modals from './components/Modals.jsx'
@@ -57,6 +58,24 @@ function Shell() {
   useEffect(() => {
     if (ready && !authed && loc.pathname !== '/home') navigate('/home', { replace: true })
   }, [ready, authed, loc.pathname, navigate])
+  useEffect(() => {
+    if (!ready || user) return
+    const visit = () => trackVisit(isGuest ? 'guest' : 'landing')
+    visit()
+    const timer = setInterval(visit, 5 * 60 * 1000)
+    const changed = event => {
+      if (event.type !== 'storage' || event.key === 'liftrio_analytics_disabled') visit()
+    }
+    document.addEventListener('visibilitychange', visit)
+    window.addEventListener(ANALYTICS_CHANGED, changed)
+    window.addEventListener('storage', changed)
+    return () => {
+      clearInterval(timer)
+      document.removeEventListener('visibilitychange', visit)
+      window.removeEventListener(ANALYTICS_CHANGED, changed)
+      window.removeEventListener('storage', changed)
+    }
+  }, [ready, user, isGuest])
   // every tab/route change starts at the top of the page
   useEffect(() => { window.scrollTo(0, 0) }, [loc.pathname])
   // bound to the workout, not to the route — checking Stats mid-session keeps the screen on
@@ -109,3 +128,4 @@ export default function App() {
   useEffect(() => { boot() }, [boot])
   return <HashRouter><Shell /></HashRouter>
 }
+
