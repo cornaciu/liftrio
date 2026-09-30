@@ -104,7 +104,7 @@ export default function Settings() {
     {!DEMO && !MOBILE && <Section title={t('Privacy')}>
       <Row icon="shield" iconTint="var(--grey)" title={t('Guest usage statistics')}
         subtitle={t('A random browser ID counts guest visits and returns. No names, workout or nutrition data are sent.')}>
-        <Switch checked={usageStats} onChange={enabled => { setAnalyticsEnabled(enabled); setUsageStats(analyticsEnabled()) }} />
+        <Switch ariaLabel={t('Guest usage statistics')} checked={usageStats} onChange={enabled => { setAnalyticsEnabled(enabled); setUsageStats(analyticsEnabled()) }} />
       </Row>
     </Section>}
 
