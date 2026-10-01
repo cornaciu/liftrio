@@ -101,7 +101,7 @@ export default function Settings() {
     </Section>
     {!user && !DEMO && !MOBILE && <p className="sect-f" style={{ marginTop: -18, marginBottom: 22 }}>{t('Guest mode — data lives only in this browser.')}</p>}
 
-    {!DEMO && !MOBILE && <Section title={t('Privacy')}>
+    {!user && !DEMO && !MOBILE && <Section title={t('Privacy')}>
       <Row icon="shield" iconTint="var(--grey)" title={t('Guest usage statistics')}
         subtitle={t('A random browser ID counts guest visits and returns. No names, workout or nutrition data are sent.')}>
         <Switch ariaLabel={t('Guest usage statistics')} checked={usageStats} onChange={enabled => { setAnalyticsEnabled(enabled); setUsageStats(analyticsEnabled()) }} />
